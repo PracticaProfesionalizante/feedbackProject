@@ -26,9 +26,7 @@ export const authenticate = (
     req.userId = decoded.userId
     next()
   } catch (error) {
-    const appError = error as AppError
-    appError.statusCode = 401
-    appError.message = 'Invalid or expired token'
+    const appError = new AppError('Invalid or expired token', 401)
     next(appError)
   }
 }

@@ -12,9 +12,8 @@ export const validate = (schema: ZodSchema) => {
       })
       next()
     } catch (error: any) {
-      const appError = new AppError('Validation error')
-      appError.statusCode = 400
-      appError.message = error.errors?.[0]?.message || 'Invalid input'
+      const message = error.errors?.[0]?.message || 'Invalid input'
+      const appError = new AppError(message, 400)
       next(appError)
     }
   }

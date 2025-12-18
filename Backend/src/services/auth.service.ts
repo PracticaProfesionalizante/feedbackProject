@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 import { AppError } from '../middleware/errorHandler'
 
@@ -13,8 +13,7 @@ export const authService = {
     })
 
     if (existingUser) {
-      const error = new AppError('User already exists')
-      error.statusCode = 409
+      const error = new AppError('User already exists', 409)
       throw error
     }
 
@@ -26,7 +25,7 @@ export const authService = {
       data: {
         email: data.email,
         password: hashedPassword,
-        name: data.name,
+        name: data.name || '',
       },
       select: {
         id: true,
@@ -43,11 +42,17 @@ export const authService = {
     // Buscar usuario
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        password: true,
+        role: true,
+      },
     })
 
     if (!user) {
-      const error = new AppError('Invalid credentials')
-      error.statusCode = 401
+      const error = new AppError('Invalid credentials', 401)
       throw error
     }
 
@@ -55,18 +60,18 @@ export const authService = {
     const isValidPassword = await bcrypt.compare(password, user.password)
 
     if (!isValidPassword) {
-      const error = new AppError('Invalid credentials')
-      error.statusCode = 401
+      const error = new AppError('Invalid credentials', 401)
       throw error
     }
 
     // Generar JWT
+    const jwtSecret = process.env.JWT_SECRET || 'secret'
+    const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d'
+
     const token = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET || 'secret',
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      }
+      jwtSecret,
+      { expiresIn: jwtExpiresIn } as SignOptions
     )
 
     return {
@@ -74,7 +79,7 @@ export const authService = {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role, // Role asignado desde BD
+        role: user.role,
       },
       token,
     }
