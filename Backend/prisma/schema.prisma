@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(EMPLOYEE) // Asignar roles directamente desde BD
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  feedbacksSent     Feedback[] @relation("FeedbackFrom")
+  feedbacksReceived Feedback[] @relation("FeedbackTo")
+  comments          Comment[]
+  notifications     Notification[]
+  teamsLed          TeamMember[] @relation("TeamLeader")
+  teamMemberships   TeamMember[] @relation("TeamMember")
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  leaderId  String
+  memberId  String
+  createdAt DateTime @default(now())
+  
+  leader    User     @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  member    User     @relation("TeamMember", fields: [memberId], references: [id], onDelete: Cascade)
+  
+  @@unique([leaderId, memberId])
+  @@index([leaderId])
+  @@index([memberId])
+}
+
+model Feedback {
+  id          String        @id @default(uuid())
+  fromUserId  String
+  toUserId    String
+  type        FeedbackType
+  content     String
+  status      FeedbackStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  fromUser    User          @relation("FeedbackFrom", fields: [fromUserId], references: [id])
+  toUser      User          @relation("FeedbackTo", fields: [toUserId], references: [id])
+  comments    Comment[]
+  
+  @@index([toUserId, status])
+  @@index([fromUserId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  feedbackId String
+  userId     String
+  content    String
+  createdAt  DateTime @default(now())
+  
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+  
+  @@index([feedbackId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, read])
+}
+
+enum Role {
+  LEADER
+  EMPLOYEE
+}
+
+enum FeedbackType {
+  RECOGNITION
+  IMPROVEMENT
+  GENERAL
+}
+
+enum FeedbackStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum NotificationType {
+  FEEDBACK_RECEIVED
+  COMMENT_RECEIVED
+  FEEDBACK_UPDATED
+}
+
