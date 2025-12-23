@@ -9,7 +9,7 @@ export const authController = {
       const user = await authService.register({ email, password, name })
       res.status(201).json({
         success: true,
-        message: 'User registered successfully',
+        message: 'prueba',
         data: user,
       })
     } catch (error) {
