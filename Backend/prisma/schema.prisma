@@ -18,7 +18,7 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relaciones
   feedbacksSent     Feedback[] @relation("FeedbackFrom")
   feedbacksReceived Feedback[] @relation("FeedbackTo")
@@ -33,29 +33,52 @@ model TeamMember {
   leaderId  String
   memberId  String
   createdAt DateTime @default(now())
-  
-  leader    User     @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
-  member    User     @relation("TeamMember", fields: [memberId], references: [id], onDelete: Cascade)
-  
+
+  leader User @relation(
+    "TeamLeader",
+    fields: [leaderId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  member User @relation(
+    "TeamMember",
+    fields: [memberId],
+    references: [id],
+    onDelete: Cascade
+  )
+
   @@unique([leaderId, memberId])
   @@index([leaderId])
   @@index([memberId])
 }
 
 model Feedback {
-  id          String        @id @default(uuid())
-  fromUserId  String
-  toUserId    String
-  type        FeedbackType
-  content     String
-  status      FeedbackStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  fromUser    User          @relation("FeedbackFrom", fields: [fromUserId], references: [id])
-  toUser      User          @relation("FeedbackTo", fields: [toUserId], references: [id])
-  comments    Comment[]
-  
+  id         String         @id @default(uuid())
+  fromUserId String
+  toUserId   String
+  type       FeedbackType
+  content    String
+  status     FeedbackStatus @default(PENDING)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  fromUser User @relation(
+    "FeedbackFrom",
+    fields: [fromUserId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  toUser User @relation(
+    "FeedbackTo",
+    fields: [toUserId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  comments Comment[]
+
   @@index([toUserId, status])
   @@index([fromUserId])
   @@index([createdAt])
@@ -67,10 +90,19 @@ model Comment {
   userId     String
   content    String
   createdAt  DateTime @default(now())
-  
-  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id])
-  
+
+  feedback Feedback @relation(
+    fields: [feedbackId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  user User @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
   @@index([feedbackId])
 }
 
@@ -81,9 +113,13 @@ model Notification {
   message   String
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
-  
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  user User @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
   @@index([userId, read])
 }
 
