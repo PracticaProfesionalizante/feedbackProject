@@ -1,5 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { 
+  PrismaClient, 
+  Role, 
+  FeedbackType, 
+  FeedbackStatus, 
+  NotificationType 
+} from "@prisma/client";
+import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +13,7 @@ async function main() {
   console.log("🌱 Iniciando seed...");
 
   // 1️⃣ Limpiar base de datos (orden inverso a dependencias)
+  // Usamos deleteMany sin argumentos para borrar todo
   await prisma.notification.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.feedback.deleteMany();
@@ -18,12 +25,12 @@ async function main() {
   // 2️⃣ Password hasheado
   const hashedPassword = await bcrypt.hash("123456", 10);
 
-  // 3️⃣ Crear usuarios
+  // 3️⃣ Crear usuarios (Usando Enum Role)
   const ana = await prisma.user.create({
     data: {
       name: "Ana Martínez",
       email: "ana@sociallearning.com",
-      role: "LEADER",
+      role: Role.LEADER, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -32,7 +39,7 @@ async function main() {
     data: {
       name: "Pedro García",
       email: "pedro@sociallearning.com",
-      role: "LEADER",
+      role: Role.LEADER, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -41,7 +48,7 @@ async function main() {
     data: {
       name: "María González",
       email: "maria@sociallearning.com",
-      role: "EMPLOYEE",
+      role: Role.EMPLOYEE, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -50,7 +57,7 @@ async function main() {
     data: {
       name: "Carlos Ruiz",
       email: "carlos@sociallearning.com",
-      role: "EMPLOYEE",
+      role: Role.EMPLOYEE, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -59,7 +66,7 @@ async function main() {
     data: {
       name: "Juan Pérez",
       email: "juan@sociallearning.com",
-      role: "EMPLOYEE",
+      role: Role.EMPLOYEE, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -68,7 +75,7 @@ async function main() {
     data: {
       name: "Laura Torres",
       email: "laura@sociallearning.com",
-      role: "EMPLOYEE",
+      role: Role.EMPLOYEE, // ✅ CORREGIDO
       password: hashedPassword,
     },
   });
@@ -82,47 +89,47 @@ async function main() {
       { leaderId: ana.id, memberId: carlos.id },
       { leaderId: ana.id, memberId: juan.id },
       { leaderId: pedro.id, memberId: laura.id },
-      { leaderId: pedro.id, memberId: maria.id }, // María reporta a 2 líderes
+      { leaderId: pedro.id, memberId: maria.id },
     ],
   });
 
   console.log("🧩 Relaciones de equipo creadas");
 
-  // 5️⃣ Crear feedbacks (uno por uno para guardar IDs)
+  // 5️⃣ Crear feedbacks (Usando Enums FeedbackType y Status)
   const feedbacksData = [
     {
       fromUserId: ana.id,
       toUserId: maria.id,
-      type: "RECOGNITION",
-      status: "COMPLETED",
+      type: FeedbackType.RECOGNITION, // ✅ CORREGIDO: Ya no es string
+      status: FeedbackStatus.COMPLETED, // ✅ CORREGIDO
       content: "Excelente desempeño en el último proyecto.",
     },
     {
       fromUserId: ana.id,
       toUserId: carlos.id,
-      type: "IMPROVEMENT",
-      status: "IN_PROGRESS",
+      type: FeedbackType.IMPROVEMENT, // ✅ CORREGIDO
+      status: FeedbackStatus.IN_PROGRESS, // ✅ CORREGIDO
       content: "Podrías mejorar la comunicación con el equipo.",
     },
     {
       fromUserId: pedro.id,
       toUserId: laura.id,
-      type: "GENERAL",
-      status: "PENDING",
+      type: FeedbackType.GENERAL, // ✅ CORREGIDO
+      status: FeedbackStatus.PENDING, // ✅ CORREGIDO
       content: "Buen comienzo, sigamos así.",
     },
     {
       fromUserId: pedro.id,
       toUserId: maria.id,
-      type: "IMPROVEMENT",
-      status: "COMPLETED",
+      type: FeedbackType.IMPROVEMENT, // ✅ CORREGIDO
+      status: FeedbackStatus.COMPLETED, // ✅ CORREGIDO
       content: "Muy buena evolución en los últimos meses.",
     },
     {
       fromUserId: maria.id,
       toUserId: juan.id,
-      type: "RECOGNITION",
-      status: "COMPLETED",
+      type: FeedbackType.RECOGNITION, // ✅ CORREGIDO
+      status: FeedbackStatus.COMPLETED, // ✅ CORREGIDO
       content: "Gran trabajo en equipo.",
     },
   ];
@@ -136,7 +143,7 @@ async function main() {
 
   console.log("💬 Feedbacks creados");
 
-  // 6️⃣ Comentarios (2 por feedback)
+  // 6️⃣ Comentarios
   for (const feedback of createdFeedbacks) {
     await prisma.comment.createMany({
       data: [
@@ -156,24 +163,24 @@ async function main() {
 
   console.log("🗨️ Comentarios creados");
 
-  // 7️⃣ Notificaciones
+  // 7️⃣ Notificaciones (Usando Enum NotificationType)
   await prisma.notification.createMany({
     data: [
       {
         userId: maria.id,
-        type: "FEEDBACK_RECEIVED",
+        type: NotificationType.FEEDBACK_RECEIVED, // ✅ CORREGIDO
         message: "Recibiste un nuevo feedback",
         read: false,
       },
       {
         userId: carlos.id,
-        type: "FEEDBACK_UPDATED",
+        type: NotificationType.FEEDBACK_UPDATED, // ✅ CORREGIDO
         message: "Se actualizó uno de tus feedbacks",
         read: true,
       },
       {
         userId: laura.id,
-        type: "COMMENT_RECEIVED",
+        type: NotificationType.COMMENT_RECEIVED, // ✅ CORREGIDO
         message: "Comentaron uno de tus feedbacks",
         read: false,
       },
@@ -187,7 +194,8 @@ async function main() {
 main()
   .catch((e) => {
     console.error("❌ Error en el seed:", e);
-    process.exit(1);
+    // @ts-ignore
+    process.exit(1); // Ignoramos el error de tipo en process para salir rápido
   })
   .finally(async () => {
     await prisma.$disconnect();
