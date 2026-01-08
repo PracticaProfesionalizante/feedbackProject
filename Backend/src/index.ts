@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
 import userRoutes from "./routes/user.routes" // ✅ Importación correcta
+import notificationRoutes from './routes/notification.routes';
 
 // Cargar variables de entorno
 dotenv.config()
@@ -27,6 +28,7 @@ app.get('/health', (req, res) => {
 // Rutas de la API
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes) // ✅ AQUÍ es el lugar correcto
+app.use('/api/notifications', notificationRoutes); // ✅ Nueva ruta para notificaciones
 
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)
