@@ -195,7 +195,7 @@ main()
   .catch((e) => {
     console.error("❌ Error en el seed:", e);
     // @ts-ignore
-    process.exit(1); // Ignoramos el error de tipo en process para salir rápido
+    process.exit(1); 
   })
   .finally(async () => {
     await prisma.$disconnect();
