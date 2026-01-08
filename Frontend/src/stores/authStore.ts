@@ -15,6 +15,7 @@ type LoginPayload = { email: string; password: string }
 type RegisterPayload = { name: string; email: string; password: string }
 
 const TOKEN_KEY = 'auth_token'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 function decodeJwt(token: string): any | null {
   try {
@@ -77,9 +78,8 @@ export const useAuthStore = defineStore('auth', {
 
     async fetchMe() {
       if (!this.token) return null
-      const API_URL = import.meta.env.VITE_API_URL
 
-      const res = await fetch(`${API_URL}/auth/me`, {
+      const res = await fetch(`${API_BASE}/auth/me`, {
         headers: { ...this.getAuthHeader() }
       })
 
@@ -134,9 +134,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const API_URL = import.meta.env.VITE_API_URL
-
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -171,9 +169,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const API_URL = import.meta.env.VITE_API_URL
-
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await fetch(`${API_BASE}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
