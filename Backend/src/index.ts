@@ -31,7 +31,10 @@ app.use('/api/users', userRoutes) // ✅ AQUÍ es el lugar correcto
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)
 
-// Start server
-app.listen(PORT, () => {
+// 👇 CAMBIA ESTO AL FINAL:
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
+
+// Exportamos 'app' y 'server' para los tests
+export { app, server }
