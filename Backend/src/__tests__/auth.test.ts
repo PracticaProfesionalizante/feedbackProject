@@ -89,16 +89,17 @@ describe('🔐 Auth API Tests', () => {
       expect(response.status).toBe(401);
     });
 
-    // ⚠️ ESTE TEST FALLARÁ HASTA QUE MARCOS TERMINE EL MIDDLEWARE DE AUTH
-    // Lo dejamos escrito (Skipped) para cuando esté listo.
-    test.skip('✅ Debe obtener perfil con token válido', async () => {
+    // ⚠️ ESTE TEST FALLARÁ HASTA QUE MARCOS TERMINE EL MIDDLEWARE DE AUTH// 👇 CAMBIO: De 'test.skip' a 'test'
+    test('✅ Debe obtener perfil con token válido', async () => {
       const response = await request(app)
         .get('/api/users/profile')
-        .set('Authorization', `Bearer ${token}`); // Enviamos el token
+        .set('Authorization', `Bearer ${token}`); // Usa el token que guardamos en el login
 
       expect(response.status).toBe(200);
+      // Verificamos que traiga datos del usuario
       expect(response.body).toHaveProperty('email', userData.email);
-      expect(response.body).toHaveProperty('stats'); // Tu feature nueva
+      // Verificamos que traiga tus estadísticas
+      expect(response.body).toHaveProperty('stats'); 
+    });
     });
   });
-});
