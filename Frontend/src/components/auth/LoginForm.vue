@@ -39,13 +39,13 @@
         Iniciar sesión
       </v-btn>
 
-      <!-- Register link -->
+      <!-- Register switch (SIN cambiar de vista) -->
       <div class="text-center mt-4">
         <span class="text-body-2 text-medium-emphasis">¿No tenés cuenta?</span>
         <v-btn
           variant="text"
           class="px-1"
-          @click="goToRegister"
+          @click="emit('switch-to-register')"
           :disabled="auth.loading"
         >
           Registrate
@@ -71,19 +71,22 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import { useAuthStore } from '../../stores/authStore'
 
-// Store / Router
+const emit = defineEmits<{
+  (e: 'switch-to-register'): void
+}>()
+
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-// UI
 const showPassword = ref(false)
-const snackbar = reactive({
-  open: false,
-  message: ''
-})
+const snackbar = reactive({ open: false, message: '' })
 
-// ✅ Zod schema
+function showError(message: string) {
+  snackbar.message = message
+  snackbar.open = true
+}
+
 const schema = toTypedSchema(
   z.object({
     email: z
@@ -96,43 +99,23 @@ const schema = toTypedSchema(
   })
 )
 
-// ✅ VeeValidate form
 const { errors, defineField, handleSubmit } = useForm({
   validationSchema: schema,
-  initialValues: {
-    email: '',
-    password: ''
-  }
+  initialValues: { email: '', password: '' }
 })
 
 const [email] = defineField('email')
 const [password] = defineField('password')
 
-// Helpers
-function showError(message: string) {
-  snackbar.message = message
-  snackbar.open = true
-}
-
-// Submit
 const onSubmit = handleSubmit(async (values) => {
-  const ok = await auth.login({
-    email: values.email,
-    password: values.password
-  })
+  const ok = await auth.login({ email: values.email, password: values.password })
 
   if (!ok) {
-    // Si auth.error viene del store, lo mostramos, sino mensaje genérico
     showError(auth.error || 'No se pudo iniciar sesión. Verificá tus credenciales.')
     return
   }
 
-  // ✅ Redirect post-login
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
   await router.replace(redirect || '/dashboard')
 })
-
-function goToRegister() {
-  router.push('/register')
-}
 </script>
