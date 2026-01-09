@@ -4,6 +4,9 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
+import teamRoutes from './routes/teamRoutes'
+
+
 
 // Cargar variables de entorno desde la raíz del proyecto Backend
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -24,7 +27,13 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' })
 })
 
+app.use('/api/team', teamRoutes)
+
 app.use('/api/auth', authRoutes)
+
+
+
+app.use('/api/team', teamRoutes)
 
 // Error handler
 app.use(errorHandler)

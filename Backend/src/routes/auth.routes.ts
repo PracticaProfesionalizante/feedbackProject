@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate.middleware'
 import { loginSchema, registerSchema } from '../validators/auth.validator'
 import { authenticate } from '../middleware/auth.middleware'
 
+
 const router = Router()
 
 router.post('/register', validate(registerSchema), authController.register)
