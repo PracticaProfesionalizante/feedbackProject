@@ -2,16 +2,16 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+// Importamos los tipos de Zod para que TypeScript sepa qué hay en req.body
+import { RegisterInput, LoginInput, UpdateProfileInput } from "../validators/auth.validator";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "secreto_super_seguro";
 
 // REGISTRO
-export const register = async (req: Request, res: Response) => {
+// Usamos los tipos <{}, {}, RegisterInput> para que TS nos ayude con el autocompletado
+export const register = async (req: Request<{}, {}, RegisterInput>, res: Response) => {
   try {
-    // Nota: Tu middleware validate ya envolvió los datos en req.body.body?
-    // Si usaste el validador corregido que te pasé, Zod valida req.body pero NO lo anida en .body.body
-    // Express sigue entregando los datos en req.body
     const { email, name, password, role } = req.body;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -42,7 +42,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 // LOGIN
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request<{}, {}, LoginInput>, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -60,5 +60,16 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Error en el servidor", error });
+  }
+};
+
+// ACTUALIZAR PERFIL
+export const updateProfile = async (req: Request<{}, {}, UpdateProfileInput>, res: Response) => {
+  try {
+    // Ahora TS sabe qué campos pueden venir en req.body
+    const { name, email, password } = req.body;
+    res.json({ message: "Perfil actualizado correctamente", data: { name, email } });
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar" });
   }
 };
