@@ -1,11 +1,12 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
 
-// Cargar variables de entorno
-dotenv.config()
+// Cargar variables de entorno desde la raíz del proyecto Backend
+dotenv.config({ path: path.resolve(__dirname, '../.env') })
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -32,4 +33,3 @@ app.use(errorHandler)
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
-
