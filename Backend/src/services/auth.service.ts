@@ -1,9 +1,7 @@
 import bcrypt from 'bcrypt'
 import jwt, { SignOptions } from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
 import { AppError } from '../middleware/errorHandler'
-
-const prisma = new PrismaClient()
+import { prisma } from '../utils/prisma'
 
 export const authService = {
   async register(data: { email: string; password: string; name?: string }) {

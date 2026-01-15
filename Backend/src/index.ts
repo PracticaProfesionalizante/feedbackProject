@@ -28,12 +28,7 @@ app.get('/health', (req, res) => {
 })
 
 app.use('/api/team', teamRoutes)
-
 app.use('/api/auth', authRoutes)
-
-
-
-app.use('/api/team', teamRoutes)
 
 // Error handler
 app.use(errorHandler)

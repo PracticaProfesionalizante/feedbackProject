@@ -1,53 +1,40 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from '../middleware/auth'
+import AppLayout from '../layout/AppLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/dashboard' },
-
     // Públicas
     {
       path: '/login',
-      component: () => import('../views/LoginVue.vue'),
-      meta: { guestOnly: true }
-    },
-    {
-      path: '/register',
-      component: () => import('../views/Register.vue'),
+      component: () => import('../views/LoginView.vue'),
       meta: { guestOnly: true }
     },
 
-    // Protegidas
+    // Protegidas (con layout)
     {
-      path: '/dashboard',
-      component: () => import('../views/Dashboard.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/feedbacks/:pathMatch(.*)*',
-      component: () => import('../views/Feedbacks.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/profile',
-      component: () => import('../views/Profile.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/team',
-      component: () => import('../views/Team.vue'),
-      meta: { requiresAuth: true }
-    },
-    // {
-    //   path: '/notifications',
-    //   component: () => import('../views/Notifications.vue'),
-    //   meta: { requiresAuth: true }
-    // },
+      path: '/',
+      component: AppLayout,
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/team' },
+        {
+          path: 'team',
+          component: () => import('../../src/views/TeamView.vue')
+        },
+        {
+          path: 'dashboard',
+          component: () => import('../../src/views/Dashboard.vue')
+        },
+        {
+          path: 'profile',
+          component: () => import('../../src/views/Profile.vue')
+        }
+      ]
+    }
   ]
 })
 
-// Guard global
 router.beforeEach(authGuard)
-
 export default router

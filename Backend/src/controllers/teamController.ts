@@ -1,10 +1,11 @@
-import type { Request, Response } from 'express'
-import { prisma } from '../../prisma/seed' // ajustá si tu prisma client está en otra ruta
+import type { Response } from 'express'
+import { prisma } from '../utils/prisma'
+import type { AuthRequest } from '../middleware/auth.middleware'
 
 export const teamController = {
   // GET /api/team/employees (solo LEADER)
-  async getEmployees(req: Request, res: Response) {
-    const userId = req.user!.id
+  async getEmployees(req: AuthRequest, res: Response) {
+    const userId = req.userId!
 
     const teamMembers = await prisma.teamMember.findMany({
       where: { leaderId: userId },
@@ -25,8 +26,8 @@ export const teamController = {
   },
 
   // GET /api/team/leaders
-  async getLeaders(req: Request, res: Response) {
-    const userId = req.user!.id
+  async getLeaders(req: AuthRequest, res: Response) {
+    const userId = req.userId!
 
     const teamMembers = await prisma.teamMember.findMany({
       where: { memberId: userId },
