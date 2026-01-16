@@ -1,15 +1,33 @@
 import { Request, Response, NextFunction } from 'express';
 import { feedbackService } from '../services/feedback.service';
+import { canGiveFeedback } from "../services/permissionService";
 
-export const createFeedback = async (req: Request, res: Response, next: NextFunction) => {
+
+export const createFeedback = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const userId = (req as any).user.id; // Asumimos authMiddleware
+    const userId = (req as any).user.id; // authMiddleware
+    const { toUserId } = req.body;
+
+    const allowed = await canGiveFeedback(userId, toUserId);
+
+    if (!allowed) {
+      return res.status(403).json({
+        error: "No tienes permiso para dar feedback a este usuario",
+      });
+    }
+
     const feedback = await feedbackService.create(userId, req.body);
     res.status(201).json(feedback);
+
   } catch (error) {
     next(error);
   }
 };
+
 
 export const getFeedbacks = async (req: Request, res: Response, next: NextFunction) => {
   try {
