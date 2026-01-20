@@ -1,39 +1,27 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// --------------------------------------
-// MODELO DE USUARIOS Y ROLES
-// --------------------------------------
-
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  role      Role     @default(EMPLOYEE) // Roles: LEADER o EMPLOYEE
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relaciones Jerárquicas
-  teamsLed        TeamMember[] @relation("TeamLeader") // Equipos que lidero
-  teamMemberships TeamMember[] @relation("TeamMember") // Equipos donde soy miembro
-
-  // Relaciones de Feedback
-  feedbacksSent     Feedback[] @relation("FeedbackFrom")
-  feedbacksReceived Feedback[] @relation("FeedbackTo")
-
-  // Otras Relaciones
-  comments      Comment[]
-  notifications Notification[]
+  id                String         @id @default(uuid())
+  email             String         @unique
+  name              String
+  role              Role           @default(EMPLOYEE)
+  password          String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  comments          Comment[]
+  feedbacksSent     Feedback[]     @relation("FeedbackFrom")
+  feedbacksReceived Feedback[]     @relation("FeedbackTo")
+  notifications     Notification[]
+  teamsLed          TeamMember[]   @relation("TeamLeader")
+  teamMemberships   TeamMember[]   @relation("TeamMember")
 }
 
 model TeamMember {
@@ -41,20 +29,13 @@ model TeamMember {
   leaderId  String
   memberId  String
   createdAt DateTime @default(now())
+  leader    User     @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  member    User     @relation("TeamMember", fields: [memberId], references: [id], onDelete: Cascade)
 
-  // Relación N:M explícita para jerarquía flexible
-  leader User @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
-  member User @relation("TeamMember", fields: [memberId], references: [id], onDelete: Cascade)
-
-  // Restricciones e Índices
-  @@unique([leaderId, memberId]) // Evita que un empleado tenga al mismo líder 2 veces
+  @@unique([leaderId, memberId])
   @@index([leaderId])
   @@index([memberId])
 }
-
-// --------------------------------------
-// FEEDBACK Y COMUNICACIÓN
-// --------------------------------------
 
 model Feedback {
   id         String         @id @default(uuid())
@@ -65,14 +46,11 @@ model Feedback {
   status     FeedbackStatus @default(PENDING)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  comments   Comment[]
+  fromUser   User           @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User           @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
 
-  fromUser User @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser   User @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
-
-  comments Comment[]
-
-  // Índices de Performance
-  @@index([toUserId, status]) // Para: "Ver mis feedbacks pendientes"
+  @@index([toUserId, status])
   @@index([fromUserId])
   @@index([createdAt])
 }
@@ -83,9 +61,8 @@ model Comment {
   userId     String
   content    String
   createdAt  DateTime @default(now())
-
-  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([feedbackId])
 }
@@ -97,15 +74,10 @@ model Notification {
   message   String
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, read]) // Para: "Ver mis notificaciones no leídas"
+  @@index([userId, read])
 }
-
-// --------------------------------------
-// ENUMS
-// --------------------------------------
 
 enum Role {
   LEADER
