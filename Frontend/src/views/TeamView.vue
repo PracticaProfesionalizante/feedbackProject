@@ -122,29 +122,26 @@ async function parseJsonOrThrow(res: Response) {
   return res.json()
 }
 
+function extractUsers(raw: any): TeamUser[] {
+  const payload = raw?.data ?? raw
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.users)) return payload.users
+  if (Array.isArray(payload?.leaders)) return payload.leaders
+  if (Array.isArray(payload?.employees)) return payload.employees
+  return []
+}
+
 async function fetchLeaders() {
   loadingLeaders.value = true
   try {
-    // ✅ Importante: el endpoint ya incluye /api en API_BASE, por eso acá NO agregamos /api otra vez.
-    // Ej: http://localhost:3000/api/team/leaders
     const res = await fetch(`${API_BASE}/team/leaders`, {
-      headers: {
-        // ✅ Para GET no hace falta Content-Type.
-        // Solo enviamos Authorization si hay token.
-        ...auth.getAuthHeader()
-      }
+      headers: { ...auth.getAuthHeader() }
     })
 
     if (!res.ok) throw new Error(await parseErrorMessage(res))
 
     const raw = await parseJsonOrThrow(res)
-
-    // ✅ Toleramos varias formas de respuesta:
-    // 1) { data: [...] }
-    // 2) { users: [...] }
-    // 3) [...]
-    const payload = raw?.data ?? raw
-    leaders.value = (payload.users ?? payload) as TeamUser[]
+    leaders.value = extractUsers(raw)
   } catch (e: any) {
     showError(e?.message ?? 'No se pudieron cargar tus líderes.')
     leaders.value = []
@@ -154,22 +151,18 @@ async function fetchLeaders() {
 }
 
 async function fetchEmployees() {
-  // ✅ Si no es leader, no consultamos empleados
   if (!canSeeEmployees.value) return
 
   loadingEmployees.value = true
   try {
     const res = await fetch(`${API_BASE}/team/employees`, {
-      headers: {
-        ...auth.getAuthHeader()
-      }
+      headers: { ...auth.getAuthHeader() }
     })
 
     if (!res.ok) throw new Error(await parseErrorMessage(res))
 
     const raw = await parseJsonOrThrow(res)
-    const payload = raw?.data ?? raw
-    employees.value = (payload.users ?? payload) as TeamUser[]
+    employees.value = extractUsers(raw)
   } catch (e: any) {
     showError(e?.message ?? 'No se pudieron cargar tus empleados.')
     employees.value = []

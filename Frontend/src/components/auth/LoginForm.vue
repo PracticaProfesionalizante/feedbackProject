@@ -70,7 +70,6 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import { useAuthStore } from '../../stores/authStore'
-
 const emit = defineEmits<{
   (e: 'switch-to-register'): void
 }>()
@@ -113,6 +112,14 @@ const onSubmit = handleSubmit(async (values) => {
   if (!ok) {
     showError(auth.error || 'No se pudo iniciar sesión. Verificá tus credenciales.')
     return
+  }
+
+  /**
+   * ✅ Guard extra: si por alguna razón el token no quedó persistido,
+   * lo forzamos (sin tocar validaciones ni UI).
+   */
+  if (auth.token && !localStorage.getItem('auth_token')) {
+    localStorage.setItem('auth_token', auth.token)
   }
 
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
