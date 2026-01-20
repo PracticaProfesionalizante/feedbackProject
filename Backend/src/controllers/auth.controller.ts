@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { authService } from '../services/auth.service'
 import { AppError } from '../middleware/errorHandler'
+import { AuthRequest } from '../middleware/auth.middleware'
 
 export const authController = {
   async register(req: Request, res: Response, next: NextFunction) {
@@ -30,5 +31,20 @@ export const authController = {
       next(error)
     }
   },
-}
 
+  async me(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.userId) {
+        throw new AppError('Unauthorized', 401)
+      }
+
+      const user = await authService.me(req.userId)
+      res.json({
+        success: true,
+        data: user,
+      })
+    } catch (error) {
+      next(error)
+    }
+  },
+}

@@ -1,9 +1,7 @@
 import bcrypt from 'bcrypt'
 import jwt, { SignOptions } from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
 import { AppError } from '../middleware/errorHandler'
-
-const prisma = new PrismaClient()
+import { prisma } from '../utils/prisma'
 
 export const authService = {
   async register(data: { email: string; password: string; name?: string }) {
@@ -84,5 +82,24 @@ export const authService = {
       token,
     }
   },
-}
 
+  async me(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!user) {
+      throw new AppError('User not found', 404)
+    }
+
+    return user
+  },
+}
