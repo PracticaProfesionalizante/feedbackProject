@@ -33,10 +33,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api
 function decodeJwt(token: string): any | null {
   try {
     const parts = token.split('.')
-    if (parts.length !== 3) return null
+    // Aseguramos que existan header/payload/signature
+    if (parts.length < 2) return null
 
-    const payload = parts[1]
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const jwtPayload = parts[1]
+    if (!jwtPayload) return null
+
+    const base64 = jwtPayload.replace(/-/g, '+').replace(/_/g, '/')
     const json = decodeURIComponent(
       atob(base64)
         .split('')
