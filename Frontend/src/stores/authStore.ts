@@ -33,10 +33,11 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api
 function decodeJwt(token: string): any | null {
   try {
     const parts = token.split('.')
-    if (parts.length !== 3) return null
+    // Aseguramos que existan header/payload/signature
+    const [, payloadPart] = parts
+    if (!payloadPart) return null
 
-    const payload = parts[1]
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const json = decodeURIComponent(
       atob(base64)
         .split('')
@@ -185,6 +186,10 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
+        if (!payload || !payload.email || !payload.password) {
+          throw new Error('Faltan credenciales')
+        }
+
         const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

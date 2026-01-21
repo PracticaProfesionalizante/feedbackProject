@@ -1,15 +1,27 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { Role } from '@prisma/client'
 import { AppError } from './errorHandler'
 import { prisma } from '../utils/prisma'
 
-export interface AuthRequest extends Request {
+export type AuthUser = {
+  id: string
+  role: Role
+  email: string
+  name: string
+}
+
+export type AuthRequest = Request & {
   userId?: string
-  user?: {
-    id: string
-    role: string
-    email: string
-    name: string
+  user?: AuthUser
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string
+      user?: AuthUser
+    }
   }
 }
 
@@ -33,7 +45,6 @@ export const authenticate = (
 
       req.userId = decoded.userId
 
-      // Traer usuario para exponer role/email en req.user
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: { id: true, role: true, email: true, name: true },
