@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import FeedbackList from '../components/feedbacks/FeedbackList.vue'
 import { feedbackService } from '../services/feedbackServices'
 import type { Feedback, FeedbacksResponse } from '../types/feedback'
@@ -72,7 +72,7 @@ const tabTitle = computed(() => (tab.value === 'received' ? 'Feedbacks Recibidos
 /**
  * Query principal
  * - queryKey incluye tab y page para cache/paginación correcta
- * - placeholderData: keepPreviousData evita parpadeos al paginar
+ * - placeholderData mantiene los datos anteriores mientras carga la nueva página
  */
 const query = useQuery<FeedbacksResponse, Error>({
   queryKey: computed(() => ['feedbacks', tab.value, page.value]),
@@ -82,7 +82,7 @@ const query = useQuery<FeedbacksResponse, Error>({
       page: page.value,
       limit: ITEMS_PER_PAGE
     } as any),
-  placeholderData: keepPreviousData
+  placeholderData: (prev) => prev
 })
 
 // Manejo de error
