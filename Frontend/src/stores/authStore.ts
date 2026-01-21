@@ -180,11 +180,15 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async login(payload: LoginPayload) {
+    async login(payload: LoginPayload = { email: '', password: '' }) {
       this.loading = true
       this.error = null
 
       try {
+        if (!payload?.email || !payload?.password) {
+          throw new Error('Faltan credenciales')
+        }
+
         const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

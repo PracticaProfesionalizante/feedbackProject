@@ -5,7 +5,7 @@
       app
       :model-value="drawer"
       @update:model-value="drawer = $event"
-      :permanent="isDesktop.value"
+      :permanent="isDesktop"
       :items="navItems"
       @logout="handleLogout"
     />
@@ -13,7 +13,7 @@
     <!-- AppBar -->
     <TopAppBar
       app
-      :is-mobile="!isDesktop.value"
+      :is-mobile="!isDesktop"
       :unread-count="0"
       @toggle-drawer="toggleDrawer"
       @logout="handleLogout"
@@ -54,9 +54,8 @@ type NavItem = {
 
 const auth = useAuthStore()
 const router = useRouter()
-const { mdAndUp, smAndDown } = useDisplay()
+const { mdAndUp } = useDisplay()
 const isDesktop = computed(() => mdAndUp.value)
-const isMobile = computed(() => smAndDown.value)
 const drawer = ref(isDesktop.value)
 
 const navItems: NavItem[] = [
