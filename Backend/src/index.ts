@@ -6,7 +6,6 @@ import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
 import teamRoutes from './routes/teamRoutes'
 import { userRoutes } from './routes/user.routes'
-import userRoutes from './routes/userRoutes'
 
 
 
@@ -33,7 +32,6 @@ app.get('/health', (req, res) => {
 
 app.use('/api/team', teamRoutes)
 app.use('/api/auth', authRoutes)
-app.use('/api/users', userRoutes)
 app.use('/api/users', userRoutes)
 
 // Error handler
