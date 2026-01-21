@@ -34,12 +34,10 @@ function decodeJwt(token: string): any | null {
   try {
     const parts = token.split('.')
     // Aseguramos que existan header/payload/signature
-    if (parts.length < 2) return null
+    const [, payloadPart] = parts
+    if (!payloadPart) return null
 
-    const jwtPayload = parts[1]
-    if (!jwtPayload) return null
-
-    const base64 = jwtPayload.replace(/-/g, '+').replace(/_/g, '/')
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const json = decodeURIComponent(
       atob(base64)
         .split('')
@@ -183,12 +181,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async login(payload: LoginPayload = { email: '', password: '' }) {
+    async login(payload: LoginPayload) {
       this.loading = true
       this.error = null
 
       try {
-        if (!payload?.email || !payload?.password) {
+        if (!payload || !payload.email || !payload.password) {
           throw new Error('Faltan credenciales')
         }
 
