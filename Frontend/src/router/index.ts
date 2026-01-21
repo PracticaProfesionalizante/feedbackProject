@@ -12,7 +12,7 @@ const router = createRouter({
       meta: { guestOnly: true, title: 'Login' }
     },
 
-    // (Opcional) Si no usás vista /register porque alternás formulario dentro de /login
+    // Si alternás el registro dentro de /login
     {
       path: '/register',
       redirect: '/login'
@@ -25,7 +25,7 @@ const router = createRouter({
       component: AppLayout,
       meta: { requiresAuth: true },
       children: [
-        // Home privada (para debugging ahora)
+        // Home privada (debug)
         { path: '', redirect: '/team' },
 
         {
@@ -42,20 +42,30 @@ const router = createRouter({
           path: 'profile',
           component: () => import('../views/Profile.vue'),
           meta: { title: 'Mi Perfil' }
-        }
+        },
 
-        // Si después agregás notificaciones:
+        // ✅ Feedbacks
+        {
+          path: 'feedbacks',
+          component: () => import('../views/FeedbacksView.vue'),
+          meta: { title: 'Feedbacks' }
+        },
+        // {
+        //   path: 'feedbacks/new',
+        //   component: () => import('../views/FeedbackCreateView.vue'),
+        //   meta: { title: 'Nuevo Feedback' }
+        // },
+        // {
+        //   path: 'feedbacks/:id',
+        //   component: () => import('../views/FeedbackDetailView.vue'),
+        //   meta: { title: 'Detalle de Feedback' }
+        // }
+
+        // Notificaciones (cuando exista la vista)
         // {
         //   path: 'notifications',
         //   component: () => import('../views/Notifications.vue'),
         //   meta: { title: 'Notificaciones' }
-        // },
-
-        // Feedbacks:
-        // {
-        //   path: 'feedbacks/:pathMatch(.*)*',
-        //   component: () => import('../views/Feedbacks.vue'),
-        //   meta: { title: 'Feedbacks' }
         // }
       ]
     },
