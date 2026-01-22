@@ -62,3 +62,8 @@ export const authenticate = (
     }
   })()
 }
+
+// Alias para compatibilidad con importaciones previas (authMiddleware)
+export const authMiddleware = authenticate
+// Export default para consumidores que importan sin destructurar
+export default authenticate
