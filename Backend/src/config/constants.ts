@@ -36,8 +36,9 @@ export const SERVER_CONFIG = {
   NODE_ENV: isDevelopment ? 'development' : 'production',
   // CORS: Permitir múltiples orígenes (desarrollo local y producción)
   CORS_ORIGINS: [
-    'http://localhost:5173', // Frontend local
+    'http://localhost:5173', // Frontend local (Vite default)
     'http://localhost:3000', // Por si acaso
+    'http://127.0.0.1:5173', // Alternativa localhost
     // Agregar aquí tu dominio de producción cuando lo tengas
     // 'https://tu-app.vercel.app',
   ],

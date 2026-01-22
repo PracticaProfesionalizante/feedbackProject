@@ -18,10 +18,14 @@ app.use(cors({
     // Permitir requests sin origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true)
     
-    // Permitir si está en la lista o si es desarrollo
-    if (CORS_ORIGINS.includes(origin) || isDevelopment) {
+    // Permitir localhost siempre (para desarrollo local con backend en Render)
+    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')
+    
+    // Permitir si está en la lista, es localhost, o es desarrollo
+    if (CORS_ORIGINS.includes(origin) || isLocalhost || isDevelopment) {
       callback(null, true)
     } else {
+      console.warn(`CORS bloqueado para origen: ${origin}`)
       callback(new Error('Not allowed by CORS'))
     }
   },
