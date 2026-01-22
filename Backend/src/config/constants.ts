@@ -40,8 +40,8 @@ export const SERVER_CONFIG = {
     'http://localhost:5173', // Frontend local (Vite default)
     'http://localhost:3000', // Por si acaso
     'http://127.0.0.1:5173', // Alternativa localhost
-    // Agregar aquí tu dominio de producción cuando lo tengas
-    // 'https://tu-app.vercel.app',
+    'https://feedback-frontend-liart.vercel.app', // Frontend en Vercel
+    // Agregar aquí otros dominios de producción cuando los tengas
   ],
 } as const
 
