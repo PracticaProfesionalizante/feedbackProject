@@ -18,6 +18,7 @@ const router = createRouter({
       redirect: '/login'
       // alternativa: redirect: { path: '/login', query: { mode: 'register' } }
     },
+//comment sasasa
 
     // Protegidas (con layout)
     {
@@ -50,11 +51,11 @@ const router = createRouter({
           component: () => import('../views/FeedbacksView.vue'),
           meta: { title: 'Feedbacks' }
         },
-        // {
-        //   path: 'feedbacks/new',
-        //   component: () => import('../views/FeedbackCreateView.vue'),
-        //   meta: { title: 'Nuevo Feedback' }
-        // },
+        {
+          path: 'feedbacks/new',
+          component: () => import('../views/CreateFeedbackView.vue'),
+          meta: { title: 'Nuevo Feedback' }
+        },
         // {
         //   path: 'feedbacks/:id',
         //   component: () => import('../views/FeedbackDetailView.vue'),
