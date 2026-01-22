@@ -37,7 +37,7 @@ export const API_BASE_URL: string =
  */
 export const APP_CONFIG = {
   apiBaseUrl: API_BASE_URL,
-  timeout: 10000, // 10 segundos
+  timeout: 30000, // 30 segundos (Render puede tener cold start)
   isProduction,
   isDevelopment: !isProduction,
 } as const

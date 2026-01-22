@@ -8,14 +8,26 @@ import { authRoutes } from './routes/auth.routes'
 import teamRoutes from './routes/teamRoutes'
 import { userRoutes } from './routes/user.routes'
 import feedbackRoutes from './routes/feedbackRoutes'
-import { PORT, CORS_ORIGIN } from './config/constants'
+import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
 const app = express()
 
 // Middlewares
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true)
+    
+    // Permitir si está en la lista o si es desarrollo
+    if (CORS_ORIGINS.includes(origin) || isDevelopment) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -36,5 +48,5 @@ app.use(errorHandler)
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
-  console.log(`📡 CORS enabled for: ${CORS_ORIGIN}`)
+  console.log(`📡 CORS enabled for: ${CORS_ORIGINS.join(', ')}`)
 })

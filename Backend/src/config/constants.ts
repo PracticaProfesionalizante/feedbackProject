@@ -34,7 +34,13 @@ export const JWT_CONFIG = {
 export const SERVER_CONFIG = {
   PORT: 3000,
   NODE_ENV: isDevelopment ? 'development' : 'production',
-  CORS_ORIGIN: 'http://localhost:5173',
+  // CORS: Permitir múltiples orígenes (desarrollo local y producción)
+  CORS_ORIGINS: [
+    'http://localhost:5173', // Frontend local
+    'http://localhost:3000', // Por si acaso
+    // Agregar aquí tu dominio de producción cuando lo tengas
+    // 'https://tu-app.vercel.app',
+  ],
 } as const
 
 /**
@@ -62,7 +68,7 @@ export function setupEnvironment() {
   process.env.JWT_EXPIRES_IN = JWT_CONFIG.EXPIRES_IN
   process.env.PORT = String(SERVER_CONFIG.PORT)
   process.env.NODE_ENV = SERVER_CONFIG.NODE_ENV
-  process.env.CORS_ORIGIN = SERVER_CONFIG.CORS_ORIGIN
+  // CORS se maneja como array, no como string única
 }
 
 // Ejecutar setup automáticamente al importar este módulo
@@ -75,6 +81,7 @@ export const JWT_SECRET = JWT_CONFIG.SECRET
 export const JWT_EXPIRES_IN = JWT_CONFIG.EXPIRES_IN
 export const PORT = SERVER_CONFIG.PORT
 export const NODE_ENV = SERVER_CONFIG.NODE_ENV
-export const CORS_ORIGIN = SERVER_CONFIG.CORS_ORIGIN
+export const CORS_ORIGINS = SERVER_CONFIG.CORS_ORIGINS
+export { isDevelopment, isProduction }
 
 export default APP_CONFIG
