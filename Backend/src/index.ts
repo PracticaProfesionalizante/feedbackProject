@@ -22,7 +22,8 @@ app.use(cors({
     const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')
     
     // Permitir si está en la lista, es localhost, o es desarrollo
-    if (CORS_ORIGINS.includes(origin) || isLocalhost || isDevelopment) {
+    // Usar type assertion para evitar error de tipos con CORS_ORIGINS (as const)
+    if ((CORS_ORIGINS as readonly string[]).includes(origin) || isLocalhost || isDevelopment) {
       callback(null, true)
     } else {
       console.warn(`CORS bloqueado para origen: ${origin}`)

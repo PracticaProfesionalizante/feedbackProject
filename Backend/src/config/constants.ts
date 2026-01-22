@@ -32,7 +32,8 @@ export const JWT_CONFIG = {
  * Configuración del servidor
  */
 export const SERVER_CONFIG = {
-  PORT: 3000,
+  // Render asigna el puerto dinámicamente, usar process.env.PORT si existe
+  PORT: Number(process.env.PORT) || 3000,
   NODE_ENV: isDevelopment ? 'development' : 'production',
   // CORS: Permitir múltiples orígenes (desarrollo local y producción)
   CORS_ORIGINS: [
