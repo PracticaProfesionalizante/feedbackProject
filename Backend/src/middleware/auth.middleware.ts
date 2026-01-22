@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { Role } from '@prisma/client'
 import { AppError } from './errorHandler'
 import { prisma } from '../utils/prisma'
+import { JWT_SECRET } from '../config/constants'
 
 export type AuthUser = {
   id: string
@@ -40,7 +41,7 @@ export const authenticate = (
 
       const decoded = jwt.verify(
         token,
-        process.env.JWT_SECRET || 'secret'
+        JWT_SECRET
       ) as { userId: string }
 
       req.userId = decoded.userId

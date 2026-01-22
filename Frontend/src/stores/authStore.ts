@@ -18,13 +18,15 @@ export type User = {
 type LoginPayload = { email: string; password: string }
 type RegisterPayload = { name: string; email: string; password: string }
 
+import { API_BASE_URL } from '../config/constants'
+
 /* =========================
    Constantes
 ========================= */
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE = API_BASE_URL
 
 /* =========================
    Helpers JWT

@@ -7,8 +7,13 @@
 npm install
 ```
 
-### Configurar Variables de Entorno
-Crear `.env` en la raíz:
+### Configuración
+
+Las URLs del API están centralizadas en `src/config/constants.ts` y se detectan automáticamente según el entorno:
+- **Desarrollo**: `http://localhost:3000/api`
+- **Producción**: `https://feedback-backend-dhlr.onrender.com/api`
+
+Si necesitas override para casos especiales, puedes crear `.env`:
 ```env
 VITE_API_BASE_URL=http://localhost:3000/api
 ```

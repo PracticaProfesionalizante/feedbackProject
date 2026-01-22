@@ -44,7 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import TeamMemberCard, { type TeamUser } from '../team/TeamMemberCard.vue'
+import TeamMemberCard from './TeamMemberCard.vue'
+import type { TeamUser } from './TeamMemberCard.vue'
 
 const props = withDefaults(
   defineProps<{

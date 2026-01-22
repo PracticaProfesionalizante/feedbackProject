@@ -53,17 +53,14 @@ import { useRouter } from 'vue-router'
 import TeamMemberList from '../components/team/TeamMemberList.vue'
 import type { TeamUser } from '../components/team/TeamMemberCard.vue'
 import { useAuthStore } from '../stores/authStore'
+import { API_BASE_URL } from '../config/constants'
 
 type TabValue = 'leaders' | 'employees'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// ✅ Usamos UNA sola variable de entorno consistente para el backend.
-// Recomendado en .env: VITE_API_BASE_URL=http://localhost:3000/api
-const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-  'http://localhost:3000/api'
+const API_BASE = API_BASE_URL
 
 const tab = ref<TabValue>('leaders')
 

@@ -1,26 +1,20 @@
+// Importar constants primero para establecer process.env antes de que Prisma se inicialice
+import './config/constants'
+
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
-import path from 'path'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
 import teamRoutes from './routes/teamRoutes'
 import { userRoutes } from './routes/user.routes'
 import feedbackRoutes from './routes/feedbackRoutes'
-
-
-
-
-
-// Cargar variables de entorno desde la raíz del proyecto Backend
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
+import { PORT, CORS_ORIGIN } from './config/constants'
 
 const app = express()
-const PORT = process.env.PORT || 3000
 
 // Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: CORS_ORIGIN,
   credentials: true,
 }))
 app.use(express.json())
@@ -42,4 +36,5 @@ app.use(errorHandler)
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(`📡 CORS enabled for: ${CORS_ORIGIN}`)
 })
