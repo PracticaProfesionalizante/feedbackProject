@@ -1,11 +1,12 @@
 import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
-import { useAuthStore } from '../stores/authStore' // ajustá el path si tu store está en otro lado
+import { useAuthStore } from '../stores/authStore'
+import { API_BASE_URL } from '../config/constants'
 
 // Configuración base de Axios
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-  timeout: 10000,
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30 segundos (Render puede tener cold start)
   headers: {
     'Content-Type': 'application/json',
   },

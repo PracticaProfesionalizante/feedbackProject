@@ -7,16 +7,11 @@
 npm install
 ```
 
-### Configurar Variables de Entorno
-Crear `.env` en la raíz:
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/feedback_db?schema=public"
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_EXPIRES_IN="7d"
-PORT=3000
-NODE_ENV="development"
-CORS_ORIGIN="http://localhost:5173"
-```
+### Configuración
+
+Las configuraciones están centralizadas en `src/config/constants.ts`. **No necesitas archivos `.env`**.
+
+Todas las configuraciones (base de datos, JWT, servidor) están definidas directamente en el código para facilitar el mantenimiento.
 
 ### Base de Datos
 ```bash

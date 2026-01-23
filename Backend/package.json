@@ -9,7 +9,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:dev": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "create-users": "ts-node scripts/create-test-users.ts"
   },
   "keywords": [],
   "author": "",

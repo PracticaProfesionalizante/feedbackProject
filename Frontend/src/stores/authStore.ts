@@ -18,13 +18,16 @@ export type User = {
 type LoginPayload = { email: string; password: string }
 type RegisterPayload = { name: string; email: string; password: string }
 
+import { API_BASE_URL } from '../config/constants'
+import { fetchWithTimeout } from '../utils/fetchWithTimeout'
+
 /* =========================
    Constantes
 ========================= */
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE = API_BASE_URL
 
 /* =========================
    Helpers JWT
@@ -127,9 +130,13 @@ export const useAuthStore = defineStore('auth', {
       if (!this.token) return null
 
       try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
-          headers: this.getAuthHeader(),
-        })
+        const res = await fetchWithTimeout(
+          `${API_BASE}/auth/me`,
+          {
+            headers: this.getAuthHeader(),
+          },
+          30000 // 30 segundos timeout
+        )
 
         if (res.status === 401) {
           this.resetSession()
@@ -190,11 +197,15 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Faltan credenciales')
         }
 
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        const res = await fetchWithTimeout(
+          `${API_BASE}/auth/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          },
+          30000 // 30 segundos timeout
+        )
 
         if (!res.ok) {
           const msg = await res.text()
@@ -234,11 +245,15 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const res = await fetch(`${API_BASE}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+        const res = await fetchWithTimeout(
+          `${API_BASE}/auth/register`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          },
+          30000 // 30 segundos timeout
+        )
 
         if (!res.ok) {
           const msg = await res.text()
