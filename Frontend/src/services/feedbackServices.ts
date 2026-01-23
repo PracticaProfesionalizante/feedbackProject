@@ -16,10 +16,13 @@ function buildQuery(filters?: FeedbackFilters) {
 
   if (!filters) return ''
 
-  (Object.keys(filters) as Array<keyof FeedbackFilters>).forEach((key) => {
+  const keys = Object.keys(filters) as Array<keyof FeedbackFilters>
+  keys.forEach((key) => {
     const value = filters[key]
     if (value === undefined || value === null || value === '') return
-    params.set(key, String(value))
+    // Convertir a string de forma segura
+    const stringValue = typeof value === 'string' ? value : String(value)
+    params.set(key as string, stringValue)
   })
 
   const qs = params.toString()
