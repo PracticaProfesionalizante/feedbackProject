@@ -35,9 +35,15 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-const pending = computed(() => props.data?.feedbacksByStatus?.pending ?? 0)
-const inProgress = computed(() => props.data?.feedbacksByStatus?.inProgress ?? 0)
-const completed = computed(() => props.data?.feedbacksByStatus?.completed ?? 0)
+// Normalizar la respuesta (puede venir como { data: ... } o directo)
+const stats = computed(() => {
+  if (!props.data) return null
+  return 'data' in props.data ? props.data.data : props.data
+})
+
+const pending = computed(() => stats.value?.pending ?? 0)
+const inProgress = computed(() => stats.value?.inProgress ?? 0)
+const completed = computed(() => stats.value?.completed ?? 0)
 </script>
 
 <style scoped>

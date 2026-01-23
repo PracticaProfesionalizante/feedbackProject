@@ -16,7 +16,8 @@ function buildQuery(filters?: FeedbackFilters) {
 
   if (!filters) return ''
 
-  Object.entries(filters).forEach(([key, value]) => {
+  (Object.keys(filters) as Array<keyof FeedbackFilters>).forEach((key) => {
+    const value = filters[key]
     if (value === undefined || value === null || value === '') return
     params.set(key, String(value))
   })
