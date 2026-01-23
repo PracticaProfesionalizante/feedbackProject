@@ -40,7 +40,20 @@ export const dashboardService = {
     })
     if (!res.ok) throw new Error(await parseErrorMessage(res))
     const raw = await parseJson<any>(res)
-    return unwrap<DashboardStatsResponse>(raw)
+    const data = unwrap<any>(raw)
+    
+    // El backend devuelve { feedbacksByStatus: { pending, inProgress, completed }, ... }
+    // Necesitamos mapearlo al formato esperado por el frontend
+    if (data?.feedbacksByStatus) {
+      return {
+        pending: data.feedbacksByStatus.pending ?? 0,
+        inProgress: data.feedbacksByStatus.inProgress ?? 0,
+        completed: data.feedbacksByStatus.completed ?? 0,
+      }
+    }
+    
+    // Si ya viene en el formato correcto, devolverlo tal cual
+    return data as DashboardStatsResponse
   },
 
   async getRecent(): Promise<{ items: Feedback[] }> {
@@ -50,6 +63,10 @@ export const dashboardService = {
     })
     if (!res.ok) throw new Error(await parseErrorMessage(res))
     const raw = await parseJson<any>(res)
-    return unwrap<{ items: Feedback[] }>(raw)
+    const data = unwrap<any>(raw)
+    // Asegurar que siempre devolvemos { items: [...] }
+    if (Array.isArray(data?.items)) return { items: data.items }
+    if (Array.isArray(data)) return { items: data }
+    return { items: [] }
   }
 }

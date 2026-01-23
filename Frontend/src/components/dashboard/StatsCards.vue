@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-wrap ga-4">
-    <v-card class="stat-card" variant="tonal">
+    <v-card class="stat-card" variant="tonal" color="grey">
       <v-card-title class="text-caption text-medium-emphasis">Pendientes</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
         <span v-if="!loading">{{ pending }}</span>
@@ -8,7 +8,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card class="stat-card" variant="tonal">
+    <v-card class="stat-card" variant="tonal" color="warning">
       <v-card-title class="text-caption text-medium-emphasis">En progreso</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
         <span v-if="!loading">{{ inProgress }}</span>
@@ -16,7 +16,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card class="stat-card" variant="tonal">
+    <v-card class="stat-card" variant="tonal" color="success">
       <v-card-title class="text-caption text-medium-emphasis">Completados</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
         <span v-if="!loading">{{ completed }}</span>

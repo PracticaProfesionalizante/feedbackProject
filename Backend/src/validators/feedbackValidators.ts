@@ -9,6 +9,9 @@ export const listFeedbacksQuerySchema = z.object({
   type: z.enum(['received', 'sent']).default('received'),
   status: z.nativeEnum(FeedbackStatus).optional(),
   feedbackType: z.nativeEnum(FeedbackType).optional(),
+  search: z.string().min(1).optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 })
