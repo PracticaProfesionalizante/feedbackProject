@@ -15,7 +15,6 @@
         :loading="recentLoading"
         :current-user-id="auth.user?.id"
         @open="goToDetail"
-        @new="goToNew"
       />
     </div>
 
@@ -77,9 +76,5 @@ const recentLoading = computed(() => recentQuery.isLoading.value)
 
 function goToDetail(id: string) {
   router.push(`/feedbacks/${id}`)
-}
-
-function goToNew() {
-  router.push('/feedbacks/new')
 }
 </script>

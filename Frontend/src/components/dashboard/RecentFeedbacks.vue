@@ -2,9 +2,6 @@
   <v-card>
     <v-card-title class="d-flex align-center justify-space-between">
       <div class="text-subtitle-1 font-weight-bold">Feedbacks recientes</div>
-      <v-btn color="primary" variant="text" prepend-icon="mdi-plus" @click="emit('new')">
-        Nuevo
-      </v-btn>
     </v-card-title>
 
     <v-divider />
@@ -57,7 +54,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'open', id: string): void
-  (e: 'new'): void
 }>()
 
 function preview(text: string) {
