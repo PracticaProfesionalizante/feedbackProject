@@ -8,6 +8,7 @@ import { authRoutes } from './routes/auth.routes'
 import teamRoutes from './routes/teamRoutes'
 import { userRoutes } from './routes/user.routes'
 import feedbackRoutes from './routes/feedbackRoutes'
+import dashboardRoutes from './routes/dashboardRoutes'
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
 const app = express()
@@ -46,6 +47,7 @@ app.use('/api/team', teamRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/feedbacks', feedbackRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 // Error handler
 app.use(errorHandler)

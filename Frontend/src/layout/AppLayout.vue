@@ -24,15 +24,6 @@
       <v-container fluid class="pa-4">
         <router-view />
       </v-container>
-
-      <!-- FAB Nuevo Feedback -->
-      <v-btn
-        class="fab"
-        color="primary"
-        icon="mdi-plus"
-        size="large"
-        @click="goToNewFeedback"
-      />
     </v-main>
   </v-layout>
 </template>
@@ -86,17 +77,4 @@ function handleLogout() {
   auth.logout()
   router.replace('/login')
 }
-
-function goToNewFeedback() {
-  router.push('/feedbacks/new')
-}
 </script>
-
-<style scoped>
-.fab {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 10;
-}
-</style>

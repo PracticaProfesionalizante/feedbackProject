@@ -9,6 +9,26 @@ import {
 } from '../validators/feedbackValidators'
 
 export const feedbackController = {
+
+
+  // GET /api/feedbacks/recent
+  async getRecent(req: Request, res: Response) {
+    const userId = req.user!.id
+
+    const items = await prisma.feedback.findMany({
+      where: {
+        OR: [{ toUserId: userId }, { fromUserId: userId }],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: {
+        fromUser: { select: { id: true, name: true, email: true, role: true } },
+        toUser: { select: { id: true, name: true, email: true, role: true } },
+      },
+    })
+
+    return res.json({ items })
+  },
   // GET /api/feedbacks?type=received|sent&status=...&feedbackType=...&page=1&limit=10
   async list(req: Request, res: Response) {
     const userId = req.user!.id

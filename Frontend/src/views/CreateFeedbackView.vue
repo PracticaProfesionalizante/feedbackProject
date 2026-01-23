@@ -14,7 +14,6 @@
     <v-card>
       <v-card-text>
         <FeedbackForm
-          ref="formRef"
           :available-users="availableUsers"
           :loading-users="loadingUsers"
           :loading="submitting"
@@ -55,7 +54,6 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-const formRef = ref()
 const loadingUsers = ref(false)
 const submitting = ref(false)
 const availableUsers = ref<AvailableUser[]>([])
