@@ -16,7 +16,7 @@ function buildQuery(filters?: FeedbackFilters) {
 
   if (!filters) return ''
 
-  Object.entries(filters).forEach(([key, value]) => {
+  Object.entries(filters).forEach(([key, value]: [string, unknown]) => {
     if (value === undefined || value === null || value === '') return
     params.set(key, String(value))
   })
@@ -86,6 +86,21 @@ export const feedbackService = {
 
     const raw = await parseJson<any>(res)
     return unwrap<Feedback>(raw)
+  },
+
+  async getRecentFeedbacks(limit: number = 10): Promise<Feedback[]> {
+    const auth = useAuthStore()
+
+    const res = await fetch(`${API_BASE}/feedbacks/recent?limit=${limit}`, {
+      headers: {
+        ...auth.getAuthHeader()
+      }
+    })
+
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+
+    const raw = await parseJson<any>(res)
+    return unwrap<Feedback[]>(raw)
   },
 
   async createFeedback(dto: CreateFeedbackDto): Promise<Feedback> {

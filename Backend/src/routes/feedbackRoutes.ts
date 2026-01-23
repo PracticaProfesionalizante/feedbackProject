@@ -8,6 +8,7 @@ const router = Router()
 router.use(authenticate, requireAuth)
 
 router.get('/', feedbackController.list)
+router.get('/recent', feedbackController.recent)
 router.get('/:id', feedbackController.getById)
 router.post('/', feedbackController.create)
 router.patch('/:id', feedbackController.update)

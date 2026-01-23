@@ -3,6 +3,7 @@ import { prisma } from '../utils/prisma'
 import {
   idParamSchema,
   listFeedbacksQuerySchema,
+  recentFeedbacksQuerySchema,
   createFeedbackSchema,
   updateFeedbackSchema,
 } from '../validators/feedbackValidators'
@@ -49,6 +50,41 @@ export const feedbackController = {
         pages: Math.ceil(total / limit),
       },
     })
+  },
+
+  // GET /api/feedbacks/recent?limit=10
+  async recent(req: Request, res: Response) {
+    const userId = req.user!.id
+    const query = recentFeedbacksQuerySchema.parse(req.query)
+
+    // Obtener feedbacks recibidos y enviados, mezclados
+    const [received, sent] = await Promise.all([
+      prisma.feedback.findMany({
+        where: { toUserId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: query.limit,
+        include: {
+          fromUser: { select: { id: true, name: true, email: true, role: true } },
+          toUser: { select: { id: true, name: true, email: true, role: true } },
+        },
+      }),
+      prisma.feedback.findMany({
+        where: { fromUserId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: query.limit,
+        include: {
+          fromUser: { select: { id: true, name: true, email: true, role: true } },
+          toUser: { select: { id: true, name: true, email: true, role: true } },
+        },
+      }),
+    ])
+
+    // Combinar y ordenar por fecha
+    const all = [...received, ...sent]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, query.limit)
+
+    return res.json(all)
   },
 
   // GET /api/feedbacks/:id

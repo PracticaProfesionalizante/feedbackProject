@@ -13,6 +13,10 @@ export const listFeedbacksQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
 })
 
+export const recentFeedbacksQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+})
+
 export const createFeedbackSchema = z.object({
   toUserId: z.string().uuid(),
   type: z.nativeEnum(FeedbackType),
