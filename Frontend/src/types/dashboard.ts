@@ -1,6 +1,15 @@
 import type { Feedback } from '../types/feedback'
 
 /**
+ * Conteos por tipo de feedback (opcional, para gráficos).
+ */
+export type DashboardStatsByType = {
+  recognition: number
+  improvement: number
+  general: number
+}
+
+/**
  * Conteos por estado para el dashboard.
  * Refleja los 3 estados actuales del sistema.
  */
@@ -9,6 +18,7 @@ export type DashboardStats = {
   inProgress: number
   completed: number
   total?: number // opcional por si el backend lo incluye
+  byType?: DashboardStatsByType
 }
 
 /**
