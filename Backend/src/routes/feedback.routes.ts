@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { 
   createFeedback, 
-  getFeedbacks, 
+  getFeedbacks,
+  getRecentFeedbacks,
   getFeedbackById, 
   updateFeedback,
   updateStatus,
@@ -13,7 +14,8 @@ import {
   createFeedbackSchema, 
   updateFeedbackSchema,
   updateStatusSchema,
-  queryFeedbackSchema 
+  queryFeedbackSchema,
+  recentFeedbacksSchema
 } from '../validators/feedback.validator';
 
 const router = Router();
@@ -24,7 +26,10 @@ router.use(authMiddleware);
 // 1. GET /api/feedbacks (Listar con filtros)
 router.get('/', validate(queryFeedbackSchema), getFeedbacks);
 
-// 2. GET /api/feedbacks/:id (Detalle)
+// 2. GET /api/feedbacks/recent (Feedbacks recientes - debe ir antes de /:id)
+router.get('/recent', validate(recentFeedbacksSchema), getRecentFeedbacks);
+
+// 3. GET /api/feedbacks/:id (Detalle)
 router.get('/:id', getFeedbackById);
 
 // 3. POST /api/feedbacks (Crear)

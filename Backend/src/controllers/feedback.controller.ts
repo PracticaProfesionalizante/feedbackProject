@@ -25,6 +25,39 @@ export const getFeedbacks = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const getRecentFeedbacks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const limit = Math.min(Number(req.query.limit) || 10, 50);
+
+    const feedbacks = await prisma.feedback.findMany({
+      where: {
+        OR: [
+          { toUserId: userId },
+          { fromUserId: userId }
+        ]
+      },
+      include: {
+        fromUser: {
+          select: { id: true, name: true, email: true }
+        },
+        toUser: {
+          select: { id: true, name: true, email: true }
+        },
+        _count: {
+          select: { comments: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
+
+    res.json({ feedbacks });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getFeedbackById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).user.id;

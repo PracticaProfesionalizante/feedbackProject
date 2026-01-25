@@ -39,3 +39,9 @@ export const queryFeedbackSchema = z.object({
     feedbackType: z.nativeEnum(FeedbackType).optional(),
   }),
 });
+
+export const recentFeedbacksSchema = z.object({
+  query: z.object({
+    limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  }),
+});
