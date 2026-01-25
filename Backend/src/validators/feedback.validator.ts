@@ -19,6 +19,17 @@ export const updateFeedbackSchema = z.object({
   }),
 });
 
+export const updateStatusSchema = z.object({
+  body: z.object({
+    status: z.nativeEnum(FeedbackStatus, { 
+      errorMap: () => ({ message: "Estado inválido (PENDING, IN_PROGRESS, COMPLETED)" }) 
+    }),
+  }),
+  params: z.object({
+    id: z.string().uuid({ message: "ID de feedback inválido" }),
+  }),
+});
+
 export const queryFeedbackSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).transform(Number).optional(),
