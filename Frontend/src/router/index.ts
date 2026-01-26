@@ -56,11 +56,11 @@ const router = createRouter({
           component: () => import('../views/CreateFeedbackView.vue'),
           meta: { title: 'Nuevo Feedback' }
         },
-        // {
-        //   path: 'feedbacks/:id',
-        //   component: () => import('../views/FeedbackDetailView.vue'),
-        //   meta: { title: 'Detalle de Feedback' }
-        // }
+        {
+          path: 'feedbacks/:id',
+          component: () => import('../views/FeedbackDetailView.vue'),
+          meta: { title: 'Detalle de Feedback' }
+        }
 
         // Notificaciones (cuando exista la vista)
         // {

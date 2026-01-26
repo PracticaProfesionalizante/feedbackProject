@@ -58,4 +58,5 @@ export type CreateFeedbackDto = {
 export type UpdateFeedbackDto = {
   type?: FeedbackType
   content?: string
+  status?: FeedbackStatus
 }
