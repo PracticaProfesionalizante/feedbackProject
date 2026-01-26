@@ -5,7 +5,11 @@
     "types": ["vite/client"],
     "moduleResolution": "bundler",
     "module": "ESNext",
+<<<<<<< HEAD
+    "target": "ES2015",
+=======
     "target": "ES2017",
+>>>>>>> master
     "lib": ["ES2017", "DOM", "DOM.Iterable"],
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
