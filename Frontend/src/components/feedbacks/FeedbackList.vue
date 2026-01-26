@@ -31,16 +31,17 @@
       @update:page="emit('update:page', $event)"
       @click:row="onRowClick"
     >
+      <template v-if="hideFooter" #bottom />
       <!-- Tipo -->
       <template #item.type="{ item }">
-        <v-chip size="small" variant="tonal">
+        <v-chip size="small" variant="tonal" :color="getTypeColor(item.type)">
           {{ formatType(item.type) }}
         </v-chip>
       </template>
 
       <!-- Estado -->
       <template #item.status="{ item }">
-        <v-chip size="small" variant="tonal">
+        <v-chip size="small" variant="tonal" :color="getStatusColor(item.status)">
           {{ formatStatus(item.status) }}
         </v-chip>
       </template>
@@ -103,12 +104,15 @@ const props = withDefaults(
     total?: number
 
     showNewButton?: boolean
+    /** Oculta el footer de paginación para usar v-pagination externo */
+    hideFooter?: boolean
   }>(),
   {
     title: 'Feedbacks',
     itemsPerPage: 20,
     total: undefined,
-    showNewButton: false
+    showNewButton: false,
+    hideFooter: false
   }
 )
 
@@ -166,6 +170,19 @@ function formatType(type: Feedback['type']) {
   }
 }
 
+function getTypeColor(type: Feedback['type']): string {
+  switch (type) {
+    case 'RECOGNITION':
+      return 'success'
+    case 'IMPROVEMENT':
+      return 'warning'
+    case 'GENERAL':
+      return 'info'
+    default:
+      return 'default'
+  }
+}
+
 function formatStatus(status: Feedback['status']) {
   switch (status) {
     case 'PENDING':
@@ -176,6 +193,19 @@ function formatStatus(status: Feedback['status']) {
       return 'Completado'
     default:
       return status
+  }
+}
+
+function getStatusColor(status: Feedback['status']): string {
+  switch (status) {
+    case 'PENDING':
+      return 'grey'
+    case 'IN_PROGRESS':
+      return 'warning'
+    case 'COMPLETED':
+      return 'success'
+    default:
+      return 'default'
   }
 }
 

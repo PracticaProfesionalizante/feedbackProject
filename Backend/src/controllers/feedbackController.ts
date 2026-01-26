@@ -29,7 +29,7 @@ export const feedbackController = {
 
     return res.json({ items })
   },
-  // GET /api/feedbacks?type=received|sent&status=...&feedbackType=...&page=1&limit=10
+  // GET /api/feedbacks?type=received|sent&status=...&feedbackType=...&search=...&dateFrom=...&dateTo=...&page=1&limit=10
   async list(req: Request, res: Response) {
     const userId = req.user!.id
     const query = listFeedbacksQuerySchema.parse(req.query)
@@ -42,6 +42,35 @@ export const feedbackController = {
 
     if (query.status) where.status = query.status
     if (query.feedbackType) where.type = query.feedbackType
+
+    // search: contenido o nombre de usuario (counterpart)
+    const search = (query.search ?? '').trim()
+    if (search) {
+      const searchConditions: any[] = [
+        { content: { contains: search, mode: 'insensitive' } },
+      ]
+      if (query.type === 'received') {
+        searchConditions.push({ fromUser: { name: { contains: search, mode: 'insensitive' } } })
+      } else {
+        searchConditions.push({ toUser: { name: { contains: search, mode: 'insensitive' } } })
+      }
+      where.OR = searchConditions
+    }
+
+    // rango de fechas (opcional)
+    const dateRange: { gte?: Date; lte?: Date } = {}
+    if (query.dateFrom) {
+      const from = new Date(query.dateFrom)
+      if (!Number.isNaN(from.getTime())) dateRange.gte = from
+    }
+    if (query.dateTo) {
+      const to = new Date(query.dateTo)
+      if (!Number.isNaN(to.getTime())) {
+        to.setHours(23, 59, 59, 999)
+        dateRange.lte = to
+      }
+    }
+    if (Object.keys(dateRange).length) where.createdAt = dateRange
 
     const page = query.page
     const limit = query.limit
@@ -63,6 +92,7 @@ export const feedbackController = {
 
     return res.json({
       items,
+      total,
       pagination: {
         page,
         limit,

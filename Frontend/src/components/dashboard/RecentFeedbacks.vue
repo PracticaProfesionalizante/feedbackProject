@@ -51,8 +51,8 @@
           </template>
 
           <v-list-item-title class="d-flex flex-wrap align-center ga-2">
-            <v-chip size="x-small" variant="tonal">{{ formatType(f.type) }}</v-chip>
-            <v-chip size="x-small" variant="tonal">{{ formatStatus(f.status) }}</v-chip>
+            <v-chip size="x-small" variant="tonal" :color="getTypeColor(f.type)">{{ formatType(f.type) }}</v-chip>
+            <v-chip size="x-small" variant="tonal" :color="getStatusColor(f.status)">{{ formatStatus(f.status) }}</v-chip>
           </v-list-item-title>
 
           <v-list-item-subtitle class="mt-1">
@@ -154,6 +154,32 @@ function formatDate(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleString()
+}
+
+function getTypeColor(type: Feedback['type']): string {
+  switch (type) {
+    case 'RECOGNITION':
+      return 'success'
+    case 'IMPROVEMENT':
+      return 'warning'
+    case 'GENERAL':
+      return 'info'
+    default:
+      return 'default'
+  }
+}
+
+function getStatusColor(status: Feedback['status']): string {
+  switch (status) {
+    case 'PENDING':
+      return 'grey'
+    case 'IN_PROGRESS':
+      return 'warning'
+    case 'COMPLETED':
+      return 'success'
+    default:
+      return 'default'
+  }
 }
 
 function whoLabel(f: Feedback) {

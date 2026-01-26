@@ -27,14 +27,14 @@ export type Feedback = {
 }
 
 export type FeedbackFilters = {
-  // filtros típicos (ajustamos según tu backend)
+  /** Tab: received | sent (backend type) */
+  type?: 'received' | 'sent'
+  /** Filtro por tipo de feedback (backend feedbackType) */
+  feedbackType?: FeedbackType
   status?: FeedbackStatus
-  type?: FeedbackType
-  toUserId?: string
-  fromUserId?: string
   search?: string
-
-  // paginación (si aplica)
+  dateFrom?: string
+  dateTo?: string
   page?: number
   limit?: number
   sortBy?: 'createdAt'
