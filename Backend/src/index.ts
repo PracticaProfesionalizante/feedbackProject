@@ -49,11 +49,11 @@ app.use('/api/users', userRoutes)
 app.use('/api/feedbacks', feedbackRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 
-// Error handler
+// Error handler (Siempre va después de las rutas)
 app.use(errorHandler)
 
-// Start server
-app.listen(PORT, () => {
+// 👇 CAMBIA ESTO AL FINAL:
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
   console.log(`📡 CORS enabled for: ${CORS_ORIGINS.join(', ')}`)
 })
