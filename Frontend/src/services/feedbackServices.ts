@@ -16,13 +16,9 @@ function buildQuery(filters?: FeedbackFilters) {
 
   if (!filters) return ''
 
-<<<<<<< HEAD
-  Object.entries(filters).forEach(([key, value]: [string, unknown]) => {
-=======
   const keys = Object.keys(filters) as Array<keyof FeedbackFilters>
   keys.forEach((key) => {
     const value = filters[key]
->>>>>>> master
     if (value === undefined || value === null || value === '') return
     // Convertir a string de forma segura
     const stringValue = typeof value === 'string' ? value : String(value)
