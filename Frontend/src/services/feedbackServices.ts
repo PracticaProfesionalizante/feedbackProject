@@ -144,6 +144,6 @@ export const feedbackService = {
   async updateStatus(id: string, status: FeedbackStatus): Promise<Feedback> {
     // Si tu backend tiene un endpoint específico tipo PATCH /feedbacks/:id/status
     // lo cambiamos acá. Por ahora lo resolvemos con PATCH normal.
-    return this.updateFeedback(id, { status } as any)
+    return this.updateFeedback(id, { status })
   }
 }

@@ -19,6 +19,7 @@ export type Feedback = {
   status: FeedbackStatus
   createdAt: string
   updatedAt: string
+  comments?: Comment[]
 
   // si el backend incluye relaciones:
   fromUser?: FeedbackUser
@@ -58,4 +59,5 @@ export type CreateFeedbackDto = {
 export type UpdateFeedbackDto = {
   type?: FeedbackType
   content?: string
+  status?: FeedbackStatus
 }
