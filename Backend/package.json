@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "test": "jest"
+    "test": "jest",
+    "create-users": "ts-node scripts/create-test-users.ts"
   },
   "keywords": [],
   "author": "",

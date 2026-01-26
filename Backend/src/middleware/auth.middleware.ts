@@ -1,28 +1,70 @@
-import { Request, Response, NextFunction } from "express";
-import * as jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
+import { Role } from '@prisma/client'
+import { AppError } from './errorHandler'
+import { prisma } from '../utils/prisma'
+import { JWT_SECRET } from '../config/constants'
 
-const JWT_SECRET = process.env.JWT_SECRET || "secreto_super_seguro";
+export type AuthUser = {
+  id: string
+  role: Role
+  email: string
+  name: string
+}
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+export type AuthRequest = Request & {
+  userId?: string
+  user?: AuthUser
+}
 
-  if (!authHeader) {
-    return res.status(401).json({ message: "No token provided" });
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string
+      user?: AuthUser
+    }
   }
+}
 
-  // El formato suele ser "Bearer <token>", así que separamos por espacio
-  const token = authHeader.split(" ")[1];
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  ;(async () => {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '')
 
-  if (!token) {
-    return res.status(401).json({ message: "Invalid token format" });
-  }
+      if (!token) {
+        throw new AppError('No token provided', 401)
+      }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    // Inyectamos el usuario decodificado en la request
-    (req as any).user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-};
+      const decoded = jwt.verify(
+        token,
+        JWT_SECRET
+      ) as { userId: string }
+
+      req.userId = decoded.userId
+
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { id: true, role: true, email: true, name: true },
+      })
+
+      if (!user) {
+        throw new AppError('User not found', 401)
+      }
+
+      req.user = user
+      next()
+    } catch (error) {
+      const appError = new AppError('Invalid or expired token', 401)
+      next(appError)
+    }
+  })()
+}
+
+// Alias para compatibilidad con importaciones previas (authMiddleware)
+export const authMiddleware = authenticate
+// Export default para consumidores que importan sin destructurar
+export default authenticate

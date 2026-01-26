@@ -1,38 +1,32 @@
-import { Request, Response } from "express";
-import { findUserById, getUserStats, getTeamInfo } from "../services/user.service";
+import type { Response } from 'express'
+import type { AuthRequest } from '../middleware/auth.middleware'
+import { prisma } from '../utils/prisma'
+import { AppError } from '../middleware/errorHandler'
 
-export const getProfile = async (req: Request, res: Response) => {
-  try {
-    // Obtenemos el ID del usuario "inyectado" por el middleware
-    const userId = (req as any).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Usuario no autenticado" });
+export const userController = {
+  // GET /api/users/profile
+  async profile(req: AuthRequest, res: Response) {
+    if (!req.userId) {
+      throw new AppError('Unauthorized', 401)
     }
 
-    // 1️⃣ Buscamos al usuario
-    const user = await findUserById(userId);
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      throw new AppError('User not found', 404)
     }
 
-    // 2️⃣ Buscamos las estadísticas en paralelo (para que sea rápido)
-    const stats = await getUserStats(userId);
-    
-    // 3️⃣ Buscamos la info del equipo
-    const teamInfo = await getTeamInfo(userId);
-
-    // 4️⃣ Armamos la respuesta final combinando todo
-    const finalResponse = {
-      ...user,    // id, name, email, role...
-      stats,      // Objeto con counts
-      teamInfo    // Objeto con info de equipo
-    };
-
-    res.json(finalResponse);
-
-  } catch (error) {
-    console.error("Error en getProfile:", error);
-    res.status(500).json({ message: "Error al obtener perfil", error });
-  }
-};
+    // TODO: Ajustar si hay stats/teamInfo calculados en otra capa
+    res.json({ user })
+  },
+}

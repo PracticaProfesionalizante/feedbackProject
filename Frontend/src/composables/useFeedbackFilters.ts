@@ -1,0 +1,172 @@
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import type { FeedbackStatus, FeedbackType } from '../types/feedback'
+
+export type TabValue = 'received' | 'sent'
+
+const DEFAULT_LIMIT = 20
+
+type QueryMap = Record<string, string | number | undefined>
+
+function omitEmpty(q: QueryMap): QueryMap {
+  const out: QueryMap = {}
+  for (const [k, v] of Object.entries(q)) {
+    if (v === undefined || v === null || v === '') continue
+    out[k] = v
+  }
+  return out
+}
+
+/**
+ * Composable para filtros y paginación de feedbacks.
+ * - Sincroniza con query params de la URL (tab, type, status, search, dateFrom, dateTo, page, limit).
+ * - Al cambiar de tab, resetea filtros y page a 1.
+ * - Mantiene filtros al navegar back (están en la URL).
+ */
+export function useFeedbackFilters() {
+  const route = useRoute()
+  const router = useRouter()
+
+  const query = computed<QueryMap>(() => {
+    const q = (route.query || {}) as Record<string, string>
+    return {
+      tab: q.tab === 'sent' ? 'sent' : 'received',
+      type: q.type || undefined,
+      status: q.status || undefined,
+      search: (q.search ?? '').trim() || undefined,
+      dateFrom: q.dateFrom || undefined,
+      dateTo: q.dateTo || undefined,
+      page: Math.max(1, parseInt(String(q.page || '1'), 10) || 1),
+      limit: Math.max(1, Math.min(100, parseInt(String(q.limit || DEFAULT_LIMIT), 10) || DEFAULT_LIMIT)),
+    }
+  })
+
+  const tab = computed<TabValue>(() => query.value.tab as TabValue)
+  const type = computed<FeedbackType | undefined>(() => {
+    const t = query.value.type as string | undefined
+    if (!t || t === 'Todos') return undefined
+    if (['RECOGNITION', 'IMPROVEMENT', 'GENERAL'].includes(t)) return t as FeedbackType
+    return undefined
+  })
+  const status = computed<FeedbackStatus | undefined>(() => {
+    const s = query.value.status as string | undefined
+    if (!s || s === 'Todos') return undefined
+    if (['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(s)) return s as FeedbackStatus
+    return undefined
+  })
+  const search = computed<string>(() => (query.value.search as string) ?? '')
+  const dateFrom = computed<string>(() => (query.value.dateFrom as string) ?? '')
+  const dateTo = computed<string>(() => (query.value.dateTo as string) ?? '')
+  const page = computed<number>(() => query.value.page as number)
+  const limit = computed<number>(() => query.value.limit as number)
+
+  const hasActiveFilters = computed(() => {
+    return !!(
+      (query.value.type && query.value.type !== 'Todos') ||
+      (query.value.status && query.value.status !== 'Todos') ||
+      (query.value.search && String(query.value.search).trim()) ||
+      query.value.dateFrom ||
+      query.value.dateTo
+    )
+  })
+
+  function updateQuery(partial: QueryMap) {
+    const current = { ...query.value }
+    const next = omitEmpty({ ...current, ...partial })
+    if (JSON.stringify(next) === JSON.stringify(omitEmpty(current))) return
+    const q: Record<string, string> = {}
+    for (const [k, v] of Object.entries(next)) {
+      if (v !== undefined && v !== null) q[k] = String(v)
+    }
+    router.replace({ path: route.path, query: q })
+  }
+
+  function setTab(value: TabValue) {
+    updateQuery({
+      tab: value,
+      type: undefined,
+      status: undefined,
+      search: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+      page: 1,
+    })
+  }
+
+  function setType(value: FeedbackType | 'Todos' | '') {
+    updateQuery({
+      type: value && value !== 'Todos' ? value : undefined,
+      page: 1,
+    })
+  }
+
+  function setStatus(value: FeedbackStatus | 'Todos' | '') {
+    updateQuery({
+      status: value && value !== 'Todos' ? value : undefined,
+      page: 1,
+    })
+  }
+
+  function setSearch(value: string) {
+    updateQuery({
+      search: value.trim() || undefined,
+      page: 1,
+    })
+  }
+
+  function setDateRange(from: string, to: string) {
+    updateQuery({
+      dateFrom: from || undefined,
+      dateTo: to || undefined,
+      page: 1,
+    })
+  }
+
+  function setPage(value: number) {
+    updateQuery({ page: Math.max(1, value) })
+  }
+
+  function clearFilters() {
+    updateQuery({
+      type: undefined,
+      status: undefined,
+      search: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+      page: 1,
+    })
+  }
+
+  /** Objeto listo para feedbackService.getFeedbacks (type = tab, feedbackType = type filter) */
+  const apiFilters = computed(() => ({
+    type: tab.value,
+    feedbackType: type.value ?? undefined,
+    status: status.value ?? undefined,
+    search: search.value || undefined,
+    dateFrom: dateFrom.value || undefined,
+    dateTo: dateTo.value || undefined,
+    page: page.value,
+    limit: limit.value,
+  }))
+
+  return {
+    tab,
+    type: computed(() => query.value.type as string | undefined),
+    status: computed(() => query.value.status as string | undefined),
+    search,
+    dateFrom,
+    dateTo,
+    page,
+    limit,
+    hasActiveFilters,
+    apiFilters,
+    setTab,
+    setType,
+    setStatus,
+    setSearch,
+    setDateRange,
+    setPage,
+    clearFilters,
+    updateQuery,
+  }
+}

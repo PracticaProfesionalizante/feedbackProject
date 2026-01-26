@@ -1,11 +1,10 @@
-import { Router } from "express";
-import { getProfile } from "../controllers/user.controller";
-import { authMiddleware } from "../middleware/auth.middleware"; 
+import { Router } from 'express'
+import { authenticate } from '../middleware/auth.middleware'
+import { userController } from '../controllers/user.controller'
 
-const router = Router();
+const router = Router()
 
-// Endpoint: GET /api/users/profile
-router.get("/profile", authMiddleware, getProfile);
-router.get("/profile", authMiddleware, getProfile);
+router.use(authenticate)
+router.get('/profile', userController.profile)
 
-export default router;
+export { router as userRoutes }

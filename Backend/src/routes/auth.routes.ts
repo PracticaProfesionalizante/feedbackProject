@@ -1,13 +1,14 @@
-import { Router } from 'express';
-// Importamos las funciones nombradas directamente
-import { register, login } from '../controllers/auth.controller'; 
-import { validate } from '../middleware/validate.middleware';
-import { loginSchema, registerSchema } from '../validators/auth.validator';
+import { Router } from 'express'
+import { authController } from '../controllers/auth.controller'
+import { validate } from '../middleware/validate.middleware'
+import { loginSchema, registerSchema } from '../validators/auth.validator'
+import { authenticate } from '../middleware/auth.middleware'
 
-const router = Router();
 
-// Rutas limpias y validadas
-router.post('/register', validate(registerSchema), register);
-router.post('/login', validate(loginSchema), login);
+const router = Router()
 
-export { router as authRoutes };
+router.post('/register', validate(registerSchema), authController.register)
+router.post('/login', validate(loginSchema), authController.login)
+router.get('/me', authenticate, authController.me)
+
+export { router as authRoutes }

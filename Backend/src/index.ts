@@ -1,22 +1,39 @@
+// Importar constants primero para establecer process.env antes de que Prisma se inicialice
+import './config/constants'
+
 import express from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
-import userRoutes from "./routes/user.routes" // ✅ Importación correcta
-import notificationRoutes from './routes/notification.routes';
-import feedbackRoutes from './routes/feedback.routes';
+import teamRoutes from './routes/teamRoutes'
+import { userRoutes } from './routes/user.routes'
+import feedbackRoutes from './routes/feedbackRoutes'
+import dashboardRoutes from './routes/dashboardRoutes'
+import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
-// Cargar variables de entorno
-dotenv.config()
-
-const app = express()
-const PORT = process.env.PORT || 3000
+export const app = express()
 
 // Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true)
+    
+    // Permitir localhost siempre (para desarrollo local con backend en Render)
+    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')
+    
+    // Permitir si está en la lista, es localhost, o es desarrollo
+    // Usar type assertion para evitar error de tipos con CORS_ORIGINS (as const)
+    if ((CORS_ORIGINS as readonly string[]).includes(origin) || isLocalhost || isDevelopment) {
+      callback(null, true)
+    } else {
+      console.warn(`CORS bloqueado para origen: ${origin}`)
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -26,19 +43,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' })
 })
 
-// Rutas de la API
+app.use('/api/team', teamRoutes)
 app.use('/api/auth', authRoutes)
-app.use('/api/users', userRoutes) // ✅ AQUÍ es el lugar correcto
-app.use('/api/notifications', notificationRoutes); // ✅ Nueva ruta para notificaciones
-app.use('/api/feedbacks', feedbackRoutes); // ✅ Nueva ruta para feedbacks
+app.use('/api/users', userRoutes)
+app.use('/api/feedbacks', feedbackRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)
 
 // 👇 CAMBIA ESTO AL FINAL:
-const server = app.listen(PORT, () => {
+export const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(`📡 CORS enabled for: ${CORS_ORIGINS.join(', ')}`)
 })
-
-// Exportamos 'app' y 'server' para los tests
-export { app, server }
