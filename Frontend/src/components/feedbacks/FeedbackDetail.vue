@@ -88,7 +88,7 @@
       </div>
 
       <!-- Comentarios (Sprint 3.1): por ahora solo placeholder si existen -->
-      <div class="mt-6">
+      <!-- <div class="mt-6">
         <div class="text-subtitle-2 mb-2">Comentarios</div>
 
         <div v-if="hasComments" class="d-flex flex-column ga-3">
@@ -115,7 +115,7 @@
         <div v-else class="text-body-2 text-medium-emphasis">
           Todavía no hay comentarios.
         </div>
-      </div>
+      </div> -->
     </v-card-text>
   </v-card>
 
