@@ -11,7 +11,7 @@ import feedbackRoutes from './routes/feedbackRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
-const app = express()
+export const app = express()
 
 // Middlewares
 app.use(cors({
@@ -53,7 +53,7 @@ app.use('/api/dashboard', dashboardRoutes)
 app.use(errorHandler)
 
 // 👇 CAMBIA ESTO AL FINAL:
-const server = app.listen(PORT, () => {
+export const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
   console.log(`📡 CORS enabled for: ${CORS_ORIGINS.join(', ')}`)
 })

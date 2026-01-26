@@ -101,5 +101,5 @@ describe('🔐 Auth API Tests', () => {
       // Verificamos que traiga tus estadísticas
       expect(response.body).toHaveProperty('stats'); 
     });
-    });
   });
+});
