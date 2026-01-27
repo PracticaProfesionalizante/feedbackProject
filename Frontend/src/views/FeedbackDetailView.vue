@@ -101,8 +101,8 @@ const {
 })
 
 const errorMessage = computed(() => {
-  if (!error) return 'Error al cargar el feedback'
-  return (error as Error).message
+  if (!error.value) return 'Error al cargar el feedback'
+  return error.value instanceof Error ? error.value.message : 'Error desconocido'
 })
 
 /* =========================

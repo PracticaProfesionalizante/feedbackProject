@@ -32,33 +32,6 @@ function unwrap<T>(raw: any): T {
   return (raw?.data ?? raw) as T
 }
 
-/** Formato crudo del backend: feedbacksByStatus, feedbacksByType, etc. */
-type DashboardStatsRaw = {
-  feedbacksByStatus?: { pending?: number; inProgress?: number; completed?: number }
-  feedbacksByType?: { recognition?: number; improvement?: number; general?: number }
-  totalReceived?: number
-  totalSent?: number
-  unreadNotifications?: number
-}
-
-function mapStatsResponse(raw: any): DashboardStatsResponse {
-  const unwrapped = unwrap<DashboardStatsRaw>(raw)
-  const status = unwrapped?.feedbacksByStatus ?? {}
-  const byType = unwrapped?.feedbacksByType
-  return {
-    pending: status.pending ?? 0,
-    inProgress: status.inProgress ?? 0,
-    completed: status.completed ?? 0,
-    ...(byType && {
-      byType: {
-        recognition: byType.recognition ?? 0,
-        improvement: byType.improvement ?? 0,
-        general: byType.general ?? 0,
-      },
-    }),
-  }
-}
-
 export const dashboardService = {
   async getStats(): Promise<DashboardStatsResponse> {
     const auth = useAuthStore()

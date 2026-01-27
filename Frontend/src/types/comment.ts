@@ -1,4 +1,6 @@
- export type Comment = {
+import type { FeedbackUser } from './feedback'
+
+export type Comment = {
   id: string
   feedbackId: string
   userId: string

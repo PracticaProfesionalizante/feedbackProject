@@ -4,7 +4,10 @@
     
     <v-row>
       <v-col cols="12" md="8">
-        <RecentFeedbacks />
+        <RecentFeedbacks
+          :items="[]"
+          :loading="false"
+        />
       </v-col>
     </v-row>
   </div>
