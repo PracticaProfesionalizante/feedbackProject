@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from "@prisma/client"; // 1. Importamos la clase
-
-const prisma = new PrismaClient(); // 2. Creamos la conexión
+import { prisma } from '../utils/prisma';
 
 export const getNotifications = async (req: Request, res: Response) => {
   try {
@@ -21,7 +19,6 @@ export const getNotifications = async (req: Request, res: Response) => {
 
     res.json(notifications);
   } catch (error) {
-    console.error(error); // Bueno para ver errores en consola
     res.status(500).json({ message: 'Error al obtener notificaciones' });
   }
 };

@@ -56,6 +56,4 @@ app.use(errorHandler)
 
 // 👇 CAMBIA ESTO AL FINAL:
 export const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-  console.log(`📡 CORS enabled for: ${CORS_ORIGINS.join(', ')}`)
 })

@@ -20,7 +20,6 @@ export function useLoginForm() {
   const [password, passwordAttrs] = defineField('password')
 
   const onSubmit = handleSubmit((values) => {
-    console.log('Formulario válido:', values)
     // Aquí puedes hacer la llamada a la API
   })
 

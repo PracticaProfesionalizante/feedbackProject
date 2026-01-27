@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { feedbackService } from '../services/feedback.service';
-import { PrismaClient, FeedbackStatus, NotificationType } from '@prisma/client';
+import { FeedbackStatus, NotificationType } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma';
 
 export const createFeedback = async (req: Request, res: Response, next: NextFunction) => {
   try {

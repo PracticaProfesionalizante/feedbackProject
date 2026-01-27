@@ -33,8 +33,6 @@ async function createTestUsers() {
     },
   ]
 
-  console.log('🔄 Creando usuarios de prueba...\n')
-
   for (const userData of users) {
     try {
       // Verificar si el usuario ya existe
@@ -43,7 +41,6 @@ async function createTestUsers() {
       })
 
       if (existing) {
-        console.log(`⚠️  Usuario ${userData.email} ya existe, saltando...`)
         continue
       }
 
@@ -57,17 +54,11 @@ async function createTestUsers() {
         },
       })
 
-      console.log(`✅ Usuario creado: ${user.email} (${user.role})`)
     } catch (error: any) {
       console.error(`❌ Error creando usuario ${userData.email}:`, error.message)
     }
   }
 
-  console.log('\n✨ Proceso completado!')
-  console.log('\n📋 Credenciales para login:')
-  console.log('   Email: leader@test.com | Password: password123 (LEADER)')
-  console.log('   Email: employee1@test.com | Password: password123 (EMPLOYEE)')
-  console.log('   Email: employee2@test.com | Password: password123 (EMPLOYEE)')
 }
 
 createTestUsers()

@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma';
 
 // 1. Obtener datos básicos del usuario (Sin password)
 export const findUserById = async (userId: string) => {

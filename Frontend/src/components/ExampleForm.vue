@@ -16,7 +16,6 @@ const email = ref('')
 const password = ref('')
 
 const handleSubmit = () => {
-  console.log('Enviar:', { email: email.value, password: password.value })
 }
 </script>
 

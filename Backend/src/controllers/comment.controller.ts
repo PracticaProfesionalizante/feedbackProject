@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, NotificationType } from '@prisma/client';
+import { NotificationType } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma';
 
 
 export const getComments = async (req: Request, res: Response, next: NextFunction) => {

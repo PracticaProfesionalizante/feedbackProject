@@ -1,7 +1,6 @@
-import { PrismaClient, FeedbackType, FeedbackStatus } from '@prisma/client';
+import { FeedbackType, FeedbackStatus } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma';
 
 export const feedbackService = {
   
