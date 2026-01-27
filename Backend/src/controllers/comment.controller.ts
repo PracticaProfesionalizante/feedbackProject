@@ -38,6 +38,11 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
     if (!feedback) {
       throw new AppError('Feedback no encontrado', 404);
     }
+
+    // Validar que el usuario tiene acceso al feedback (es autor o destinatario)
+    if (feedback.fromUserId !== userId && feedback.toUserId !== userId) {
+      throw new AppError('No tienes acceso a este feedback', 403);
+    }
     
     const comment = await prisma.comment.create({
       data: {

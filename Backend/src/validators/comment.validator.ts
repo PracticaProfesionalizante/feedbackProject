@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createCommentSchema = z.object({
   body: z.object({
     feedbackId: z.string().uuid({ message: "ID de feedback inválido" }),
-    content: z.string().min(1, { message: "El comentario no puede estar vacío" }),
+    content: z.string().min(5, 'Mínimo 5 caracteres').max(500, 'Máximo 500 caracteres'),
   }),
 });
 
