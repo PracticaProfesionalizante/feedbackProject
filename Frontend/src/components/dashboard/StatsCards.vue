@@ -35,27 +35,6 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-const statConfigs = [
-  {
-    key: 'pending' as const,
-    label: 'Feedbacks Pendientes',
-    color: 'grey',
-    icon: 'mdi-clock-outline',
-  },
-  {
-    key: 'inProgress' as const,
-    label: 'Feedbacks En Proceso',
-    color: 'warning',
-    icon: 'mdi-progress-clock',
-  },
-  {
-    key: 'completed' as const,
-    label: 'Feedbacks Completados',
-    color: 'success',
-    icon: 'mdi-check-circle-outline',
-  },
-]
-
 // Normalizar la respuesta (puede venir como { data: ... } o directo)
 const stats = computed(() => {
   if (!props.data) return null

@@ -240,7 +240,7 @@ function confirmEdit() {
    Comments (placeholder)
 ========================= */
 
-const hasComments = computed(() => Array.isArray((props.feedback as any)?.comments) && (props.feedback as any).comments.length > 0)
+// const hasComments = computed(() => Array.isArray((props.feedback as any)?.comments) && (props.feedback as any).comments.length > 0)
 
 /* =========================
    Format helpers

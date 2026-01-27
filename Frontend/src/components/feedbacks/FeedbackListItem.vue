@@ -86,7 +86,7 @@ const avatarInitials = computed(() => {
   const name = displayName.value
   // Filtrar strings vacíos para manejar múltiples espacios consecutivos
   const parts = name.trim().split(' ').filter(part => part.length > 0)
-  if (parts.length >= 2) {
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return (parts[0][0] + parts[1][0]).toUpperCase()
   }
   return name[0]?.toUpperCase() || '?'
