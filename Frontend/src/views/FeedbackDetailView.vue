@@ -65,7 +65,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import FeedbackDetail from '@/components/feedbacks/FeedbackDetail.vue'
-import CommentList from '@/components/comments/CommentList.vue'
+import CommentList from '@/components/comments/commentList.vue'
 
 import { feedbackService } from '../services/feedbackServices' // ✅ ajustá si tu archivo se llama distinto
 import { useAuthStore } from '../stores/authStore'
