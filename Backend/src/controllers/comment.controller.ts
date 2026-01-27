@@ -4,12 +4,8 @@ import { AppError } from '../middleware/errorHandler';
 
 const prisma = new PrismaClient();
 
-// Extender la interfaz Request para incluir el usuario
-interface AuthRequest extends Request {
-  user?: { id: string; role: string; name: string };
-}
 
-export const getComments = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getComments = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { feedbackId } = req.params;
     
@@ -29,7 +25,7 @@ export const getComments = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const createComment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { feedbackId, content } = req.body;
     const userId = req.user!.id;
@@ -73,7 +69,7 @@ export const createComment = async (req: AuthRequest, res: Response, next: NextF
   }
 };
 
-export const deleteComment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;

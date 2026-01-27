@@ -20,8 +20,8 @@ export const errorHandler = (
 ) => {
   const statusCode = err instanceof AppError ? (err.statusCode || 500) : 500
   const message = err.message || 'Internal Server Error'
-
-  console.error('Error:', err)
+  console.log('❌ ERROR CONTROLADO:', err instanceof Error ? err.message : err);
+  //console.error('Error:', err)
 
   res.status(statusCode).json({
     success: false,
