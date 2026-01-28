@@ -1,5 +1,8 @@
-import type { Request, Response } from 'express'
+import type { Request, Response, NextFunction } from 'express'
+import { Prisma } from "@prisma/client"
+import type { Prisma as PrismaTypes } from "@prisma/client"
 import { prisma } from '../utils/prisma'
+import { AppError } from "../middleware/errorHandler"
 import {
   idParamSchema,
   listFeedbacksQuerySchema,
@@ -29,48 +32,57 @@ export const feedbackController = {
 
     return res.json({ items })
   },
-  // GET /api/feedbacks?type=received|sent&status=...&feedbackType=...&search=...&dateFrom=...&dateTo=...&page=1&limit=10
-  async list(req: Request, res: Response) {
-    const userId = req.user!.id
+// GET /api/feedbacks?type=received|sent&status=...&feedbackType=...&search=...&dateFrom=...&dateTo=...&page=1&limit=10
+async list(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) return next(new AppError("Usuario no autenticado", 401))
+
+    const userId = req.user.id
     const query = listFeedbacksQuerySchema.parse(req.query)
 
-    const where: any = {}
+    const where: Prisma.FeedbackWhereInput = {
+      ...(query.type === "received" ? { toUserId: userId } : { fromUserId: userId }),
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.feedbackType ? { type: query.feedbackType } : {}),
+    }
 
-    // type filter: received vs sent
-    if (query.type === 'received') where.toUserId = userId
-    else where.fromUserId = userId
-
-    if (query.status) where.status = query.status
-    if (query.feedbackType) where.type = query.feedbackType
-
-    // search: contenido o nombre de usuario (counterpart)
-    const search = (query.search ?? '').trim()
+    const search = (query.search ?? "").trim()
     if (search) {
-      const searchConditions: any[] = [
-        { content: { contains: search, mode: 'insensitive' } },
+      const or: Prisma.FeedbackWhereInput[] = [
+        { content: { contains: search, mode: Prisma.QueryMode.insensitive } },
       ]
-      if (query.type === 'received') {
-        searchConditions.push({ fromUser: { name: { contains: search, mode: 'insensitive' } } })
+
+      if (query.type === "received") {
+        or.push({
+          fromUser: { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        })
       } else {
-        searchConditions.push({ toUser: { name: { contains: search, mode: 'insensitive' } } })
+        or.push({
+          toUser: { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        })
       }
-      where.OR = searchConditions
+
+      where.OR = or
     }
 
-    // rango de fechas (opcional)
-    const dateRange: { gte?: Date; lte?: Date } = {}
-    if (query.dateFrom) {
-      const from = new Date(query.dateFrom)
-      if (!Number.isNaN(from.getTime())) dateRange.gte = from
-    }
-    if (query.dateTo) {
-      const to = new Date(query.dateTo)
-      if (!Number.isNaN(to.getTime())) {
-        to.setHours(23, 59, 59, 999)
-        dateRange.lte = to
+    if (query.dateFrom || query.dateTo) {
+      const createdAt: Prisma.DateTimeFilter = {}
+
+      if (query.dateFrom) {
+        const from = new Date(query.dateFrom)
+        if (Number.isNaN(from.getTime())) return next(new AppError("dateFrom inválido", 400))
+        createdAt.gte = from
       }
+
+      if (query.dateTo) {
+        const to = new Date(query.dateTo)
+        if (Number.isNaN(to.getTime())) return next(new AppError("dateTo inválido", 400))
+        to.setHours(23, 59, 59, 999)
+        createdAt.lte = to
+      }
+
+      where.createdAt = createdAt
     }
-    if (Object.keys(dateRange).length) where.createdAt = dateRange
 
     const page = query.page
     const limit = query.limit
@@ -79,7 +91,7 @@ export const feedbackController = {
     const [items, total] = await Promise.all([
       prisma.feedback.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
         include: {
@@ -92,7 +104,6 @@ export const feedbackController = {
 
     return res.json({
       items,
-      total,
       pagination: {
         page,
         limit,
@@ -100,7 +111,11 @@ export const feedbackController = {
         pages: Math.ceil(total / limit),
       },
     })
-  },
+  } catch (err) {
+    return next(err)
+  }
+},
+
 
   // GET /api/feedbacks/recent?limit=10
   async recent(req: Request, res: Response) {
