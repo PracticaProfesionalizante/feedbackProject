@@ -45,6 +45,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/authStore'
 import { feedbackService } from '@/services/feedbackServices'
+import { commentService } from '@/services/commentService'
 import CommentForm from '@/components/comments/CommentForm.vue'
 import CommentItem from '@/components/comments/CommentItem.vue'
 import type { Comment, Feedback } from '@/types/feedback'
@@ -77,17 +78,37 @@ const isLoading = computed(() => feedbackQuery.isLoading.value)
 const currentUserId = computed(() => auth.user?.id)
 
 const createMutation = useMutation({
-  mutationFn: (content: string) => feedbackService.createComment(props.feedbackId, content),
-  onSuccess: async () => {
+  mutationFn: (content: string) =>
+    commentService.createComment({ feedbackId: props.feedbackId, content }),
+  onSuccess: async (created) => {
     resetKey.value += 1
+    // Optimista: agregamos al cache actual para respuesta inmediata
+    queryClient.setQueryData<Feedback | undefined>(
+      ['feedback', props.feedbackId],
+      (prev) =>
+        prev
+          ? { ...prev, comments: [...(prev.comments ?? []), created] }
+          : prev
+    )
     await invalidateRelated()
     await scrollToEnd()
   },
 })
 
 const deleteMutation = useMutation({
-  mutationFn: (commentId: string) => feedbackService.deleteComment(commentId),
-  onSuccess: async () => {
+  mutationFn: (commentId: string) => commentService.deleteComment(commentId),
+  onSuccess: async (_, variables) => {
+    // variables = commentId
+    queryClient.setQueryData<Feedback | undefined>(
+      ['feedback', props.feedbackId],
+      (prev) =>
+        prev
+          ? {
+              ...prev,
+              comments: (prev.comments ?? []).filter((c) => c.id !== variables),
+            }
+          : prev
+    )
     await invalidateRelated()
   },
 })
@@ -107,6 +128,8 @@ async function handleCreate(content: string) {
 }
 
 async function handleDelete(commentId: string) {
+  const confirmed = window.confirm('¿Eliminar este comentario?')
+  if (!confirmed) return
   await deleteMutation.mutateAsync(commentId)
 }
 
