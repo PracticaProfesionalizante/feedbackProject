@@ -1,141 +1,126 @@
 <template>
-  <v-card variant="outlined">
-    <v-card-title class="d-flex align-center justify-space-between">
-      <div class="text-subtitle-1 font-weight-bold">
-        Comentarios ({{ count }})
+  <div ref="listContainer">
+    <div class="d-flex align-center justify-space-between mb-2">
+      <div class="text-subtitle-1 font-weight-medium">
+        Comentarios ({{ commentsCount }})
       </div>
-    </v-card-title>
+      <v-progress-circular
+        v-if="isLoading"
+        indeterminate
+        color="primary"
+        size="20"
+      />
+    </div>
 
-    <v-divider />
+    <div v-if="isLoading">
+      <v-skeleton-loader type="list-item-two-line" class="mb-2" />
+      <v-skeleton-loader type="list-item-two-line" class="mb-2" />
+    </div>
 
-    <v-card-text>
-      <!-- Loading -->
-      <v-skeleton-loader v-if="isLoading" type="list-item-two-line@4" />
-
-      <!-- Error -->
-      <v-alert v-else-if="isError" type="error" variant="tonal">
-        {{ errorMessage }}
-      </v-alert>
-
-      <!-- List -->
-      <div v-else>
-        <div v-if="count === 0" class="text-body-2 text-medium-emphasis">
-          Todavía no hay comentarios.
-        </div>
-
-        <v-list v-else density="comfortable">
-          <v-list-item
-            v-for="c in comments"
-            :key="c.id"
-            class="rounded mb-2"
-          >
-            <template #prepend>
-              <v-avatar size="32">
-                <span class="text-caption font-weight-bold">
-                  {{ initials(c.user?.name) }}
-                </span>
-              </v-avatar>
-            </template>
-
-            <v-list-item-title class="d-flex align-center justify-space-between">
-              <span class="text-body-2 font-weight-medium">
-                {{ c.user?.name ?? c.userId }}
-              </span>
-              <span class="text-caption text-medium-emphasis">
-                {{ formatDateTime(c.createdAt) }}
-              </span>
-            </v-list-item-title>
-
-            <v-list-item-subtitle class="mt-1" style="white-space: pre-wrap;">
-              {{ c.content }}
-            </v-list-item-subtitle>
-          </v-list-item>
-
-          <!-- Ancla para scroll -->
-          <div ref="bottomAnchor" />
-        </v-list>
+    <div v-else>
+      <div v-if="comments.length === 0" class="text-body-2 text-medium-emphasis mb-4">
+        Aún no hay comentarios.
       </div>
-    </v-card-text>
-  </v-card>
+      <CommentItem
+        v-for="comment in comments"
+        :key="comment.id"
+        :comment="comment"
+        :current-user-id="currentUserId"
+        @delete="handleDelete"
+      />
+      <div ref="listEnd" />
+    </div>
+
+    <CommentForm
+      class="mt-4"
+      :loading="isCreating"
+      :reset-key="resetKey"
+      @submit="handleCreate"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { feedbackService } from '../../services/feedbackServices'
-import { useAuthStore } from '../../stores/authStore'
-import type { Feedback } from '../../types/feedback'
-import type {Comment} from '../../types/comment'
-
-/* =========================
-   Setup
-========================= */
-
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useAuthStore } from '@/stores/authStore'
+import { feedbackService } from '@/services/feedbackServices'
+import CommentForm from '@/components/comments/CommentForm.vue'
+import CommentItem from '@/components/comments/CommentItem.vue'
+import type { Comment, Feedback } from '@/types/feedback'
 
 const props = defineProps<{
   feedbackId: string
-  /** polling opcional (ms). Ej: 15000 para “semi realtime”. */
-  refetchIntervalMs?: number
 }>()
 
 const auth = useAuthStore()
+const queryClient = useQueryClient()
 
-/**
- * Leemos comentarios desde el detalle del feedback.
- * Ventaja: no requiere endpoint extra para comments.
- * (Si luego creamos /feedbacks/:id/comments, cambiamos este queryFn)
- */
-const query = useQuery<Feedback, Error>({
-  queryKey: computed(() => ['feedback', props.feedbackId]),
+const listContainer = ref<HTMLElement | null>(null)
+const listEnd = ref<HTMLElement | null>(null)
+const resetKey = ref(0)
+
+const feedbackQuery = useQuery<Feedback>({
+  queryKey: ['feedback', props.feedbackId],
   queryFn: () => feedbackService.getFeedback(props.feedbackId),
-  enabled: computed(() => auth.checked && !!auth.token && !!props.feedbackId),
-  refetchOnWindowFocus: false,
-  // “Tiempo real” simple por polling (opcional)
-  refetchInterval: computed(() => props.refetchIntervalMs ?? false)
 })
-
-const isLoading = computed(() => query.isLoading.value)
-const isError = computed(() => query.isError.value)
-const errorMessage = computed(() => query.error.value?.message ?? 'Error al cargar comentarios')
 
 const comments = computed<Comment[]>(() => {
-  // El backend devuelve comments en GET /feedbacks/:id
-  const data: any = query.data.value
-  return (data?.comments ?? []) as Comment[]
+  const raw = feedbackQuery.data.value?.comments ?? []
+  return [...raw].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
 })
 
-const count = computed(() => comments.value.length)
+const commentsCount = computed(() => comments.value.length)
+const isLoading = computed(() => feedbackQuery.isLoading.value)
+const currentUserId = computed(() => auth.user?.id)
 
-/**
- * Scroll automático cuando aparece un comentario nuevo.
- */
-const bottomAnchor = ref<HTMLElement | null>(null)
+const createMutation = useMutation({
+  mutationFn: (content: string) => feedbackService.createComment(props.feedbackId, content),
+  onSuccess: async () => {
+    resetKey.value += 1
+    await invalidateRelated()
+    await scrollToEnd()
+  },
+})
+
+const deleteMutation = useMutation({
+  mutationFn: (commentId: string) => feedbackService.deleteComment(commentId),
+  onSuccess: async () => {
+    await invalidateRelated()
+  },
+})
+
+const isCreating = computed(() => createMutation.isPending.value)
+
+async function invalidateRelated() {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['feedback', props.feedbackId] }),
+    queryClient.invalidateQueries({ queryKey: ['feedbacks'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  ])
+}
+
+async function handleCreate(content: string) {
+  await createMutation.mutateAsync(content)
+}
+
+async function handleDelete(commentId: string) {
+  await deleteMutation.mutateAsync(commentId)
+}
+
+async function scrollToEnd() {
+  await nextTick()
+  listEnd.value?.scrollIntoView({ behavior: 'smooth' })
+}
 
 watch(
-  () => count.value,
-  async (newCount, oldCount) => {
-    if (newCount <= 0) return
-    // solo scrollear cuando crece (nuevo comentario)
-    if (oldCount !== undefined && newCount <= oldCount) return
-
-    await nextTick()
-    bottomAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  () => comments.value.length,
+  async (len, prev) => {
+    if (len > (prev ?? 0)) {
+      await scrollToEnd()
+    }
   }
 )
-
-/* =========================
-   Helpers UI
-========================= */
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleString()
-}
-
-function initials(name?: string) {
-  if (!name) return 'U'
-  const parts = name.trim().split(/\s+/).slice(0, 2)
-  return parts.map((p) => p[0]?.toUpperCase()).join('')
-}
 </script>

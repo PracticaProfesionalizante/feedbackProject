@@ -26,6 +26,15 @@ export type Feedback = {
   toUser?: FeedbackUser
 }
 
+export type Comment = {
+  id: string
+  content: string
+  userId: string
+  createdAt: string
+  updatedAt?: string
+  user?: FeedbackUser
+}
+
 export type FeedbackFilters = {
   /** Tab: received | sent (backend type) */
   type?: 'received' | 'sent'

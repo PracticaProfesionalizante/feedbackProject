@@ -6,7 +6,8 @@ import type {
   FeedbackFilters,
   FeedbacksResponse,
   FeedbackStatus,
-  UpdateFeedbackDto
+  UpdateFeedbackDto,
+  Comment
 } from '../types/feedback'
 
 const API_BASE = API_BASE_URL
@@ -160,5 +161,36 @@ export const feedbackService = {
     // Si tu backend tiene un endpoint específico tipo PATCH /feedbacks/:id/status
     // lo cambiamos acá. Por ahora lo resolvemos con PATCH normal.
     return this.updateFeedback(id, { status })
+  },
+
+  async createComment(feedbackId: string, content: string): Promise<Comment> {
+    const auth = useAuthStore()
+
+    const res = await fetch(`${API_BASE}/feedbacks/${feedbackId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth.getAuthHeader()
+      },
+      body: JSON.stringify({ content })
+    })
+
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+
+    const raw = await parseJson<any>(res)
+    return unwrap<Comment>(raw)
+  },
+
+  async deleteComment(commentId: string): Promise<void> {
+    const auth = useAuthStore()
+
+    const res = await fetch(`${API_BASE}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        ...auth.getAuthHeader()
+      }
+    })
+
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
   }
 }
