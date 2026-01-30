@@ -69,7 +69,7 @@ export function setupEnvironment() {
   process.env.JWT_SECRET = JWT_CONFIG.SECRET
   process.env.JWT_EXPIRES_IN = JWT_CONFIG.EXPIRES_IN
   process.env.PORT = String(SERVER_CONFIG.PORT)
-  process.env.NODE_ENV = SERVER_CONFIG.NODE_ENV
+  process.env.NODE_ENV = process.env.NODE_ENV || SERVER_CONFIG.NODE_ENV
   // CORS se maneja como array, no como string única
 }
 
