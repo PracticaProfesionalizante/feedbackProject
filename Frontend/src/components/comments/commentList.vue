@@ -1,5 +1,5 @@
 <template>
-  <div ref="listContainer">
+  <div>
     <div class="d-flex align-center justify-space-between mb-2">
       <div class="text-subtitle-1 font-weight-medium">
         Comentarios ({{ commentsCount }})
@@ -57,7 +57,6 @@ const props = defineProps<{
 const auth = useAuthStore()
 const queryClient = useQueryClient()
 
-const listContainer = ref<HTMLElement | null>(null)
 const listEnd = ref<HTMLElement | null>(null)
 const resetKey = ref(0)
 
@@ -85,7 +84,7 @@ const createMutation = useMutation({
     // Optimista: agregamos al cache actual para respuesta inmediata
     queryClient.setQueryData<Feedback | undefined>(
       ['feedback', props.feedbackId],
-      (prev) =>
+      (prev: Feedback | undefined) =>
         prev
           ? { ...prev, comments: [...(prev.comments ?? []), created] }
           : prev
@@ -101,11 +100,11 @@ const deleteMutation = useMutation({
     // variables = commentId
     queryClient.setQueryData<Feedback | undefined>(
       ['feedback', props.feedbackId],
-      (prev) =>
+      (prev: Feedback | undefined) =>
         prev
           ? {
               ...prev,
-              comments: (prev.comments ?? []).filter((c) => c.id !== variables),
+              comments: (prev.comments ?? []).filter((c: Comment) => c.id !== variables),
             }
           : prev
     )
@@ -140,7 +139,7 @@ async function scrollToEnd() {
 
 watch(
   () => comments.value.length,
-  async (len, prev) => {
+  async (len: number, prev: number | undefined) => {
     if (len > (prev ?? 0)) {
       await scrollToEnd()
     }

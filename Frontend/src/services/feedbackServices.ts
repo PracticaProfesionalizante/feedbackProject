@@ -6,8 +6,7 @@ import type {
   FeedbackFilters,
   FeedbacksResponse,
   FeedbackStatus,
-  UpdateFeedbackDto,
-  Comment
+  UpdateFeedbackDto
 } from '../types/feedback'
 
 const API_BASE = API_BASE_URL
