@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { NotificationType } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../utils/prisma';
+import { notificationService } from '../services/notification.service'; // Importar el nuevo servicio
 
 
 export const getComments = async (req: Request, res: Response, next: NextFunction) => {
@@ -58,13 +58,10 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
     
     // Crear notificación para el owner del feedback si no es el mismo que comenta
     if (feedback.toUserId !== userId) {
-      await prisma.notification.create({
-        data: {
-          userId: feedback.toUserId,
-          type: NotificationType.COMMENT_RECEIVED,
-          message: `${req.user!.name} comentó en tu feedback`
-        }
-      });
+      await notificationService.createCommentReceivedNotification(
+        feedback.toUserId,
+        req.user!.name
+      );
     }
     
     res.status(201).json(comment);
