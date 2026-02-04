@@ -5,10 +5,10 @@ import express from 'express'
 import cors from 'cors'
 import { errorHandler } from './middleware/errorHandler'
 import { authRoutes } from './routes/auth.routes'
-import teamRoutes from './routes/teamRoutes'
+import teamRoutes from './routes/team.routes'
 import { userRoutes } from './routes/user.routes'
-import feedbackRoutes from './routes/feedbackRoutes'
-import dashboardRoutes from './routes/dashboardRoutes'
+import feedbackRoutes from './routes/feedback.routes'
+import dashboardRoutes from './routes/dashboard.routes'
 import commentRoutes from './routes/comment.routes' // Importar rutas de comentarios
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
