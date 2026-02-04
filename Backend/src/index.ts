@@ -10,6 +10,7 @@ import { userRoutes } from './routes/user.routes'
 import feedbackRoutes from './routes/feedbackRoutes'
 import dashboardRoutes from './routes/dashboardRoutes'
 import commentRoutes from './routes/comment.routes' // Importar rutas de comentarios
+import notificationRoutes from './routes/notification.routes'
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
 export const app = express()
@@ -50,6 +51,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/feedbacks', feedbackRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api', commentRoutes) // Usar las rutas de comentarios
+app.use('/api/notifications', notificationRoutes)
 
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)

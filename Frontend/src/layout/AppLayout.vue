@@ -14,7 +14,6 @@
     <TopAppBar
       app
       :is-mobile="!isDesktop"
-      :unread-count="0"
       @toggle-drawer="toggleDrawer"
       @logout="handleLogout"
     />

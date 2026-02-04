@@ -11,15 +11,7 @@
     <v-spacer />
 
     <!-- Notifications badge -->
-    <v-btn icon variant="text">
-      <v-badge
-        :content="unreadCount"
-        :model-value="unreadCount > 0"
-        color="primary"
-      >
-        <v-icon icon="mdi-bell-outline" />
-      </v-badge>
-    </v-btn>
+    <NotificationBadge />
 
     <!-- User menu -->
     <v-menu>
@@ -43,10 +35,10 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
+import NotificationBadge from '../notifications/NotificationBadge.vue'
 
 const props = defineProps<{
   isMobile: boolean
-  unreadCount: number
 }>()
 
 const emit = defineEmits<{

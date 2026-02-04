@@ -1,6 +1,24 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 
+export const getUnreadCount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Usuario no autenticado' });
+    }
+
+    const count = await prisma.notification.count({
+      where: { userId, read: false },
+    });
+
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener contador de notificaciones' });
+  }
+};
+
 export const getNotifications = async (req: Request, res: Response) => {
   try {
     // El user viene del token gracias al middleware (asegúrate de que tu AuthRequest lo soporte,
