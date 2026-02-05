@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { NotificationType } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../utils/prisma';
+import { notificationService } from '../services/notification.service'; // Importar el nuevo servicio
 
 
 export const getComments = async (req: Request, res: Response, next: NextFunction) => {
@@ -9,7 +9,7 @@ export const getComments = async (req: Request, res: Response, next: NextFunctio
     const { feedbackId } = req.params;
     
     const comments = await prisma.comment.findMany({
-      where: { feedbackId },
+      where: { feedbackId, deletedAt: null },
       include: {
         user: {
           select: { id: true, name: true, email: true }
@@ -29,9 +29,9 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
     const { feedbackId, content } = req.body;
     const userId = req.user!.id;
     
-    // Verificar que el feedback existe
-    const feedback = await prisma.feedback.findUnique({
-      where: { id: feedbackId }
+    // Verificar que el feedback existe y no está soft-deleted
+    const feedback = await prisma.feedback.findFirst({
+      where: { id: feedbackId, deletedAt: null }
     });
     
     if (!feedback) {
@@ -58,13 +58,10 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
     
     // Crear notificación para el owner del feedback si no es el mismo que comenta
     if (feedback.toUserId !== userId) {
-      await prisma.notification.create({
-        data: {
-          userId: feedback.toUserId,
-          type: NotificationType.COMMENT_RECEIVED,
-          message: `${req.user!.name} comentó en tu feedback`
-        }
-      });
+      await notificationService.createCommentReceivedNotification(
+        feedback.toUserId,
+        req.user!.name
+      );
     }
     
     res.status(201).json(comment);
@@ -78,8 +75,8 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
     const { id } = req.params;
     const userId = req.user!.id;
     
-    const comment = await prisma.comment.findUnique({
-      where: { id }
+    const comment = await prisma.comment.findFirst({
+      where: { id, deletedAt: null }
     });
     
     if (!comment) {
@@ -91,7 +88,11 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
       throw new AppError('Solo el autor puede eliminar el comentario', 403);
     }
     
-    await prisma.comment.delete({ where: { id } });
+    // Soft delete: marcar deletedAt
+    await prisma.comment.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
     
     res.status(204).send();
   } catch (error) {

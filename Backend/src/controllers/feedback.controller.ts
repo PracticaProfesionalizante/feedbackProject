@@ -1,13 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 import { feedbackService } from '../services/feedback.service';
-import { FeedbackStatus, NotificationType } from '@prisma/client';
+import { FeedbackStatus } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../utils/prisma';
+import { notificationService } from '../services/notification.service'; // Importar el nuevo servicio
 
 export const createFeedback = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).user.id; // Asumimos authMiddleware
     const feedback = await feedbackService.create(userId, req.body);
+    
+    // Crear notificación para el destinatario (toUser)
+    await notificationService.createFeedbackReceivedNotification(
+      feedback.toUserId,
+      (req as any).user.name // El nombre del usuario que envía el feedback
+    );
+
     res.status(201).json(feedback);
   } catch (error) {
     next(error);
@@ -31,6 +39,7 @@ export const getRecentFeedbacks = async (req: Request, res: Response, next: Next
 
     const feedbacks = await prisma.feedback.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { toUserId: userId },
           { fromUserId: userId }
@@ -83,9 +92,9 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     const { status } = req.body;
     const userId = (req as any).user.id;
 
-    // Buscar el feedback
-    const feedback = await prisma.feedback.findUnique({
-      where: { id }
+    // Buscar el feedback (excluir soft-deleted)
+    const feedback = await prisma.feedback.findFirst({
+      where: { id, deletedAt: null }
     });
 
     if (!feedback) {
@@ -139,19 +148,10 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     });
 
     // Crear notificación para el autor
-    const statusMessages: Record<FeedbackStatus, string> = {
-      [FeedbackStatus.PENDING]: 'pendiente',
-      [FeedbackStatus.IN_PROGRESS]: 'en proceso',
-      [FeedbackStatus.COMPLETED]: 'completado',
-    };
-
-    await prisma.notification.create({
-      data: {
-        userId: feedback.fromUserId,
-        type: NotificationType.FEEDBACK_UPDATED,
-        message: `Tu feedback cambió a estado ${statusMessages[newStatus]}`
-      }
-    });
+    await notificationService.createFeedbackUpdatedNotification(
+      feedback.fromUserId,
+      newStatus
+    );
 
     res.json(updated);
   } catch (error) {
