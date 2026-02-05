@@ -28,7 +28,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Notification, NotificationType } from '../../types/notification'
-import { markAsRead } from '../../services/notificationService'
+import { notificationService } from '../../services/notificationService'
 
 const props = defineProps<{
   notification: Notification
@@ -66,7 +66,7 @@ const timeAgo = computed(() => {
 
 async function handleClick() {
   if (!props.notification.read) {
-    await markAsRead(props.notification.id)
+    await notificationService.markAsRead(props.notification.id)
     emit('read')
   }
   router.push('/feedbacks')
