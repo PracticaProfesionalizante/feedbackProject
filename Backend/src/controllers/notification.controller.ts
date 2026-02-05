@@ -1,24 +1,78 @@
-import { Request, Response } from 'express';
-import { prisma } from '../utils/prisma';
+import type { Request, Response, NextFunction } from 'express'
+import { prisma } from '../utils/prisma'
+import { AppError } from '../middleware/errorHandler'
 
-export const getNotifications = async (req: Request, res: Response) => {
+// GET /api/notifications?read=true|false&limit=50
+export const getNotifications = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // El user viene del token gracias al middleware (asegúrate de que tu AuthRequest lo soporte,
-    // si te da error en 'req.user', usa 'any' temporalmente: (req: any, ...)
-    const userId = (req as any).user?.id; 
+    const userId = req.user!.id
+    const { read, limit = '50' } = req.query
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+    const where: any = {
+      userId,
+      ...(read !== undefined ? { read: read === 'true' } : {}),
     }
 
-    // Buscamos las notificaciones
-    const notifications = await prisma.notification.findMany({
-      where: { userId: userId },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: Number(limit),
+      }),
+      prisma.notification.count({ where: { userId, read: false } }),
+    ])
 
-    res.json(notifications);
+    res.json({ notifications, unreadCount })
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener notificaciones' });
+    next(error)
   }
-};
+}
+
+// GET /api/notifications/count
+export const getUnreadCount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id
+    const unreadCount = await prisma.notification.count({
+      where: { userId, read: false },
+    })
+    res.json({ unreadCount })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// PATCH /api/notifications/:id/read
+export const markNotificationAsRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id
+    const { id } = req.params
+
+    // updateMany: filtra por id + userId (seguridad)
+    const updated = await prisma.notification.updateMany({
+      where: { id, userId },
+      data: { read: true },
+    })
+
+    if (updated.count === 0) throw new AppError('Notificación no encontrada', 404)
+
+    res.status(204).send()
+  } catch (error) {
+    next(error)
+  }
+}
+
+// PATCH /api/notifications/read-all
+export const markAllNotificationsAsRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id
+
+    await prisma.notification.updateMany({
+      where: { userId, read: false },
+      data: { read: true },
+    })
+
+    res.status(204).send()
+  } catch (error) {
+    next(error)
+  }
+}
