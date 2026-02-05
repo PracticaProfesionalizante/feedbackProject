@@ -21,11 +21,11 @@ export const userController = {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
-    // Stats
+    // Stats (excluir soft-deleted)
     const [feedbacksGiven, feedbacksReceived, comments] = await Promise.all([
-      prisma.feedback.count({ where: { fromUserId: userId } }),
-      prisma.feedback.count({ where: { toUserId: userId } }),
-      prisma.comment.count({ where: { userId } }),
+      prisma.feedback.count({ where: { fromUserId: userId, deletedAt: null } }),
+      prisma.feedback.count({ where: { toUserId: userId, deletedAt: null } }),
+      prisma.comment.count({ where: { userId, deletedAt: null } }),
     ])
 
     // Team info

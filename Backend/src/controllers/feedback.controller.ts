@@ -39,6 +39,7 @@ export const getRecentFeedbacks = async (req: Request, res: Response, next: Next
 
     const feedbacks = await prisma.feedback.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { toUserId: userId },
           { fromUserId: userId }
@@ -91,9 +92,9 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     const { status } = req.body;
     const userId = (req as any).user.id;
 
-    // Buscar el feedback
-    const feedback = await prisma.feedback.findUnique({
-      where: { id }
+    // Buscar el feedback (excluir soft-deleted)
+    const feedback = await prisma.feedback.findFirst({
+      where: { id, deletedAt: null }
     });
 
     if (!feedback) {

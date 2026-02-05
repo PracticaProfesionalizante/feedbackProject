@@ -17,19 +17,19 @@ export const findUserById = async (userId: string) => {
 
 // 2. Calcular estadísticas (Feedbacks y Comentarios)
 export const getUserStats = async (userId: string) => {
-  // Contar feedbacks que el usuario ESCRIBIÓ
+  // Contar feedbacks que el usuario ESCRIBIÓ (excluir soft-deleted)
   const feedbacksGiven = await prisma.feedback.count({
-    where: { fromUserId: userId },
+    where: { fromUserId: userId, deletedAt: null },
   });
 
-  // Contar feedbacks que el usuario RECIBIÓ
+  // Contar feedbacks que el usuario RECIBIÓ (excluir soft-deleted)
   const feedbacksReceived = await prisma.feedback.count({
-    where: { toUserId: userId },
+    where: { toUserId: userId, deletedAt: null },
   });
 
-  // Contar comentarios que el usuario hizo
+  // Contar comentarios que el usuario hizo (excluir soft-deleted)
   const comments = await prisma.comment.count({
-    where: { userId: userId },
+    where: { userId: userId, deletedAt: null },
   });
 
   return {
