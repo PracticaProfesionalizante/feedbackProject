@@ -14,9 +14,10 @@
     <TopAppBar
       app
       :is-mobile="!isDesktop"
-      :unread-count="0"
+      :unread-count="unreadCount"
       @toggle-drawer="toggleDrawer"
       @logout="handleLogout"
+      @update:unread-count="unreadCount = $event"
     />
 
     <!-- Content -->
@@ -48,6 +49,7 @@ const router = useRouter()
 const { mdAndUp } = useDisplay()
 const isDesktop = computed(() => mdAndUp.value)
 const drawer = ref(isDesktop.value)
+const unreadCount = ref(0)
 
 const navItems: NavItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/dashboard' },
@@ -61,6 +63,8 @@ const navItems: NavItem[] = [
 onMounted(async () => {
   await auth.checkAuth()
   drawer.value = isDesktop.value
+  const { fetchUnreadCount } = await import('../services/notificationService')
+  unreadCount.value = await fetchUnreadCount()
 })
 
 watch(isDesktop, (desktop) => {

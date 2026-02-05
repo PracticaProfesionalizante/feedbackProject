@@ -10,16 +10,16 @@
 
     <v-spacer />
 
-    <!-- Notifications badge -->
-    <v-btn icon variant="text">
-      <v-badge
-        :content="unreadCount"
-        :model-value="unreadCount > 0"
-        color="primary"
-      >
-        <v-icon icon="mdi-bell-outline" />
-      </v-badge>
-    </v-btn>
+    <!-- Notifications panel con badge -->
+    <NotificationPanel @update:unread-count="emit('update:unreadCount', $event)">
+      <template #activator="{ props: menuProps }">
+        <v-btn v-bind="menuProps" icon variant="text">
+          <NotificationBadge :count="unreadCount">
+            <v-icon icon="mdi-bell-outline" />
+          </NotificationBadge>
+        </v-btn>
+      </template>
+    </NotificationPanel>
 
     <!-- User menu -->
     <v-menu>
@@ -43,6 +43,8 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
+import NotificationPanel from '../notifications/NotificationPanel.vue'
+import NotificationBadge from '../notifications/NotificationBadge.vue'
 
 const props = defineProps<{
   isMobile: boolean
@@ -52,6 +54,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'toggle-drawer'): void
   (e: 'logout'): void
+  (e: 'update:unreadCount', value: number): void
 }>()
 
 const route = useRoute()
