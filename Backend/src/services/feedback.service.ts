@@ -41,10 +41,10 @@ export const feedbackService = {
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Filtro base: por defecto traigo los RECIBIDOS, salvo que pida 'sent'
+    // Filtro base: por defecto traigo los RECIBIDOS, salvo que pida 'sent'. Excluir soft-deleted.
     const whereClause: any = query.type === 'sent' 
-      ? { fromUserId: userId } 
-      : { toUserId: userId };
+      ? { fromUserId: userId, deletedAt: null } 
+      : { toUserId: userId, deletedAt: null };
 
     if (query.status) whereClause.status = query.status;
     if (query.feedbackType) whereClause.type = query.feedbackType;
@@ -74,10 +74,10 @@ export const feedbackService = {
     };
   },
 
-  // 3. OBTENER DETALLE (Solo si soy parte del feedback)
+  // 3. OBTENER DETALLE (Solo si soy parte del feedback). Excluir soft-deleted.
   async findOne(userId: string, feedbackId: string) {
-    const feedback = await prisma.feedback.findUnique({
-      where: { id: feedbackId },
+    const feedback = await prisma.feedback.findFirst({
+      where: { id: feedbackId, deletedAt: null },
       include: {
         fromUser: { select: { id: true, name: true } },
         toUser: { select: { id: true, name: true } }
@@ -94,9 +94,9 @@ export const feedbackService = {
     return feedback;
   },
 
-  // 4. ACTUALIZAR (Reglas complejas de permisos)
+  // 4. ACTUALIZAR (Reglas complejas de permisos). Excluir soft-deleted.
   async update(userId: string, feedbackId: string, data: { content?: string; status?: FeedbackStatus }) {
-    const feedback = await prisma.feedback.findUnique({ where: { id: feedbackId } });
+    const feedback = await prisma.feedback.findFirst({ where: { id: feedbackId, deletedAt: null } });
     if (!feedback) throw new AppError("Feedback no encontrado", 404);
 
     // REGLA: Actualizar CONTENIDO -> Solo el AUTOR
@@ -119,15 +119,20 @@ export const feedbackService = {
     });
   },
 
-  // 5. ELIMINAR (Solo autor)
+  // 5. SOFT DELETE (Solo autor). Marcar deletedAt en feedback y sus comentarios.
   async delete(userId: string, feedbackId: string) {
-    const feedback = await prisma.feedback.findUnique({ where: { id: feedbackId } });
+    const feedback = await prisma.feedback.findFirst({ where: { id: feedbackId, deletedAt: null } });
     if (!feedback) throw new AppError("Feedback no encontrado", 404);
 
     if (feedback.fromUserId !== userId) {
       throw new AppError("Solo el autor puede eliminar el feedback", 403);
     }
 
-    return await prisma.feedback.delete({ where: { id: feedbackId } });
+    const now = new Date();
+    await prisma.$transaction([
+      prisma.comment.updateMany({ where: { feedbackId }, data: { deletedAt: now } }),
+      prisma.feedback.update({ where: { id: feedbackId }, data: { deletedAt: now } }),
+    ]);
+    return { id: feedbackId };
   }
 };

@@ -20,6 +20,7 @@ export const feedbackController = {
 
     const items = await prisma.feedback.findMany({
       where: {
+        deletedAt: null,
         OR: [{ toUserId: userId }, { fromUserId: userId }],
       },
       orderBy: { createdAt: 'desc' },
@@ -41,6 +42,7 @@ async list(req: Request, res: Response, next: NextFunction) {
     const query = listFeedbacksQuerySchema.parse(req.query)
 
     const where: Prisma.FeedbackWhereInput = {
+      deletedAt: null,
       ...(query.type === "received" ? { toUserId: userId } : { fromUserId: userId }),
       ...(query.status ? { status: query.status } : {}),
       ...(query.feedbackType ? { type: query.feedbackType } : {}),
@@ -125,7 +127,7 @@ async list(req: Request, res: Response, next: NextFunction) {
     // Obtener feedbacks recibidos y enviados, mezclados
     const [received, sent] = await Promise.all([
       prisma.feedback.findMany({
-        where: { toUserId: userId },
+        where: { toUserId: userId, deletedAt: null },
         orderBy: { createdAt: 'desc' },
         take: query.limit,
         include: {
@@ -134,7 +136,7 @@ async list(req: Request, res: Response, next: NextFunction) {
         },
       }),
       prisma.feedback.findMany({
-        where: { fromUserId: userId },
+        where: { fromUserId: userId, deletedAt: null },
         orderBy: { createdAt: 'desc' },
         take: query.limit,
         include: {
@@ -157,12 +159,13 @@ async list(req: Request, res: Response, next: NextFunction) {
     const userId = req.user!.id
     const { id } = idParamSchema.parse(req.params)
 
-    const feedback = await prisma.feedback.findUnique({
-      where: { id },
+    const feedback = await prisma.feedback.findFirst({
+      where: { id, deletedAt: null },
       include: {
         fromUser: { select: { id: true, name: true, email: true, role: true } },
         toUser: { select: { id: true, name: true, email: true, role: true } },
         comments: {
+          where: { deletedAt: null },
           orderBy: { createdAt: 'asc' },
           include: { user: { select: { id: true, name: true, email: true, role: true } } },
         },
@@ -228,8 +231,8 @@ async list(req: Request, res: Response, next: NextFunction) {
     const { id } = idParamSchema.parse(req.params)
     const body = updateFeedbackSchema.parse(req.body)
 
-    const feedback = await prisma.feedback.findUnique({
-      where: { id },
+    const feedback = await prisma.feedback.findFirst({
+      where: { id, deletedAt: null },
       select: { id: true, fromUserId: true, toUserId: true, content: true, status: true },
     })
 
@@ -259,13 +262,13 @@ async list(req: Request, res: Response, next: NextFunction) {
     return res.json(updated)
   },
 
-  // DELETE /api/feedbacks/:id (solo autor)
+  // DELETE /api/feedbacks/:id (solo autor). Soft delete: marcar deletedAt.
   async remove(req: Request, res: Response) {
     const userId = req.user!.id
     const { id } = idParamSchema.parse(req.params)
 
-    const feedback = await prisma.feedback.findUnique({
-      where: { id },
+    const feedback = await prisma.feedback.findFirst({
+      where: { id, deletedAt: null },
       select: { id: true, fromUserId: true },
     })
 
@@ -274,7 +277,11 @@ async list(req: Request, res: Response, next: NextFunction) {
       return res.status(403).json({ message: 'Solo el autor puede eliminar el feedback' })
     }
 
-    await prisma.feedback.delete({ where: { id } })
+    const now = new Date()
+    await prisma.$transaction([
+      prisma.comment.updateMany({ where: { feedbackId: id }, data: { deletedAt: now } }),
+      prisma.feedback.update({ where: { id }, data: { deletedAt: now } }),
+    ])
     return res.status(204).send()
   },
 }
