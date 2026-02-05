@@ -14,7 +14,6 @@
     <TopAppBar
       app
       :is-mobile="!isDesktop"
-      :unread-count="0"
       @toggle-drawer="toggleDrawer"
       @logout="handleLogout"
     />
@@ -35,6 +34,7 @@ import { useDisplay } from 'vuetify'
 import Sidebar from '../components/navigation/SideBar.vue'
 import TopAppBar from '../components/navigation/TopAppBar.vue'
 import { useAuthStore } from '../stores/authStore'
+import { useNotificationStore } from '../stores/notificationStore'
 
 type NavItem = {
   title: string
@@ -44,6 +44,7 @@ type NavItem = {
 }
 
 const auth = useAuthStore()
+const notificationStore = useNotificationStore()
 const router = useRouter()
 const { mdAndUp } = useDisplay()
 const isDesktop = computed(() => mdAndUp.value)
@@ -61,6 +62,12 @@ const navItems: NavItem[] = [
 onMounted(async () => {
   await auth.checkAuth()
   drawer.value = isDesktop.value
+  try {
+    await notificationStore.fetchUnreadCount()
+  } catch {
+    // Backend puede no tener aún /api/notifications (ej. Render sin deploy)
+    // El contador queda en 0 y la app sigue funcionando
+  }
 })
 
 watch(isDesktop, (desktop) => {
