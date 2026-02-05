@@ -15,7 +15,7 @@ const isProduction = !isDevelopment
 export const DATABASE_CONFIG = {
   // Supabase (runtime con pooler / pgbouncer)
   DATABASE_URL: 'postgresql://postgres.fpxxzvimzjiybnzeaaea:hOLaTeclab2025@aws-0-us-west-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1',
-  
+
   // Supabase (direct, para Prisma db pull / migraciones)
   DIRECT_URL: 'postgresql://postgres.fpxxzvimzjiybnzeaaea:hOLaTeclab2025@aws-0-us-west-2.pooler.supabase.com:5432/postgres',
 } as const

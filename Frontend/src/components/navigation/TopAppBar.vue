@@ -10,16 +10,39 @@
 
     <v-spacer />
 
-    <!-- Notifications panel con badge -->
-    <NotificationPanel @update:unread-count="emit('update:unreadCount', $event)">
+    <!-- Notifications: menú con panel -->
+    <v-menu
+      v-model="notificationMenuOpen"
+      :close-on-content-click="false"
+      location="bottom end"
+      transition="scale-transition"
+      min-width="320"
+    >
       <template #activator="{ props: menuProps }">
         <v-btn v-bind="menuProps" icon variant="text">
-          <NotificationBadge :count="unreadCount">
+          <v-badge
+            :content="notificationStore.unreadCount"
+            :model-value="notificationStore.unreadCount > 0"
+            color="primary"
+          >
             <v-icon icon="mdi-bell-outline" />
-          </NotificationBadge>
+          </v-badge>
         </v-btn>
       </template>
-    </NotificationPanel>
+      <NotificationPanel
+        :open="notificationMenuOpen"
+        @close="notificationMenuOpen = false"
+        @toast="showToast"
+      />
+    </v-menu>
+
+    <!-- Toast éxito (marcar todo leído) -->
+    <v-snackbar v-model="snackbar.open" :timeout="4000" color="success">
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.open = false">Cerrar</v-btn>
+      </template>
+    </v-snackbar>
 
     <!-- User menu -->
     <v-menu>
@@ -40,15 +63,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
+import { useNotificationStore } from '../../stores/notificationStore'
 import NotificationPanel from '../notifications/NotificationPanel.vue'
-import NotificationBadge from '../notifications/NotificationBadge.vue'
 
-const props = defineProps<{
+defineProps<{
   isMobile: boolean
-  unreadCount: number
 }>()
 
 const emit = defineEmits<{
@@ -59,6 +81,14 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const auth = useAuthStore()
+const notificationStore = useNotificationStore()
+const notificationMenuOpen = ref(false)
+const snackbar = ref({ open: false, message: '' })
+
+function showToast(message: string) {
+  snackbar.value.message = message
+  snackbar.value.open = true
+}
 
 /**
  * ✅ Título dinámico:

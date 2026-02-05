@@ -18,7 +18,7 @@
     <v-divider />
 
     <!-- Menu items -->
-    <v-list nav density="comfortable" active-color="primary">
+    <v-list nav density="comfortable" color="primary">
       <v-list-item
         v-for="item in items"
         :key="item.title"

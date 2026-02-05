@@ -1,6 +1,6 @@
 export type NotificationType = 'FEEDBACK_RECEIVED' | 'COMMENT_RECEIVED' | 'FEEDBACK_UPDATED'
 
-export type Notification = {
+export interface Notification {
   id: string
   userId: string
   type: NotificationType
