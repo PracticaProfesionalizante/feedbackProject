@@ -34,18 +34,19 @@ export const dashboardController = {
       await Promise.all([
         prisma.feedback.groupBy({
           by: ['status'],
-          where: { toUserId: userId },
+          where: { toUserId: userId, deletedAt: null },
           _count: { _all: true },
         }),
         prisma.feedback.groupBy({
           by: ['type'],
           where: {
+            deletedAt: null,
             OR: [{ toUserId: userId }, { fromUserId: userId }],
           },
           _count: { _all: true },
         }),
-        prisma.feedback.count({ where: { toUserId: userId } }),
-        prisma.feedback.count({ where: { fromUserId: userId } }),
+        prisma.feedback.count({ where: { toUserId: userId, deletedAt: null } }),
+        prisma.feedback.count({ where: { fromUserId: userId, deletedAt: null } }),
         prisma.notification.count({ where: { userId, read: false } }),
       ])
 

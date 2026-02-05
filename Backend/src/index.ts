@@ -56,6 +56,9 @@ app.use('/api/notifications', notificationRoutes)
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)
 
-// 👇 CAMBIA ESTO AL FINAL:
-export const server = app.listen(PORT, () => {
-})
+// export server
+export const server =
+  process.env.NODE_ENV === 'test'
+    ? null
+    : app.listen(PORT, () => {})
+
