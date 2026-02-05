@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -104,4 +103,32 @@ enum NotificationType {
   FEEDBACK_RECEIVED
   COMMENT_RECEIVED
   FEEDBACK_UPDATED
+}
+
+// Tabla de auditoría: registra quién (userId), desde qué IP y qué acción en cada tabla.
+model AuditLog {
+  id            String   @id @default(uuid())
+  tableName     String   // Feedback, Comment, Notification, User, etc.
+  recordId      String   // id del registro afectado
+  action        AuditAction
+  userId        String?  // quien realizó la acción (null si no autenticado)
+  ip            String?
+  userAgent     String?
+  requestMethod String?  // GET, POST, PATCH, DELETE
+  requestPath   String?  // ej. /api/feedbacks/abc-123
+  description   String?  // texto legible opcional, ej. "Login de juan@mail.com"
+  oldData       Json?
+  newData       Json?
+  createdAt     DateTime @default(now())
+
+  @@index([tableName, recordId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
 }

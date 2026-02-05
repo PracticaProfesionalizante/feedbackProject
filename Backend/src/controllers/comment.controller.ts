@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../utils/prisma';
-import { notificationService } from '../services/notification.service'; // Importar el nuevo servicio
+import { notificationService } from '../services/notification.service';
+import { auditLog } from '../services/audit.service';
 
 
 export const getComments = async (req: Request, res: Response, next: NextFunction) => {
@@ -55,6 +56,13 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
         }
       }
     });
+
+    await auditLog(req, {
+      tableName: 'Comment',
+      recordId: comment.id,
+      action: 'CREATE',
+      newData: { feedbackId, userId, content: comment.content },
+    });
     
     // Crear notificación para el owner del feedback si no es el mismo que comenta
     if (feedback.toUserId !== userId) {
@@ -92,6 +100,13 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
     await prisma.comment.update({
       where: { id },
       data: { deletedAt: new Date() }
+    });
+
+    await auditLog(req, {
+      tableName: 'Comment',
+      recordId: id,
+      action: 'DELETE',
+      oldData: { feedbackId: comment.feedbackId, userId: comment.userId, content: comment.content },
     });
     
     res.status(204).send();

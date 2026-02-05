@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client"
 import type { Prisma as PrismaTypes } from "@prisma/client"
 import { prisma } from '../utils/prisma'
 import { AppError } from "../middleware/errorHandler"
+import { auditLog } from '../services/audit.service'
 import {
   idParamSchema,
   listFeedbacksQuerySchema,
@@ -219,8 +220,12 @@ async list(req: Request, res: Response, next: NextFunction) {
       },
     })
 
-    // (Opcional) crear notificación al destinatario
-    // await prisma.notification.create({ ... })
+    await auditLog(req, {
+      tableName: 'Feedback',
+      recordId: created.id,
+      action: 'CREATE',
+      newData: { type: created.type, content: created.content, fromUserId: created.fromUserId, toUserId: created.toUserId },
+    })
 
     return res.status(201).json(created)
   },
@@ -258,7 +263,14 @@ async list(req: Request, res: Response, next: NextFunction) {
       },
     })
 
-    // (Opcional) notificación al autor o destinatario según cambio
+    await auditLog(req, {
+      tableName: 'Feedback',
+      recordId: id,
+      action: 'UPDATE',
+      oldData: { content: feedback.content, status: feedback.status },
+      newData: { content: updated.content, status: updated.status },
+    })
+
     return res.json(updated)
   },
 
@@ -269,7 +281,7 @@ async list(req: Request, res: Response, next: NextFunction) {
 
     const feedback = await prisma.feedback.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, fromUserId: true },
+      select: { id: true, fromUserId: true, content: true, status: true },
     })
 
     if (!feedback) return res.status(404).json({ message: 'Feedback no encontrado' })
@@ -282,6 +294,14 @@ async list(req: Request, res: Response, next: NextFunction) {
       prisma.comment.updateMany({ where: { feedbackId: id }, data: { deletedAt: now } }),
       prisma.feedback.update({ where: { id }, data: { deletedAt: now } }),
     ])
+
+    await auditLog(req, {
+      tableName: 'Feedback',
+      recordId: id,
+      action: 'DELETE',
+      oldData: { fromUserId: feedback.fromUserId, content: feedback.content, status: feedback.status },
+    })
+
     return res.status(204).send()
   },
 }

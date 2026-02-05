@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/errorHandler'
+import { auditLog } from '../services/audit.service'
 
 // GET /api/notifications?read=true|false&limit=50
 export const getNotifications = async (req: Request, res: Response, next: NextFunction) => {
@@ -47,13 +48,23 @@ export const markNotificationAsRead = async (req: Request, res: Response, next: 
     const userId = req.user!.id
     const { id } = req.params
 
-    // updateMany: filtra por id + userId (seguridad)
+    const before = await prisma.notification.findFirst({ where: { id, userId }, select: { read: true } })
     const updated = await prisma.notification.updateMany({
       where: { id, userId },
       data: { read: true },
     })
 
     if (updated.count === 0) throw new AppError('Notificación no encontrada', 404)
+
+    if (before && !before.read) {
+      await auditLog(req, {
+        tableName: 'Notification',
+        recordId: id,
+        action: 'UPDATE',
+        oldData: { read: false },
+        newData: { read: true },
+      })
+    }
 
     res.status(204).send()
   } catch (error) {
@@ -66,10 +77,19 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response, ne
   try {
     const userId = req.user!.id
 
-    await prisma.notification.updateMany({
+    const updated = await prisma.notification.updateMany({
       where: { userId, read: false },
       data: { read: true },
     })
+
+    if (updated.count > 0) {
+      await auditLog(req, {
+        tableName: 'Notification',
+        recordId: `bulk-${userId}-${Date.now()}`,
+        action: 'UPDATE',
+        newData: { read: true, count: updated.count },
+      })
+    }
 
     res.status(204).send()
   } catch (error) {
