@@ -27,6 +27,23 @@
         @delete="confirmDelete"
       />
 
+      <!-- ✅ Acciones -->
+      <v-divider class="my-6" />
+
+      <!-- Autor: puede editar texto + check/uncheck -->
+      <ActionListEditor
+        v-if="isAuthor"
+        v-model="actionsLocal"
+      />
+
+      <!-- Receptor: solo check/uncheck (emit-only => listo para backend) -->
+      <ActionListViewer
+        v-else
+        :model-value="actionsLocal"
+        emit-only
+        @toggle="handleToggleAction"
+      />
+
       <!-- ✅ Comentarios -->
       <v-divider class="my-6" />
       <CommentList :feedback-id="feedbackId" :refetch-interval-ms="15000" />
@@ -60,16 +77,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
-import FeedbackDetail from '@/components/feedbacks/FeedbackDetail.vue'
-import CommentList from '@/components/comments/commentList.vue'
+import FeedbackDetail from '../components/feedbacks/FeedbackDetail.vue'
 
-import { feedbackService } from '../services/feedbackServices' // ✅ ajustá si tu archivo se llama distinto
+import ActionListViewer from '../components/feedbacks/ActionListViewer.vue'
+import ActionListEditor from '../components/feedbacks/ActionListEditor.vue'
+
+import { feedbackService } from '../services/feedbackServices'
 import { useAuthStore } from '../stores/authStore'
-import type { Feedback, FeedbackStatus } from '../types/feedback'
+import type { Feedback, FeedbackAction, FeedbackStatus } from '@/types/feedback'
 
 /* =========================
    Setup
@@ -82,6 +101,22 @@ const auth = useAuthStore()
 
 const feedbackId = route.params.id as string
 const currentUserId = computed(() => auth.user?.id ?? '')
+
+/**
+ * ✅ Fallback local (solo para poder probar ahora)
+ * Cuando el backend devuelva feedback.actions, esto se reemplaza automáticamente.
+ */
+const actionsDraft = ref<FeedbackAction[]>([
+  { id: 'a1', text: 'Definir próximos pasos', done: false },
+  { id: 'a2', text: 'Hacer seguimiento en 1 semana', done: true }
+])
+
+/**
+ * ✅ Lista de acciones "local" que se muestra en UI:
+ * - si el backend trae feedback.actions => usamos esas
+ * - si no trae => usamos actionsDraft
+ */
+const actionsLocal = ref<FeedbackAction[]>([])
 
 /* =========================
    Query: detalle feedback
@@ -105,11 +140,29 @@ const errorMessage = computed(() => {
   return error.value instanceof Error ? error.value.message : 'Error desconocido'
 })
 
+/**
+ * ✅ Permisos UI (el backend igual valida)
+ */
+const isAuthor = computed(() => feedback.value?.fromUserId === currentUserId.value)
+const isReceiver = computed(() => feedback.value?.toUserId === currentUserId.value)
+
+/**
+ * ✅ Sincroniza actionsLocal cada vez que llega/actualiza el feedback.
+ * Si el backend trae actions, usamos eso; sino fallback draft.
+ */
+watch(
+  () => feedback.value,
+  (fb) => {
+    const fromApi = fb?.actions
+    actionsLocal.value = (fromApi && Array.isArray(fromApi) ? fromApi : actionsDraft.value).map(a => ({ ...a }))
+  },
+  { immediate: true }
+)
+
 /* =========================
-   Mutations
+   Mutations (feedback)
 ========================= */
 
-// Cambiar estado (solo destinatario; el backend valida)
 const updateStatusMutation = useMutation({
   mutationFn: (status: FeedbackStatus) => feedbackService.updateStatus(feedbackId, status),
   onSuccess: () => {
@@ -121,7 +174,6 @@ const updateStatusMutation = useMutation({
   }
 })
 
-// Editar contenido (solo autor y solo PENDING; el backend valida)
 const updateContentMutation = useMutation({
   mutationFn: (content: string) => feedbackService.updateFeedback(feedbackId, { content }),
   onSuccess: () => {
@@ -133,7 +185,6 @@ const updateContentMutation = useMutation({
   }
 })
 
-// Eliminar (solo autor; el backend valida)
 const deleteMutation = useMutation({
   mutationFn: () => feedbackService.deleteFeedback(feedbackId),
   onSuccess: () => {
@@ -146,7 +197,7 @@ const deleteMutation = useMutation({
 })
 
 /* =========================
-   Handlers
+   Handlers (feedback)
 ========================= */
 
 function handleUpdateStatus(status: FeedbackStatus) {
@@ -155,6 +206,28 @@ function handleUpdateStatus(status: FeedbackStatus) {
 
 function handleEditContent(content: string) {
   updateContentMutation.mutate(content)
+}
+
+/* =========================
+   Handlers (acciones)
+========================= */
+
+/**
+ * ✅ B2: wiring listo para backend.
+ * ActionListViewer emite { id, done } y acá:
+ * - por ahora actualizamos actionsLocal para poder probar
+ * - cuando exista endpoint, reemplazamos por mutation y luego invalidamos query
+ */
+function handleToggleAction(payload: { id: string; done: boolean }) {
+  // UI inmediata (modo demo)
+  const idx = actionsLocal.value.findIndex((a) => a.id === payload.id)
+  if (idx >= 0) {
+    actionsLocal.value[idx] = { ...actionsLocal.value[idx], done: payload.done }
+  }
+
+  // TODO (cuando el backend esté):
+  // actionService.update(payload.id, { done: payload.done })
+  //   -> onSuccess: invalidateRelated()
 }
 
 /* =========================

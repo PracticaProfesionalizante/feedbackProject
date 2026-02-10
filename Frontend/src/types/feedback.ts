@@ -19,11 +19,10 @@ export type Feedback = {
   status: FeedbackStatus
   createdAt: string
   updatedAt: string
-  comments?: Comment[]
-
-  // si el backend incluye relaciones:
   fromUser?: FeedbackUser
   toUser?: FeedbackUser
+
+  actions?: FeedbackAction[]
 }
 
 export type Comment = {
@@ -63,10 +62,29 @@ export type CreateFeedbackDto = {
   toUserId: string
   type: FeedbackType
   content: string
+  // actions?: CreateFeedbackActionDto[] // ✅ nuevo
+  actions?: { text: string }[]
 }
 
 export type UpdateFeedbackDto = {
   type?: FeedbackType
   content?: string
   status?: FeedbackStatus
+}
+export type FeedbackAction = {
+  id: string
+  feedbackId?: string // opcional en modo "draft" antes de guardar
+  text: string
+  done: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type CreateFeedbackActionDto = {
+  text: string
+}
+
+export type UpdateFeedbackActionDto = {
+  text?: string
+  done?: boolean
 }

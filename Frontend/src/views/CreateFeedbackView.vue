@@ -2,11 +2,7 @@
   <v-container>
     <!-- Header -->
     <div class="d-flex align-center mb-6">
-      <v-btn
-        icon="mdi-arrow-left"
-        variant="text"
-        @click="goBack"
-      />
+      <v-btn icon="mdi-arrow-left" variant="text" @click="goBack" />
       <h1 class="text-h5 font-weight-bold ml-2">Nuevo Feedback</h1>
     </div>
 
@@ -21,6 +17,11 @@
           @submit="handleSubmit"
           @cancel="goBack"
         />
+
+        <!-- ✅ Acciones (Checklist) -->
+        <v-divider class="my-6" />
+
+        <ActionListEditor v-model="actions" />
       </v-card-text>
     </v-card>
 
@@ -40,8 +41,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { feedbackService } from '../services/feedbackServices'
 import FeedbackForm from '../components/feedbacks/FeedbackForm.vue'
+import ActionListEditor from '@/components/feedbacks/ActionListEditor.vue'
 import { API_BASE_URL } from '../config/constants'
-import type { FeedbackType } from '../types/feedback'
+import type { FeedbackAction, FeedbackType } from '../types/feedback'
 
 type AvailableUser = {
   id: string
@@ -57,6 +59,14 @@ const auth = useAuthStore()
 const loadingUsers = ref(false)
 const submitting = ref(false)
 const availableUsers = ref<AvailableUser[]>([])
+
+/**
+ * ✅ Acciones en modo draft (frontend)
+ * - Por ahora se almacenan localmente
+ * - Cuando el backend soporte actions en POST /feedbacks,
+ *   las mandamos en el DTO como actions: [{ text }]
+ */
+const actions = ref<FeedbackAction[]>([])
 
 const snackbar = ref({
   open: false,
@@ -91,12 +101,14 @@ async function fetchAvailableUsers() {
       if (employeesRes.ok) {
         const employeesData = await employeesRes.json()
         const employees = employeesData?.employees || employeesData || []
-        users.push(...employees.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(
+          ...employees.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role
+          }))
+        )
       }
 
       // Sus propios líderes
@@ -106,12 +118,14 @@ async function fetchAvailableUsers() {
       if (leadersRes.ok) {
         const leadersData = await leadersRes.json()
         const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(
+          ...leaders.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role
+          }))
+        )
       }
     } else {
       // Si es EMPLOYEE: solo sus líderes directos
@@ -121,22 +135,22 @@ async function fetchAvailableUsers() {
       if (leadersRes.ok) {
         const leadersData = await leadersRes.json()
         const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(
+          ...leaders.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role
+          }))
+        )
       }
     }
 
-    // Eliminar duplicados (por si un LEADER también es líder de otro)
-    const uniqueUsers = Array.from(
-      new Map(users.map(u => [u.id, u])).values()
-    )
+    // Eliminar duplicados
+    const uniqueUsers = Array.from(new Map(users.map((u) => [u.id, u])).values())
 
     // Filtrar el usuario actual (no puede enviarse feedback a sí mismo)
-    availableUsers.value = uniqueUsers.filter(u => u.id !== userId)
+    availableUsers.value = uniqueUsers.filter((u) => u.id !== userId)
   } catch (error: any) {
     showError(error?.message || 'Error al cargar usuarios disponibles')
     availableUsers.value = []
@@ -145,22 +159,23 @@ async function fetchAvailableUsers() {
   }
 }
 
-async function handleSubmit(data: {
-  toUserId: string
-  type: FeedbackType
-  content: string
-}) {
+async function handleSubmit(data: { toUserId: string; type: FeedbackType; content: string }) {
   submitting.value = true
   try {
     const feedback = await feedbackService.createFeedback({
       toUserId: data.toUserId,
       type: data.type,
-      content: data.content
-    })
+      content: data.content,
+
+      // ✅ listo para cuando el backend soporte acciones
+      actions: actions.value.map((a) => ({ text: a.text }))
+    } as any) // <-- podés sacar el any cuando tu CreateFeedbackDto incluya actions
 
     showSuccess('Feedback creado exitosamente')
-    
-    // Redirigir al detalle del feedback después de un breve delay
+
+    // Reset draft actions
+    actions.value = []
+
     setTimeout(() => {
       router.push(`/feedbacks/${feedback.id}`)
     }, 1000)
@@ -176,19 +191,11 @@ function goBack() {
 }
 
 function showSuccess(message: string) {
-  snackbar.value = {
-    open: true,
-    message,
-    color: 'success'
-  }
+  snackbar.value = { open: true, message, color: 'success' }
 }
 
 function showError(message: string) {
-  snackbar.value = {
-    open: true,
-    message,
-    color: 'error'
-  }
+  snackbar.value = { open: true, message, color: 'error' }
 }
 
 onMounted(async () => {
