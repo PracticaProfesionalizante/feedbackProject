@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import jwt, { SignOptions } from 'jsonwebtoken'
-import { AppError } from '../middleware/errorHandler'
+import { AppError } from '../middleware/error.handler'
 import { prisma } from '../utils/prisma'
 import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/constants'
 

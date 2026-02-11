@@ -3,14 +3,15 @@ import './config/constants'
 
 import express from 'express'
 import cors from 'cors'
-import { errorHandler } from './middleware/errorHandler'
+import { errorHandler } from './middleware/error.handler'
 import { authRoutes } from './routes/auth.routes'
-import teamRoutes from './routes/teamRoutes'
+import teamRoutes from './routes/team.routes'
 import { userRoutes } from './routes/user.routes'
-import feedbackRoutes from './routes/feedbackRoutes'
-import dashboardRoutes from './routes/dashboardRoutes'
+import feedbackRoutes from './routes/feedback.routes'
+import dashboardRoutes from './routes/dashboard.routes'
 import commentRoutes from './routes/comment.routes'
 import notificationRoutes from './routes/notification.routes'
+import { orgChartRoutes } from './routes/org-chart.routes'
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
 export const app = express()
@@ -52,6 +53,7 @@ app.use('/api/feedbacks', feedbackRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api', commentRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/org-chart', orgChartRoutes)
 
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)

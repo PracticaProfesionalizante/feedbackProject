@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../middleware/errorHandler';
+import { AppError } from '../middleware/error.handler';
 import { prisma } from '../utils/prisma';
 import { notificationService } from '../services/notification.service';
 import { auditLog } from '../services/audit.service';

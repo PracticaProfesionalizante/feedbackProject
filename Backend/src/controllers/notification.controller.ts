@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import { prisma } from '../utils/prisma'
-import { AppError } from '../middleware/errorHandler'
+import { AppError } from '../middleware/error.handler'
 import { auditLog } from '../services/audit.service'
 
 // GET /api/notifications?read=true|false&limit=50

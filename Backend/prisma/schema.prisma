@@ -21,6 +21,44 @@ model User {
   notifications     Notification[]
   teamsLed          TeamMember[]   @relation("TeamLeader")
   teamMemberships   TeamMember[]   @relation("TeamMember")
+  orgPositions      UserOrgPosition[]
+}
+
+model OrgArea {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  positions OrgPosition[]
+
+  @@index([name])
+}
+
+model OrgPosition {
+  id          String            @id @default(uuid())
+  name        String
+  areaId      String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  area        OrgArea           @relation(fields: [areaId], references: [id], onDelete: Restrict)
+  userLinks   UserOrgPosition[]
+
+  @@unique([areaId, name])
+  @@index([name])
+  @@index([areaId])
+}
+
+model UserOrgPosition {
+  id         String      @id @default(uuid())
+  userId     String
+  positionId String
+  createdAt  DateTime    @default(now())
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position   OrgPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, positionId])
+  @@index([userId])
+  @@index([positionId])
 }
 
 model TeamMember {

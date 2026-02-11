@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { authService } from '../services/auth.service'
-import { AppError } from '../middleware/errorHandler'
+import { AppError } from '../middleware/error.handler'
 import { AuthRequest } from '../middleware/auth.middleware'
 import { auditLog } from '../services/audit.service'
 

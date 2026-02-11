@@ -7,3 +7,4 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   }
   next()
 }
+
