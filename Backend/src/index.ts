@@ -12,6 +12,7 @@ import dashboardRoutes from './routes/dashboard.routes'
 import commentRoutes from './routes/comment.routes'
 import notificationRoutes from './routes/notification.routes'
 import { orgChartRoutes } from './routes/org-chart.routes'
+import { rolesRoutes } from './routes/roles.routes'
 import { PORT, CORS_ORIGINS, isDevelopment } from './config/constants'
 
 export const app = express()
@@ -54,6 +55,7 @@ app.use('/api/dashboard', dashboardRoutes)
 app.use('/api', commentRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/org-chart', orgChartRoutes)
+app.use('/api/roles', rolesRoutes)
 
 // Error handler (Siempre va después de las rutas)
 app.use(errorHandler)

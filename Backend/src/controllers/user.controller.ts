@@ -36,6 +36,18 @@ async function buildProfile(req: AuthRequest, res: Response) {
           },
         },
       },
+      assignedRoles: {
+        orderBy: [{ role: { name: 'asc' } }],
+        select: {
+          role: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+      },
     },
   })
 
@@ -71,7 +83,7 @@ async function buildProfile(req: AuthRequest, res: Response) {
     positionsByAreaMap.set(areaId, current)
   })
 
-  const { orgPositions, ...userBase } = user
+  const { orgPositions, assignedRoles, ...userBase } = user
 
   return res.json({
     user: {
@@ -87,6 +99,7 @@ async function buildProfile(req: AuthRequest, res: Response) {
       },
       positions: orgPositions.map((assignment) => assignment.position),
       positionsByArea: Array.from(positionsByAreaMap.values()),
+      roles: assignedRoles.map((assignment) => assignment.role),
     },
   })
 }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { Role } from '@prisma/client'
-import { AppError } from './errorHandler'
+import { AppError } from './error.handler'
 import { prisma } from '../utils/prisma'
 import { JWT_SECRET } from '../config/constants'
 
