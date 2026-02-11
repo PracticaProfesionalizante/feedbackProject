@@ -37,9 +37,11 @@ export const userController = {
     ])
 
     return res.json({
-      ...user,
-      stats: { feedbacksGiven, feedbacksReceived, comments },
-      teamInfo: { employeesCount, leadersCount },
+      user: {
+        ...user,
+        stats: { feedbacksGiven, feedbacksReceived, comments },
+        teamInfo: { employeesCount, leadersCount },
+      },
     })
   },
 }
