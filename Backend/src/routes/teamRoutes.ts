@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { teamController } from '../controllers/team.controller'
+import { teamController } from '../controllers/teamController'
 import { requireAuth } from '../middleware/require.auth'
 import { requireRole } from '../middleware/require.role'
 import { Role } from '@prisma/client'

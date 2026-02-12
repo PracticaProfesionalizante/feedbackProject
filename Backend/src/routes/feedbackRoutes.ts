@@ -3,7 +3,7 @@ import {
   feedbackController,
   getRecentFeedbacks,
   updateStatus,
-} from '../controllers/feedback.controller'
+} from '../controllers/feedbackController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
 import { validate } from '../middleware/validate.middleware'

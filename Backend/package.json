@@ -11,6 +11,7 @@
     "prisma:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio",
    "test": "jest --runInBand",
+    "test:smoke": "jest --runInBand src/__tests__/endpoints.smoke.test.ts",
     "create-users": "ts-node scripts/create-test-users.ts"
   },
   "keywords": [],

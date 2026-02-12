@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { Role } from '@prisma/client'
-import { orgChartController } from '../controllers/org-chart.controller'
+import { orgChartController } from '../controllers/orgChartController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
 import { requireRole } from '../middleware/require.role'

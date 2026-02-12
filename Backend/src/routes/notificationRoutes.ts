@@ -5,7 +5,7 @@ import {
   getUnreadCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-} from '../controllers/notification.controller'
+} from '../controllers/notificationController'
 
 const router = Router()
 

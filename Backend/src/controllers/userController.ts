@@ -3,6 +3,21 @@ import type { AuthRequest } from '../middleware/auth.middleware'
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/error.handler'
 
+type ProfileUser = {
+  id: string
+  email: string
+  name: string
+  role: string
+  createdAt: Date
+  updatedAt: Date
+  orgPositions: Array<{
+    position: { id: string; name: string; area: { id: string; name: string } }
+  }>
+  assignedRoles: Array<{
+    role: { id: string; name: string; description: string | null }
+  }>
+}
+
 async function buildProfile(req: AuthRequest, res: Response) {
   if (!req.userId) {
     throw new AppError('Unauthorized', 401)
@@ -10,7 +25,10 @@ async function buildProfile(req: AuthRequest, res: Response) {
 
   const userId = req.userId
 
-  const user = await prisma.user.findUnique({
+  const user = await (prisma.user.findUnique as unknown as (args: {
+    where: { id: string }
+    select: Record<string, unknown>
+  }) => Promise<ProfileUser | null>)({
     where: { id: userId },
     select: {
       id: true,

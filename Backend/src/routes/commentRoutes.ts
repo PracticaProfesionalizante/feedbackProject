@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createComment, deleteComment, getComments } from '../controllers/comment.controller';
+import { createComment, deleteComment, getComments } from '../controllers/commentController';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { createCommentSchema, deleteCommentSchema, getCommentsSchema } from '../validators/comment.validator';
