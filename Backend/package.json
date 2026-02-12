@@ -12,7 +12,8 @@
     "prisma:studio": "prisma studio",
    "test": "jest --runInBand",
     "test:smoke": "jest --runInBand src/__tests__/endpoints.smoke.test.ts",
-    "create-users": "ts-node scripts/create-test-users.ts"
+    "create-users": "ts-node scripts/create-test-users.ts",
+    "seed": "ts-node scripts/seed-data.ts"
   },
   "keywords": [],
   "author": "",
