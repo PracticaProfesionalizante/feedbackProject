@@ -9,7 +9,13 @@ import '../src/config/constants'
 import bcrypt from 'bcrypt'
 import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient() as PrismaClient & {
+  accessRole: { findMany: (args?: object) => Promise<{ id: string }[]> }
+  userRoleLink: { upsert: (args: object) => Promise<unknown> }
+  orgArea: { upsert: (args: object) => Promise<{ id: string }>; findMany: () => Promise<{ id: string }[]> }
+  orgPosition: { upsert: (args: object) => Promise<{ id: string }>; findMany: () => Promise<{ id: string }[]> }
+  userOrgPosition: { upsert: (args: object) => Promise<unknown> }
+}
 
 const SEED_PASSWORD = 'Password123'
 const SALT_ROUNDS = 10
