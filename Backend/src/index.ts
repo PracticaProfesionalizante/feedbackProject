@@ -65,4 +65,3 @@ export const server =
   process.env.NODE_ENV === 'test'
     ? null
     : app.listen(PORT, () => {})
-

@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { Role } from '@prisma/client'
 import { orgChartController } from '../controllers/orgChartController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
 import { requireRole } from '../middleware/require.role'
+import { Role } from '@prisma/client'
 import { validate } from '../middleware/validate.middleware'
 import {
   areaIdSchema,
@@ -36,4 +36,3 @@ router.get('/users/:userId/positions', validate(assignUserPositionsSchema), orgC
 router.put('/users/:userId/positions', validate(assignUserPositionsSchema), orgChartController.replaceUserPositions)
 
 export { router as orgChartRoutes }
-

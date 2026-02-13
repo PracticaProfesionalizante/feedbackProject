@@ -4,7 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -23,32 +24,6 @@ model User {
   teamMemberships   TeamMember[]   @relation("TeamMember")
   orgPositions      UserOrgPosition[]
   assignedRoles     UserRoleLink[]
-}
-
-model AccessRole {
-  id          String         @id @default(uuid())
-  name        String         @unique
-  description String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  users       UserRoleLink[]
-
-  @@index([name])
-  @@map("roles")
-}
-
-model UserRoleLink {
-  id        String     @id @default(uuid())
-  userId    String
-  roleId    String
-  createdAt DateTime   @default(now())
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      AccessRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, roleId])
-  @@index([userId])
-  @@index([roleId])
-  @@map("user_roles")
 }
 
 model OrgArea {
@@ -147,9 +122,30 @@ model Notification {
   @@index([userId, read])
 }
 
-enum Role {
-  LEADER
-  EMPLOYEE
+model AccessRole {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  users       UserRoleLink[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model UserRoleLink {
+  id        String     @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      AccessRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
 }
 
 enum FeedbackType {
@@ -168,6 +164,11 @@ enum NotificationType {
   FEEDBACK_RECEIVED
   COMMENT_RECEIVED
   FEEDBACK_UPDATED
+}
+
+enum Role {
+  LEADER
+  EMPLOYEE
 }
 
 // Tabla de auditoría: registra quién (userId), desde qué IP y qué acción en cada tabla.

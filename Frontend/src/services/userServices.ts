@@ -1,4 +1,4 @@
-import api from '../services/api' // tu axios instance
+import api from './api' // tu axios instance
 
 export type UserProfile = {
   id: string
