@@ -126,15 +126,12 @@ const userRolesQuery = useQuery({
     return userRoleService.getUserRoles(selectedUserId.value)
   },
   staleTime: 0,
-  cacheTime: 0,
-  onSuccess: (val) => {
-    if (val?.roleIds) selectedRoleIds.value = [...val.roleIds]
-  },
+  gcTime: 0,
 })
 
 watch(
   () => userRolesQuery.data.value,
-  (val) => {
+  (val: { roleIds?: string[] } | undefined) => {
     if (val?.roleIds) selectedRoleIds.value = [...val.roleIds]
   }
 )
