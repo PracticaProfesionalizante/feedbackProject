@@ -6,7 +6,7 @@
       :model-value="drawer"
       @update:model-value="drawer = $event"
       :permanent="isDesktop"
-      :items="navItems"
+      :items="filteredNavItems"
       @logout="handleLogout"
     />
 
@@ -42,6 +42,7 @@ type NavItem = {
   icon: string
   to?: string
   action?: 'logout'
+  requireLeader?: boolean
 }
 
 const auth = useAuthStore()
@@ -56,10 +57,15 @@ const navItems: NavItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/dashboard' },
   { title: 'Feedbacks', icon: 'mdi-clipboard-text-outline', to: '/feedbacks' },
   { title: 'Mi Equipo', icon: 'mdi-account-group-outline', to: '/team' },
+  { title: 'Gestión de roles', icon: 'mdi-shield-account-outline', to: '/roles', requireLeader: true },
   { title: 'Mi Perfil', icon: 'mdi-account-outline', to: '/profile' },
   { title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/notifications' },
   { title: 'Cerrar Sesión', icon: 'mdi-logout', action: 'logout' }
 ]
+
+const filteredNavItems = computed(() =>
+  navItems.filter((item) => !item.requireLeader || auth.isLeader)
+)
 
 onMounted(async () => {
   await auth.checkAuth()

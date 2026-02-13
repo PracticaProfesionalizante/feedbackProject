@@ -48,14 +48,24 @@ export const authenticate = (
 
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
-        select: { id: true, role: true, email: true, name: true },
+        select: {
+          id: true,
+          role: true,
+          email: true,
+          name: true,
+        },
       })
 
       if (!user) {
         throw new AppError('User not found', 401)
       }
 
-      req.user = user
+      req.user = {
+        id: user.id,
+        role: user.role,
+        email: user.email,
+        name: user.name,
+      }
       next()
     } catch (error) {
       const appError = new AppError('Invalid or expired token', 401)

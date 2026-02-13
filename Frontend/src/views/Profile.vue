@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import ProfileInfo from '../components/profile/ProfileInfo.vue'
 import ProfileStats from '../components/profile/ProfileStats.vue'
-import { UserService } from '../services/user.services'
+import { UserService } from '../services/userServices'
 import { useAuthStore } from '../stores/authStore' 
 
 const router = useRouter()
