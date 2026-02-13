@@ -60,6 +60,11 @@ const router = createRouter({
           path: 'feedbacks/:id',
           component: () => import('../views/FeedbackDetailView.vue'),
           meta: { title: 'Detalle de Feedback' }
+        },
+        {
+          path: 'roles',
+          component: () => import('../views/RolesView.vue'),
+          meta: { title: 'Gestión de roles' }
         }
 
         // Notificaciones (cuando exista la vista)
