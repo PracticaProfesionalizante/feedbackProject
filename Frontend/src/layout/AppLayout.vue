@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
   { title: 'Feedbacks', icon: 'mdi-clipboard-text-outline', to: '/feedbacks' },
   { title: 'Mi Equipo', icon: 'mdi-account-group-outline', to: '/team' },
   { title: 'Gestión de roles', icon: 'mdi-shield-account-outline', to: '/roles', requireLeader: true },
+  { title: 'Organigrama', icon: 'mdi-sitemap', to: '/organigrama', requireLeader: true },
   { title: 'Mi Perfil', icon: 'mdi-account-outline', to: '/profile' },
   { title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/notifications' },
   { title: 'Cerrar Sesión', icon: 'mdi-logout', action: 'logout' }

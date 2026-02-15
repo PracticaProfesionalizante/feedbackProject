@@ -65,6 +65,11 @@ const router = createRouter({
           path: 'roles',
           component: () => import('../views/RolesView.vue'),
           meta: { title: 'Gestión de roles' }
+        },
+        {
+          path: 'organigrama',
+          component: () => import('../views/OrganigramaView.vue'),
+          meta: { title: 'Organigrama' }
         }
 
         // Notificaciones (cuando exista la vista)
