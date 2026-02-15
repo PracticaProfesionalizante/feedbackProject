@@ -8,6 +8,8 @@ type ProfileUser = {
   email: string
   name: string
   role: string
+  birthdate: Date | null
+  country: string | null
   createdAt: Date
   updatedAt: Date
   orgPositions: Array<{
@@ -35,6 +37,8 @@ async function buildProfile(req: AuthRequest, res: Response) {
       email: true,
       name: true,
       role: true,
+      birthdate: true,
+      country: true,
       createdAt: true,
       updatedAt: true,
       orgPositions: {
@@ -122,6 +126,47 @@ async function buildProfile(req: AuthRequest, res: Response) {
   })
 }
 
+type UpdateProfileBody = {
+  name?: string
+  email?: string
+  birthdate?: string | null
+  country?: string | null
+}
+
+async function updateProfile(req: AuthRequest, res: Response) {
+  if (!req.userId) {
+    throw new AppError('Unauthorized', 401)
+  }
+
+  const { name, email, birthdate, country } = req.body as UpdateProfileBody
+
+  const updateData: Record<string, unknown> = {}
+
+  if (name !== undefined && typeof name === 'string' && name.trim()) {
+    updateData.name = name.trim()
+  }
+  if (email !== undefined && typeof email === 'string' && email.trim()) {
+    updateData.email = email.trim()
+  }
+  if (birthdate !== undefined) {
+    updateData.birthdate = birthdate ? new Date(birthdate) : null
+  }
+  if (country !== undefined) {
+    updateData.country = country && typeof country === 'string' ? country.trim() || null : null
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return buildProfile(req, res)
+  }
+
+  await prisma.user.update({
+    where: { id: req.userId },
+    data: updateData,
+  })
+
+  return buildProfile(req, res)
+}
+
 export const userController = {
   // GET /api/users/profile
   async profile(req: AuthRequest, res: Response) {
@@ -132,4 +177,7 @@ export const userController = {
   async getProfile(req: AuthRequest, res: Response) {
     return buildProfile(req, res)
   },
+
+  // PATCH /api/users/profile
+  updateProfile,
 }

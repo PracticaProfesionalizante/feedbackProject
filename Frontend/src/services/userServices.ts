@@ -5,6 +5,8 @@ export type UserProfile = {
   email: string
   name: string
   role: 'LEADER' | 'EMPLOYEE'
+  birthdate?: string | null
+  country?: string | null
   createdAt: string
   stats: {
     feedbacksGiven: number
@@ -36,8 +38,12 @@ export const UserService = {
     return { ...user, stats, teamInfo }
   },
 
-  // lo dejamos listo para más adelante
-  patchProfile: async (payload: { name?: string; email?: string; password?: string }) => {
+  patchProfile: async (payload: {
+    name?: string
+    email?: string
+    birthdate?: string | null
+    country?: string | null
+  }) => {
     const { data } = await api.patch('/users/profile', payload)
     return data
   },

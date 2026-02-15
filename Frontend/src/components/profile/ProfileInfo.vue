@@ -6,6 +6,8 @@ type Props = {
   email: string
   role: 'LEADER' | 'EMPLOYEE'
   createdAt: string
+  birthdate?: string | null
+  country?: string | null
   employeesCount: number
   leadersCount: number
 }
@@ -18,9 +20,14 @@ const emit = defineEmits<{
 const initial = computed(() => (props.name?.trim()?.[0] ?? '?').toUpperCase())
 
 const memberSince = computed(() => {
-  // simple: formateo local (después si quieren lo pasamos a date-fns)
   const d = new Date(props.createdAt)
   return isNaN(d.getTime()) ? props.createdAt : d.toLocaleDateString()
+})
+
+const birthdateFormatted = computed(() => {
+  if (!props.birthdate) return null
+  const d = new Date(props.birthdate)
+  return isNaN(d.getTime()) ? props.birthdate : d.toLocaleDateString()
 })
 </script>
 
@@ -60,6 +67,22 @@ const memberSince = computed(() => {
       </template>
       <v-list-item-title>Miembro desde</v-list-item-title>
       <v-list-item-subtitle class="mt-1">{{ memberSince }}</v-list-item-subtitle>
+    </v-list-item>
+
+    <v-list-item v-if="birthdateFormatted">
+      <template #prepend>
+        <v-icon icon="mdi-cake-variant-outline" />
+      </template>
+      <v-list-item-title>Fecha de cumpleaños</v-list-item-title>
+      <v-list-item-subtitle class="mt-1">{{ birthdateFormatted }}</v-list-item-subtitle>
+    </v-list-item>
+
+    <v-list-item v-if="country">
+      <template #prepend>
+        <v-icon icon="mdi-earth" />
+      </template>
+      <v-list-item-title>País</v-list-item-title>
+      <v-list-item-subtitle class="mt-1">{{ country }}</v-list-item-subtitle>
     </v-list-item>
   </v-list>
 

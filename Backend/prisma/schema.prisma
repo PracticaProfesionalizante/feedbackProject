@@ -14,6 +14,8 @@ model User {
   name              String
   role              Role           @default(EMPLOYEE)
   password          String
+  birthdate         DateTime?
+  country           String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   comments          Comment[]
