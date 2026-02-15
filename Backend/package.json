@@ -16,6 +16,7 @@
     "seed": "ts-node scripts/seed-data.ts",
     "seed:roles": "ts-node scripts/seed-roles.ts",
     "seed:org": "ts-node scripts/seed-org-chart.ts",
+    "seed:feedback": "ts-node scripts/seed-feedback.ts",
     "seed:all": "ts-node scripts/seed-all.ts"
   },
   "keywords": [],
