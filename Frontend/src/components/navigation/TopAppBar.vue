@@ -54,6 +54,9 @@
       </template>
 
       <v-list density="comfortable">
+        <v-list-item :to="{ path: '/profile' }" prepend-icon="mdi-account-outline" link>
+          <v-list-item-title>Mi Perfil</v-list-item-title>
+        </v-list-item>
         <v-list-item @click="emit('logout')" prepend-icon="mdi-logout">
           <v-list-item-title>Cerrar sesión</v-list-item-title>
         </v-list-item>

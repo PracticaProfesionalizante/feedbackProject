@@ -7,5 +7,6 @@ const router = Router()
 
 router.use(authenticate)
 router.get('/profile', requireAuth, userController.getProfile)
+router.patch('/profile', requireAuth, userController.updateProfile)
 
 export { router as userRoutes }

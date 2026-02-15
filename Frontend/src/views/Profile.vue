@@ -5,10 +5,8 @@ import { useQuery } from '@tanstack/vue-query'
 import ProfileInfo from '../components/profile/ProfileInfo.vue'
 import ProfileStats from '../components/profile/ProfileStats.vue'
 import { UserService } from '../services/userServices'
-import { useAuthStore } from '../stores/authStore' 
 
 const router = useRouter()
-const authStore = useAuthStore()
 
 
 
@@ -30,14 +28,6 @@ function goEdit() {
 
 function goTeam() {
   router.push('/team')
-}
-
-function logout() {
-  authStore.logout?.() // si ya existe
-  // fallback típico:
-  // localStorage.removeItem('token')
-  // authStore.$reset()
-  router.replace('/login')
 }
 </script>
 
@@ -76,6 +66,8 @@ function logout() {
             :email="profile.email"
             :role="profile.role"
             :createdAt="profile.createdAt"
+            :birthdate="profile.birthdate"
+            :country="profile.country"
             :employeesCount="profile.teamInfo.employeesCount"
             :leadersCount="profile.teamInfo.leadersCount"
             @goTeam="goTeam"
@@ -88,14 +80,6 @@ function logout() {
             :feedbacksReceived="profile.stats.feedbacksReceived"
             :comments="profile.stats.comments"
           />
-
-          <v-divider class="my-6" />
-
-          <div class="d-flex justify-end">
-            <v-btn color="error" variant="tonal" prepend-icon="mdi-logout" @click="logout">
-              Cerrar sesión
-            </v-btn>
-          </div>
         </div>
       </v-card-text>
     </v-card>

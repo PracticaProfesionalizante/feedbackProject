@@ -44,6 +44,11 @@ const router = createRouter({
           component: () => import('../views/Profile.vue'),
           meta: { title: 'Mi Perfil' }
         },
+        {
+          path: 'profile/edit',
+          component: () => import('../views/ProfileEdit.vue'),
+          meta: { title: 'Editar Perfil' }
+        },
 
         // ✅ Feedbacks
         {
