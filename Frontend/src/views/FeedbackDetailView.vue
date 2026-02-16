@@ -23,8 +23,9 @@
         :feedback="feedback"
         :current-user-id="currentUserId"
         @update-status="handleUpdateStatus"
-        @edit-content="handleEditContent"
+        @edit-feedback="handleEditFeedback"
         @delete="confirmDelete"
+        @toggle-action="handleToggleAction"
       />
 
       <!-- ✅ Comentarios -->
@@ -89,13 +90,15 @@ const currentUserId = computed(() => auth.user?.id ?? '')
 
 const canFetch = computed(() => auth.checked && !!auth.token && !!feedbackId)
 
+const queryKeyDetail = computed(() => ['feedback', feedbackId, auth.token] as const)
+
 const {
   data: feedback,
   isLoading,
   isError,
   error
 } = useQuery<Feedback>({
-  queryKey: ['feedback', feedbackId, auth.token],
+  queryKey: queryKeyDetail,
   queryFn: () => feedbackService.getFeedback(feedbackId),
   enabled: canFetch
 })
@@ -123,13 +126,57 @@ const updateStatusMutation = useMutation({
 
 // Editar contenido (solo autor y solo PENDING; el backend valida)
 const updateContentMutation = useMutation({
-  mutationFn: (content: string) => feedbackService.updateFeedback(feedbackId, { content }),
+  mutationFn: (payload: { content: string; actions: any[] }) =>
+    feedbackService.updateFeedback(feedbackId, payload),
   onSuccess: () => {
     invalidateRelated()
-    showMessage('Contenido actualizado correctamente')
+    showMessage('Feedback actualizado correctamente')
   },
   onError: (e: any) => {
     showMessage(e?.message ?? 'No se pudo editar el feedback')
+  }
+})
+
+function handleEditFeedback(payload: { content: string; actions: any[] }) {
+  updateContentMutation.mutate(payload)
+}
+
+// ✅ Toggle acción checklist (autor o receptor; backend valida)
+const toggleActionMutation = useMutation({
+  mutationFn: (payload: { actionId: string; done: boolean }) =>
+    feedbackService.toggleAction(feedbackId, payload.actionId, payload.done),
+
+  // Optimistic update para que el checkbox responda instantáneo
+  onMutate: async (payload) => {
+    const key = queryKeyDetail.value
+    await queryClient.cancelQueries({ queryKey: key })
+
+    const previous = queryClient.getQueryData<Feedback>(key)
+
+    if (previous?.actions?.length) {
+      const next: Feedback = {
+        ...previous,
+        actions: previous.actions.map((a) =>
+          a.id === payload.actionId ? { ...a, done: payload.done } : a
+        )
+      }
+      queryClient.setQueryData(key, next)
+    }
+
+    return { previous }
+  },
+
+  onError: (e: any, _payload, ctx) => {
+    // revert
+    if (ctx?.previous) {
+      queryClient.setQueryData(queryKeyDetail.value, ctx.previous)
+    }
+    showMessage(e?.message ?? 'No se pudo actualizar la acción')
+  },
+
+  onSuccess: () => {
+    // por seguridad, refetch
+    invalidateRelated()
   }
 })
 
@@ -155,6 +202,11 @@ function handleUpdateStatus(status: FeedbackStatus) {
 
 function handleEditContent(content: string) {
   updateContentMutation.mutate(content)
+}
+
+function handleToggleAction(payload: { feedbackId: string; actionId: string; done: boolean }) {
+  // feedbackId viene del componente, pero acá usamos el del route para evitar inconsistencias
+  toggleActionMutation.mutate({ actionId: payload.actionId, done: payload.done })
 }
 
 /* =========================

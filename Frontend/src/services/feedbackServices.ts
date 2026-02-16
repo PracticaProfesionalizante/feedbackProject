@@ -11,16 +11,21 @@ import type {
 
 const API_BASE = API_BASE_URL
 
+function buildUrl(path: string) {
+  // evita // o falta de /
+  const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE
+  const p = path.startsWith('/') ? path : `/${path}`
+  return `${base}${p}`
+}
+
 function buildQuery(filters?: FeedbackFilters) {
   const params = new URLSearchParams()
-
   if (!filters) return ''
 
   const keys = Object.keys(filters) as Array<keyof FeedbackFilters>
   keys.forEach((key) => {
     const value = filters[key]
     if (value === undefined || value === null || value === '') return
-    // Convertir a string de forma segura
     const stringValue = typeof value === 'string' ? value : String(value)
     params.set(key as string, stringValue)
   })
@@ -47,7 +52,7 @@ async function parseJson<T>(res: Response): Promise<T> {
   const ct = res.headers.get('content-type') || ''
   if (!ct.includes('application/json')) {
     const text = await res.text()
-    throw new Error(`Respuesta inválida (no JSON). ${text.slice(0, 80)}`)
+    throw new Error(`Respuesta inválida (no JSON). ${text.slice(0, 120)}`)
   }
   return res.json() as Promise<T>
 }
@@ -57,12 +62,24 @@ function unwrap<T>(raw: any): T {
   return (raw?.data ?? raw) as T
 }
 
+// Normaliza arrays que pueden venir como:
+// - { feedbacks: [...] }
+// - { items: [...] }
+// - [...] directo
+function unwrapArray<T>(raw: any): T[] {
+  const data = unwrap<any>(raw)
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.feedbacks)) return data.feedbacks
+  if (Array.isArray(data?.items)) return data.items
+  return []
+}
+
 export const feedbackService = {
   async getFeedbacks(filters: FeedbackFilters = {}): Promise<FeedbacksResponse> {
     const auth = useAuthStore()
     const qs = buildQuery(filters)
 
-    const res = await fetch(`${API_BASE}/feedbacks${qs}`, {
+    const res = await fetch(buildUrl(`/feedbacks${qs}`), {
       headers: {
         ...auth.getAuthHeader()
       }
@@ -73,14 +90,15 @@ export const feedbackService = {
     const raw = await parseJson<any>(res)
     const data = unwrap<any>(raw)
 
-    // tolera: array directo o { items, total }
-    return (data.items ? data : data) as FeedbacksResponse
+    // esperado: { items, pagination }
+    // pero toleramos que venga otra forma.
+    return (data?.items ? data : data) as FeedbacksResponse
   },
 
   async getFeedback(id: string): Promise<Feedback> {
     const auth = useAuthStore()
 
-    const res = await fetch(`${API_BASE}/feedbacks/${id}`, {
+    const res = await fetch(buildUrl(`/feedbacks/${id}`), {
       headers: {
         ...auth.getAuthHeader()
       }
@@ -95,7 +113,7 @@ export const feedbackService = {
   async getRecentFeedbacks(limit: number = 10): Promise<Feedback[]> {
     const auth = useAuthStore()
 
-    const res = await fetch(`${API_BASE}/feedbacks/recent?limit=${limit}`, {
+    const res = await fetch(buildUrl(`/feedbacks/recent?limit=${limit}`), {
       headers: {
         ...auth.getAuthHeader()
       }
@@ -104,13 +122,13 @@ export const feedbackService = {
     if (!res.ok) throw new Error(await parseErrorMessage(res))
 
     const raw = await parseJson<any>(res)
-    return unwrap<Feedback[]>(raw)
+    return unwrapArray<Feedback>(raw)
   },
 
   async createFeedback(dto: CreateFeedbackDto): Promise<Feedback> {
     const auth = useAuthStore()
 
-    const res = await fetch(`${API_BASE}/feedbacks`, {
+    const res = await fetch(buildUrl('/feedbacks'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -128,7 +146,7 @@ export const feedbackService = {
   async updateFeedback(id: string, dto: UpdateFeedbackDto): Promise<Feedback> {
     const auth = useAuthStore()
 
-    const res = await fetch(`${API_BASE}/feedbacks/${id}`, {
+    const res = await fetch(buildUrl(`/feedbacks/${id}`), {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -146,7 +164,7 @@ export const feedbackService = {
   async deleteFeedback(id: string): Promise<void> {
     const auth = useAuthStore()
 
-    const res = await fetch(`${API_BASE}/feedbacks/${id}`, {
+    const res = await fetch(buildUrl(`/feedbacks/${id}`), {
       method: 'DELETE',
       headers: {
         ...auth.getAuthHeader()
@@ -157,8 +175,50 @@ export const feedbackService = {
   },
 
   async updateStatus(id: string, status: FeedbackStatus): Promise<Feedback> {
-    // Si tu backend tiene un endpoint específico tipo PATCH /feedbacks/:id/status
-    // lo cambiamos acá. Por ahora lo resolvemos con PATCH normal.
-    return this.updateFeedback(id, { status })
+    // ✅ endpoint real según tus routes: PATCH /api/feedbacks/:id/status
+    const auth = useAuthStore()
+
+    const res = await fetch(buildUrl(`/feedbacks/${id}/status`), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth.getAuthHeader()
+      },
+      body: JSON.stringify({ status })
+    })
+
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+
+    const raw = await parseJson<any>(res)
+    return unwrap<Feedback>(raw)
   },
+
+  /**
+   * ✅ Toggle de checklist (autor o receptor)
+   * Endpoint: PATCH /api/feedbacks/:id/actions/:actionId
+   *
+   * - Si pasás `done`, intenta setear a ese valor.
+   * - Si NO pasás `done`, el backend lo togglea.
+   */
+  async toggleAction(feedbackId: string, actionId: string, done?: boolean) {
+    const auth = useAuthStore()
+
+    const res = await fetch(buildUrl(`/feedbacks/${feedbackId}/actions/${actionId}`), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth.getAuthHeader()
+      },
+      // si done es undefined, mandamos {} para no romper JSON.parse en backend
+      body: JSON.stringify(done === undefined ? {} : { done })
+    })
+
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+
+    const raw = await parseJson<any>(res)
+    const data = unwrap<any>(raw)
+
+    // tolera: { item }, o objeto directo
+    return (data?.item ?? data) as { id: string; text: string; done: boolean; updatedAt?: string }
+  }
 }
