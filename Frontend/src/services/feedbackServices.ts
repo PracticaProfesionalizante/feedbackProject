@@ -5,7 +5,6 @@ import type {
   Feedback,
   FeedbackFilters,
   FeedbacksResponse,
-  FeedbackStatus,
   UpdateFeedbackDto
 } from '../types/feedback'
 
@@ -172,25 +171,6 @@ export const feedbackService = {
     })
 
     if (!res.ok) throw new Error(await parseErrorMessage(res))
-  },
-
-  async updateStatus(id: string, status: FeedbackStatus): Promise<Feedback> {
-    // ✅ endpoint real según tus routes: PATCH /api/feedbacks/:id/status
-    const auth = useAuthStore()
-
-    const res = await fetch(buildUrl(`/feedbacks/${id}/status`), {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...auth.getAuthHeader()
-      },
-      body: JSON.stringify({ status })
-    })
-
-    if (!res.ok) throw new Error(await parseErrorMessage(res))
-
-    const raw = await parseJson<any>(res)
-    return unwrap<Feedback>(raw)
   },
 
   /**

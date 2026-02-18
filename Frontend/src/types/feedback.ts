@@ -1,6 +1,5 @@
 export type Role = 'LEADER' | 'EMPLOYEE'
 
-export type FeedbackStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
 export type FeedbackType = 'RECOGNITION' | 'IMPROVEMENT' | 'GENERAL'
 
 export type FeedbackUser = {
@@ -43,29 +42,24 @@ export type Feedback = {
   toUserId: string
   type: FeedbackType
   content: string
-  status: FeedbackStatus
   createdAt: string
   updatedAt: string
 
-  /** ✅ NUEVO: para mostrar "Editado" estilo WhatsApp */
+  /** Para mostrar "Editado" estilo WhatsApp */
   contentEditedAt?: string | null
 
-  /** ✅ NUEVO: checklist */
+  /** Checklist */
   actions?: FeedbackAction[]
 
   comments?: Comment[]
 
-  // relaciones
   fromUser?: FeedbackUser
   toUser?: FeedbackUser
 }
 
 export type FeedbackFilters = {
-  /** Tab: received | sent (backend type) */
   type?: 'received' | 'sent'
-  /** Filtro por tipo de feedback (backend feedbackType) */
   feedbackType?: FeedbackType
-  status?: FeedbackStatus
   search?: string
   dateFrom?: string
   dateTo?: string
@@ -109,8 +103,5 @@ export type CreateFeedbackDto = {
 export type UpdateFeedbackDto = {
   type?: FeedbackType
   content?: string
-  status?: FeedbackStatus
-
-  /** ✅ NUEVO: acciones al editar (solo autor) */
   actions?: FeedbackActionInput[]
 }

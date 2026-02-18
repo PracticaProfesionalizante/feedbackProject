@@ -10,7 +10,6 @@ export async function createTestFeedback(fromUserId: string, toUserId: string) {
       fromUserId,
       toUserId,
       type: 'GENERAL',
-      status: 'PENDING',
       content: 'Feedback test',
     },
   })

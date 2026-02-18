@@ -6,10 +6,6 @@
         <v-chip size="small" variant="tonal">
           {{ formatType(feedback.type) }}
         </v-chip>
-
-        <v-chip size="small" variant="tonal">
-          {{ formatStatus(feedback.status) }}
-        </v-chip>
       </div>
 
       <v-menu v-if="canSeeMenu">
@@ -63,23 +59,6 @@
         </div>
       </div>
 
-      <!-- Estado editable (solo destinatario) -->
-      <div v-if="canChangeStatus" class="mb-4 d-flex align-center ga-2 flex-wrap">
-        <div class="text-body-2 text-medium-emphasis">Cambiar estado:</div>
-
-        <v-select
-          v-model="statusModel"
-          :items="statusOptions"
-          item-title="label"
-          item-value="value"
-          density="compact"
-          variant="outlined"
-          hide-details
-          style="max-width: 240px"
-          @update:model-value="onStatusChange"
-        />
-      </div>
-
       <!-- Contenido -->
       <div class="text-subtitle-2 mb-2">Contenido</div>
       <div class="text-body-1" style="white-space: pre-wrap;">
@@ -131,7 +110,7 @@
         />
 
         <div class="text-caption text-medium-emphasis mb-4">
-          Solo el autor puede editar el contenido y únicamente si el feedback está en estado “Pendiente”.
+          Solo el autor puede editar el contenido y las acciones.
         </div>
 
         <!-- ✅ NUEVO: editor de acciones -->
@@ -180,8 +159,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import type { Feedback, FeedbackStatus, FeedbackAction, FeedbackActionInput } from '../../types/feedback'
+import { computed, reactive } from 'vue'
+import type { Feedback, FeedbackAction, FeedbackActionInput } from '../../types/feedback'
 
 const props = defineProps<{
   feedback: Feedback
@@ -189,16 +168,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update-status', status: FeedbackStatus): void
-
-  /** 👇 lo dejamos por compatibilidad, pero ya no lo vamos a usar desde este dialog */
   (e: 'edit-content', content: string): void
-
-  /** ✅ NUEVO: editar feedback completo (contenido + acciones) */
   (e: 'edit-feedback', payload: { content: string; actions: FeedbackActionInput[] }): void
-
   (e: 'delete'): void
-
   (e: 'toggle-action', payload: { feedbackId: string; actionId: string; done: boolean }): void
 }>()
 
@@ -209,9 +181,8 @@ const emit = defineEmits<{
 const isAuthor = computed(() => props.feedback.fromUserId === props.currentUserId)
 const isRecipient = computed(() => props.feedback.toUserId === props.currentUserId)
 
-const canChangeStatus = computed(() => isRecipient.value)
 const canDelete = computed(() => isAuthor.value)
-const canEditContent = computed(() => isAuthor.value && props.feedback.status === 'PENDING')
+const canEditContent = computed(() => isAuthor.value)
 const canSeeMenu = computed(() => canEditContent.value || canDelete.value)
 
 /* =========================
@@ -220,30 +191,6 @@ const canSeeMenu = computed(() => canEditContent.value || canDelete.value)
 
 const metaLabel = computed(() => (props.feedback.contentEditedAt ? 'Editado ·' : 'Creado ·'))
 const metaDateIso = computed(() => (props.feedback.contentEditedAt ?? props.feedback.createdAt))
-
-/* =========================
-   Estado editable
-========================= */
-
-const statusOptions: Array<{ label: string; value: FeedbackStatus }> = [
-  { label: 'Pendiente', value: 'PENDING' },
-  { label: 'En progreso', value: 'IN_PROGRESS' },
-  { label: 'Completado', value: 'COMPLETED' }
-]
-
-const statusModel = ref<FeedbackStatus>(props.feedback.status)
-
-watch(
-  () => props.feedback.status,
-  (s) => {
-    statusModel.value = s
-  }
-)
-
-function onStatusChange(next: FeedbackStatus) {
-  if (next === props.feedback.status) return
-  emit('update-status', next)
-}
 
 /* =========================
    Acciones (Checklist)
@@ -342,19 +289,6 @@ function formatType(type: Feedback['type']) {
       return 'General'
     default:
       return type
-  }
-}
-
-function formatStatus(status: Feedback['status']) {
-  switch (status) {
-    case 'PENDING':
-      return 'Pendiente'
-    case 'IN_PROGRESS':
-      return 'En progreso'
-    case 'COMPLETED':
-      return 'Completado'
-    default:
-      return status
   }
 }
 

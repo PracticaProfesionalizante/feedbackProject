@@ -2,18 +2,6 @@ import type { Request, Response } from 'express'
 import { prisma } from '../utils/prisma'
 
 
-function mapStatusCounts(rows: Array<{ status: string; _count: { _all: number } }>) {
-  const base = { pending: 0, inProgress: 0, completed: 0 }
-
-  for (const r of rows) {
-    if (r.status === 'PENDING') base.pending = r._count._all
-    if (r.status === 'IN_PROGRESS') base.inProgress = r._count._all
-    if (r.status === 'COMPLETED') base.completed = r._count._all
-  }
-
-  return base
-}
-
 function mapTypeCounts(rows: Array<{ type: string; _count: { _all: number } }>) {
   const base = { recognition: 0, improvement: 0, general: 0 }
 
@@ -30,13 +18,8 @@ export const dashboardController = {
   async getStats(req: Request, res: Response) {
     const userId = req.user!.id
 
-    const [byStatusRaw, byTypeRaw, totalReceived, totalSent, unreadNotifications] =
+    const [byTypeRaw, totalReceived, totalSent, unreadNotifications] =
       await Promise.all([
-        prisma.feedback.groupBy({
-          by: ['status'],
-          where: { toUserId: userId, deletedAt: null },
-          _count: { _all: true },
-        }),
         prisma.feedback.groupBy({
           by: ['type'],
           where: {
@@ -50,11 +33,9 @@ export const dashboardController = {
         prisma.notification.count({ where: { userId, read: false } }),
       ])
 
-    const feedbacksByStatus = mapStatusCounts(byStatusRaw as any)
     const feedbacksByType = mapTypeCounts(byTypeRaw as any)
 
     return res.json({
-      feedbacksByStatus,
       feedbacksByType,
       totalReceived,
       totalSent,

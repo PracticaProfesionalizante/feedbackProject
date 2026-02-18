@@ -10,10 +10,9 @@ import { validate } from '../middleware/validate.middleware'
 import {
   createFeedbackSchema,
   updateFeedbackSchema,
-  updateStatusSchema,
   queryFeedbackSchema,
   recentFeedbacksSchema,
-  toggleActionSchema, // ✅ NUEVO
+  toggleActionSchema,
 } from '../validators/feedback.validator'
 
 const router = Router()
@@ -58,9 +57,6 @@ router.patch(
   validate(toggleActionSchema),
   feedbackController.toggleAction
 )
-
-// PATCH /api/feedbacks/:id/status (debe ir antes de /:id)
-router.patch('/:id/status', validate(updateStatusSchema), feedbackController.updateStatus)
 
 // PATCH /api/feedbacks/:id
 router.patch('/:id', validate(updateFeedbackSchema), feedbackController.update)

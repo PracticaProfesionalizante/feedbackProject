@@ -10,15 +10,14 @@ export type DashboardStatsByType = {
 }
 
 /**
- * Conteos por estado para el dashboard.
- * Refleja los 3 estados actuales del sistema.
+ * Estadísticas del dashboard (por tipo, recibidos/enviados, notificaciones).
  */
 export type DashboardStats = {
-  pending: number
-  inProgress: number
-  completed: number
-  total?: number // opcional por si el backend lo incluye
-  byType?: DashboardStatsByType
+  feedbacksByType?: DashboardStatsByType
+  byType?: DashboardStatsByType // alias para compatibilidad con FeedbackChart
+  totalReceived?: number
+  totalSent?: number
+  unreadNotifications?: number
 }
 
 /**
@@ -48,7 +47,7 @@ export type RecentFeedbacksResponse =
  */
 export type RecentFeedbackItem = Pick<
   Feedback,
-  'id' | 'type' | 'status' | 'content' | 'createdAt' | 'fromUserId' | 'toUserId'
+  'id' | 'type' | 'content' | 'createdAt' | 'fromUserId' | 'toUserId'
 > & {
   fromUser?: Feedback['fromUser']
   toUser?: Feedback['toUser']

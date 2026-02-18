@@ -10,13 +10,6 @@ const globalForPrisma = globalThis as GlobalWithPrisma
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    engineType: 'binary',
-    datasourceUrl: process.env.DATABASE_URL,
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
     log: NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
 

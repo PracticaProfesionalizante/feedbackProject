@@ -80,22 +80,21 @@ model TeamMember {
 }
 
 model Feedback {
-  id         String         @id @default(uuid())
-  fromUserId String
-  toUserId   String
-  type       FeedbackType
-  content    String
-  status     FeedbackStatus @default(PENDING)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id              String           @id @default(uuid())
+  fromUserId      String
+  toUserId        String
+  type            FeedbackType
+  content         String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   contentEditedAt DateTime?
-  deletedAt  DateTime?
-  comments   Comment[]
-  fromUser   User           @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser     User           @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
-  actions    FeedbackAction[]
+  deletedAt       DateTime?
+  comments        Comment[]
+  fromUser        User            @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser          User            @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  actions         FeedbackAction[]
 
-  @@index([toUserId, status])
+  @@index([toUserId])
   @@index([fromUserId])
   @@index([createdAt])
   @@index([deletedAt])
@@ -189,12 +188,6 @@ enum FeedbackType {
   RECOGNITION
   IMPROVEMENT
   GENERAL
-}
-
-enum FeedbackStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
 }
 
 enum NotificationType {

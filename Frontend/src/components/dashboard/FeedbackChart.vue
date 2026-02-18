@@ -40,7 +40,7 @@ const stats = computed(() => {
   return 'data' in props.data ? props.data.data : props.data
 })
 
-const byType = computed(() => stats.value?.byType)
+const byType = computed(() => stats.value?.byType ?? stats.value?.feedbacksByType)
 
 const hasData = computed(() => {
   const b = byType.value

@@ -16,20 +16,6 @@
           @update:model-value="onTypeChange($event)"
         />
 
-        <!-- Estado -->
-        <v-select
-          :model-value="statusValue"
-          :items="statusItems"
-          item-title="title"
-          item-value="value"
-          label="Estado"
-          density="comfortable"
-          hide-details
-          clearable
-          style="max-width: 180px"
-          @update:model-value="onStatusChange($event)"
-        />
-
         <!-- Búsqueda por contenido o usuario -->
         <v-text-field
           :model-value="search"
@@ -83,24 +69,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFeedbackFilters } from '../../composables/useFeedbackFilters'
-import type { FeedbackStatus, FeedbackType } from '../../types/feedback'
+import type { FeedbackType } from '../../types/feedback'
 
 const {
   type,
-  status,
   search,
   dateFrom,
   dateTo,
   hasActiveFilters,
   setType,
-  setStatus,
   setSearch,
   setDateRange,
   clearFilters,
 } = useFeedbackFilters()
 
 const typeValue = computed(() => type.value ?? 'Todos')
-const statusValue = computed(() => status.value ?? 'Todos')
 
 const typeItems = [
   { title: 'Todos', value: 'Todos' },
@@ -109,19 +92,8 @@ const typeItems = [
   { title: 'General', value: 'GENERAL' },
 ]
 
-const statusItems = [
-  { title: 'Todos', value: 'Todos' },
-  { title: 'Pendiente', value: 'PENDING' },
-  { title: 'En progreso', value: 'IN_PROGRESS' },
-  { title: 'Completado', value: 'COMPLETED' },
-]
-
 function onTypeChange(v: string | FeedbackType | 'Todos' | null | undefined) {
   setType((v && v !== 'Todos' ? v : 'Todos') as FeedbackType | 'Todos' | '')
-}
-
-function onStatusChange(v: string | FeedbackStatus | 'Todos' | null | undefined) {
-  setStatus((v && v !== 'Todos' ? v : 'Todos') as FeedbackStatus | 'Todos' | '')
 }
 
 function onDateFromChange(v: string | null | undefined) {

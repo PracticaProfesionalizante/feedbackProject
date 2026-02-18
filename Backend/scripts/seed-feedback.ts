@@ -9,7 +9,6 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const TIPOS = ['RECOGNITION', 'IMPROVEMENT', 'GENERAL'] as const
-const ESTADOS = ['PENDING', 'IN_PROGRESS', 'COMPLETED'] as const
 
 const CONTENIDOS_RECONOCIMIENTO = [
   'Excelente trabajo en el último sprint, la entrega fue a tiempo y con buena calidad.',
@@ -42,7 +41,6 @@ async function main() {
 
   const count = 50
   const tipos = [...TIPOS]
-  const estados = [...ESTADOS]
   const contenidos = [...CONTENIDOS_RECONOCIMIENTO, ...CONTENIDOS_MEJORA, ...CONTENIDOS_GENERAL]
 
   for (let i = 0; i < count; i++) {
@@ -50,7 +48,6 @@ async function main() {
     let to = users[(i + 1) % users.length]
     if (from.id === to.id) to = users[(i + 2) % users.length]!
     const type = tipos[i % tipos.length]!
-    const status = estados[i % estados.length]!
     const content = contenidos[i % contenidos.length]!
 
     await prisma.feedback.create({
@@ -58,7 +55,6 @@ async function main() {
         fromUserId: from.id,
         toUserId: to.id,
         type,
-        status,
         content,
       },
     })

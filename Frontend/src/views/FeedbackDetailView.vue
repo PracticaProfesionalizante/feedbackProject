@@ -22,7 +22,6 @@
       <FeedbackDetail
         :feedback="feedback"
         :current-user-id="currentUserId"
-        @update-status="handleUpdateStatus"
         @edit-feedback="handleEditFeedback"
         @delete="confirmDelete"
         @toggle-action="handleToggleAction"
@@ -70,7 +69,7 @@ import CommentList from '@/components/comments/commentList.vue'
 
 import { feedbackService } from '../services/feedbackServices' // ✅ ajustá si tu archivo se llama distinto
 import { useAuthStore } from '../stores/authStore'
-import type { Feedback, FeedbackStatus } from '../types/feedback'
+import type { Feedback } from '../types/feedback'
 
 /* =========================
    Setup
@@ -112,19 +111,7 @@ const errorMessage = computed(() => {
    Mutations
 ========================= */
 
-// Cambiar estado (solo destinatario; el backend valida)
-const updateStatusMutation = useMutation({
-  mutationFn: (status: FeedbackStatus) => feedbackService.updateStatus(feedbackId, status),
-  onSuccess: () => {
-    invalidateRelated()
-    showMessage('Estado actualizado correctamente')
-  },
-  onError: (e: any) => {
-    showMessage(e?.message ?? 'No se pudo actualizar el estado')
-  }
-})
-
-// Editar contenido (solo autor y solo PENDING; el backend valida)
+// Editar contenido (solo autor; el backend valida)
 const updateContentMutation = useMutation({
   mutationFn: (payload: { content: string; actions: any[] }) =>
     feedbackService.updateFeedback(feedbackId, payload),
@@ -195,10 +182,6 @@ const deleteMutation = useMutation({
 /* =========================
    Handlers
 ========================= */
-
-function handleUpdateStatus(status: FeedbackStatus) {
-  updateStatusMutation.mutate(status)
-}
 
 function handleEditContent(content: string) {
   updateContentMutation.mutate(content)

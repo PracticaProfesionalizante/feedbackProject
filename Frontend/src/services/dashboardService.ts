@@ -41,19 +41,14 @@ export const dashboardService = {
     if (!res.ok) throw new Error(await parseErrorMessage(res))
     const raw = await parseJson<any>(res)
     const data = unwrap<any>(raw)
-    
-    // El backend devuelve { feedbacksByStatus: { pending, inProgress, completed }, ... }
-    // Necesitamos mapearlo al formato esperado por el frontend
-    if (data?.feedbacksByStatus) {
-      return {
-        pending: data.feedbacksByStatus.pending ?? 0,
-        inProgress: data.feedbacksByStatus.inProgress ?? 0,
-        completed: data.feedbacksByStatus.completed ?? 0,
-      }
-    }
-    
-    // Si ya viene en el formato correcto, devolverlo tal cual
-    return data as DashboardStatsResponse
+    // Backend devuelve: feedbacksByType, totalReceived, totalSent, unreadNotifications
+    return {
+      feedbacksByType: data?.feedbacksByType ?? { recognition: 0, improvement: 0, general: 0 },
+      byType: data?.feedbacksByType ?? { recognition: 0, improvement: 0, general: 0 },
+      totalReceived: data?.totalReceived ?? 0,
+      totalSent: data?.totalSent ?? 0,
+      unreadNotifications: data?.unreadNotifications ?? 0,
+    } as DashboardStatsResponse
   },
 
   async getRecent(): Promise<{ items: Feedback[] }> {

@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { FeedbackStatus, FeedbackType } from '../types/feedback'
+import type { FeedbackType } from '../types/feedback'
 
 export type TabValue = 'received' | 'sent'
 
@@ -48,12 +48,6 @@ export function useFeedbackFilters() {
     if (['RECOGNITION', 'IMPROVEMENT', 'GENERAL'].includes(t)) return t as FeedbackType
     return undefined
   })
-  const status = computed<FeedbackStatus | undefined>(() => {
-    const s = query.value.status as string | undefined
-    if (!s || s === 'Todos') return undefined
-    if (['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(s)) return s as FeedbackStatus
-    return undefined
-  })
   const search = computed<string>(() => (query.value.search as string) ?? '')
   const dateFrom = computed<string>(() => (query.value.dateFrom as string) ?? '')
   const dateTo = computed<string>(() => (query.value.dateTo as string) ?? '')
@@ -63,7 +57,6 @@ export function useFeedbackFilters() {
   const hasActiveFilters = computed(() => {
     return !!(
       (query.value.type && query.value.type !== 'Todos') ||
-      (query.value.status && query.value.status !== 'Todos') ||
       (query.value.search && String(query.value.search).trim()) ||
       query.value.dateFrom ||
       query.value.dateTo
@@ -85,7 +78,6 @@ export function useFeedbackFilters() {
     updateQuery({
       tab: value,
       type: undefined,
-      status: undefined,
       search: undefined,
       dateFrom: undefined,
       dateTo: undefined,
@@ -96,13 +88,6 @@ export function useFeedbackFilters() {
   function setType(value: FeedbackType | 'Todos' | '') {
     updateQuery({
       type: value && value !== 'Todos' ? value : undefined,
-      page: 1,
-    })
-  }
-
-  function setStatus(value: FeedbackStatus | 'Todos' | '') {
-    updateQuery({
-      status: value && value !== 'Todos' ? value : undefined,
       page: 1,
     })
   }
@@ -129,7 +114,6 @@ export function useFeedbackFilters() {
   function clearFilters() {
     updateQuery({
       type: undefined,
-      status: undefined,
       search: undefined,
       dateFrom: undefined,
       dateTo: undefined,
@@ -141,7 +125,6 @@ export function useFeedbackFilters() {
   const apiFilters = computed(() => ({
     type: tab.value,
     feedbackType: type.value ?? undefined,
-    status: status.value ?? undefined,
     search: search.value || undefined,
     dateFrom: dateFrom.value || undefined,
     dateTo: dateTo.value || undefined,
@@ -152,7 +135,6 @@ export function useFeedbackFilters() {
   return {
     tab,
     type: computed(() => query.value.type as string | undefined),
-    status: computed(() => query.value.status as string | undefined),
     search,
     dateFrom,
     dateTo,
@@ -162,7 +144,6 @@ export function useFeedbackFilters() {
     apiFilters,
     setTab,
     setType,
-    setStatus,
     setSearch,
     setDateRange,
     setPage,

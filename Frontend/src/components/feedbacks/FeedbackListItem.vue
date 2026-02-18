@@ -21,13 +21,6 @@
         >
           {{ typeLabel }}
         </v-chip>
-        <v-chip
-          :color="statusColor"
-          size="small"
-          variant="tonal"
-        >
-          {{ statusLabel }}
-        </v-chip>
       </div>
     </template>
 
@@ -123,32 +116,6 @@ const typeColor = computed(() => {
       return 'warning'
     case 'GENERAL':
       return 'info'
-    default:
-      return 'grey'
-  }
-})
-
-const statusLabel = computed(() => {
-  switch (props.feedback.status) {
-    case 'PENDING':
-      return 'Pendiente'
-    case 'IN_PROGRESS':
-      return 'En progreso'
-    case 'COMPLETED':
-      return 'Completado'
-    default:
-      return props.feedback.status
-  }
-})
-
-const statusColor = computed(() => {
-  switch (props.feedback.status) {
-    case 'PENDING':
-      return 'grey'
-    case 'IN_PROGRESS':
-      return 'primary'
-    case 'COMPLETED':
-      return 'success'
     default:
       return 'grey'
   }

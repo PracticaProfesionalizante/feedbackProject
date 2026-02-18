@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { Prisma, FeedbackStatus } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/error.handler'
 import { auditLog } from '../services/audit.service'
@@ -29,7 +29,6 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
   const where: Prisma.FeedbackWhereInput = {
     deletedAt: null,
     ...(query.type === 'received' ? { toUserId: userId } : { fromUserId: userId }),
-    ...(query.status ? { status: query.status } : {}),
     ...(query.feedbackType ? { type: query.feedbackType } : {}),
   }
 
@@ -158,7 +157,7 @@ async function createFeedbackCore(req: Request) {
 }
 
 /* ======================================================
-   EDITAR FEEDBACK (contenido/acciones por autor, status por receptor)
+   EDITAR FEEDBACK (contenido/acciones solo por autor)
 ====================================================== */
 
 async function updateFeedbackCore(req: Request) {
@@ -175,11 +174,6 @@ async function updateFeedbackCore(req: Request) {
   // contenido solo autor
   if (body.content !== undefined && feedback.fromUserId !== user.id) {
     throw new AppError('Solo el autor puede modificar el contenido', 403)
-  }
-
-  // status solo destinatario
-  if (body.status !== undefined && feedback.toUserId !== user.id) {
-    throw new AppError('Solo el destinatario puede modificar el estado', 403)
   }
 
   // acciones (texto/estructura) solo autor
@@ -211,7 +205,6 @@ async function updateFeedbackCore(req: Request) {
       where: { id },
       data: {
         ...(body.content !== undefined ? { content: body.content } : {}),
-        ...(body.status !== undefined ? { status: body.status } : {}),
         ...(shouldMarkEdited ? { contentEditedAt: new Date() } : {}),
       },
       include: {
@@ -231,68 +224,6 @@ async function updateFeedbackCore(req: Request) {
     action: 'UPDATE',
   })
 
-  // notificación si cambia status
-  if (body.status !== undefined && feedback.status !== body.status) {
-    await notificationService.createFeedbackUpdatedNotification(feedback.fromUserId, body.status)
-  }
-
-  return updated
-}
-
-/* ======================================================
-   CAMBIO DE STATUS (workflow) - NO toca contentEditedAt
-====================================================== */
-
-async function updateStatusCore(req: Request) {
-  const user = getAuthUser(req)
-  const { id } = idParamSchema.parse(req.params)
-  const requestedStatus = req.body?.status as FeedbackStatus
-
-  const feedback = await prisma.feedback.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, fromUserId: true, toUserId: true, status: true },
-  })
-
-  if (!feedback) throw new AppError('Feedback no encontrado', 404)
-
-  if (feedback.toUserId !== user.id) {
-    throw new AppError('Solo el destinatario puede cambiar el estado', 403)
-  }
-
-  const currentStatus = feedback.status
-  const newStatus = requestedStatus
-
-  const validTransitions: Record<FeedbackStatus, FeedbackStatus[]> = {
-    [FeedbackStatus.PENDING]: [FeedbackStatus.IN_PROGRESS, FeedbackStatus.COMPLETED],
-    [FeedbackStatus.IN_PROGRESS]: [FeedbackStatus.COMPLETED],
-    [FeedbackStatus.COMPLETED]: [],
-  }
-
-  if (!validTransitions[currentStatus].includes(newStatus)) {
-    throw new AppError(`Transición inválida: ${currentStatus} → ${newStatus}`, 400)
-  }
-
-  const updated = await prisma.feedback.update({
-    where: { id },
-    data: { status: newStatus },
-    include: {
-      fromUser: { select: { id: true, name: true, email: true, role: true } },
-      toUser: { select: { id: true, name: true, email: true, role: true } },
-      actions: { orderBy: { createdAt: 'asc' }, select: { id: true, text: true, done: true } },
-    },
-  })
-
-  await Promise.all([
-    auditLog(req, {
-      tableName: 'Feedback',
-      recordId: id,
-      action: 'UPDATE',
-      oldData: { status: currentStatus },
-      newData: { status: newStatus },
-    }),
-    notificationService.createFeedbackUpdatedNotification(feedback.fromUserId, newStatus),
-  ])
-
   return updated
 }
 
@@ -306,7 +237,7 @@ async function deleteFeedbackCore(req: Request) {
 
   const feedback = await prisma.feedback.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, fromUserId: true, status: true, content: true },
+    select: { id: true, fromUserId: true, content: true },
   })
 
   if (!feedback) throw new AppError('Feedback no encontrado', 404)
@@ -326,7 +257,7 @@ async function deleteFeedbackCore(req: Request) {
     tableName: 'Feedback',
     recordId: id,
     action: 'DELETE',
-    oldData: { fromUserId: feedback.fromUserId, status: feedback.status, content: feedback.content },
+    oldData: { fromUserId: feedback.fromUserId, content: feedback.content },
   })
 }
 
@@ -403,15 +334,6 @@ export const feedbackController = {
   update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const updated = await updateFeedbackCore(req)
-      res.json(updated)
-    } catch (error) {
-      next(error)
-    }
-  },
-
-  updateStatus: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const updated = await updateStatusCore(req)
       res.json(updated)
     } catch (error) {
       next(error)

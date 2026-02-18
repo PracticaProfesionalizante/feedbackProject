@@ -39,13 +39,6 @@
         </v-chip>
       </template>
 
-      <!-- Estado -->
-      <template #item.status="{ item }">
-        <v-chip size="small" variant="tonal" :color="getStatusColor(item.status)">
-          {{ formatStatus(item.status) }}
-        </v-chip>
-      </template>
-
       <!-- De/Para según mode -->
       <template #item.counterpart="{ item }">
         <div class="d-flex flex-column">
@@ -129,7 +122,6 @@ const emit = defineEmits<{
 const headers = computed(() => {
   return [
     { title: 'Tipo', key: 'type', sortable: false },
-    { title: 'Estado', key: 'status', sortable: false },
     {
       title: props.mode === 'received' ? 'De' : 'Para',
       key: 'counterpart',
@@ -178,32 +170,6 @@ function getTypeColor(type: Feedback['type']): string {
       return 'warning'
     case 'GENERAL':
       return 'info'
-    default:
-      return 'default'
-  }
-}
-
-function formatStatus(status: Feedback['status']) {
-  switch (status) {
-    case 'PENDING':
-      return 'Pendiente'
-    case 'IN_PROGRESS':
-      return 'En progreso'
-    case 'COMPLETED':
-      return 'Completado'
-    default:
-      return status
-  }
-}
-
-function getStatusColor(status: Feedback['status']): string {
-  switch (status) {
-    case 'PENDING':
-      return 'grey'
-    case 'IN_PROGRESS':
-      return 'warning'
-    case 'COMPLETED':
-      return 'success'
     default:
       return 'default'
   }

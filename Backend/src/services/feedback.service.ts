@@ -1,4 +1,4 @@
-import { FeedbackType, FeedbackStatus } from '@prisma/client';
+import { FeedbackType } from '@prisma/client';
 import { AppError } from '../middleware/error.handler';
 import { prisma } from '../utils/prisma';
 
@@ -30,7 +30,6 @@ export const feedbackService = {
         toUserId: data.toUserId,
         content: data.content,
         type: data.type,
-        status: FeedbackStatus.PENDING
       }
     });
   },
@@ -46,7 +45,6 @@ export const feedbackService = {
       ? { fromUserId: userId, deletedAt: null } 
       : { toUserId: userId, deletedAt: null };
 
-    if (query.status) whereClause.status = query.status;
     if (query.feedbackType) whereClause.type = query.feedbackType;
 
     const [total, feedbacks] = await Promise.all([
@@ -94,28 +92,18 @@ export const feedbackService = {
     return feedback;
   },
 
-  // 4. ACTUALIZAR (Reglas complejas de permisos). Excluir soft-deleted.
-  async update(userId: string, feedbackId: string, data: { content?: string; status?: FeedbackStatus }) {
+  // 4. ACTUALIZAR (solo autor puede editar contenido). Excluir soft-deleted.
+  async update(userId: string, feedbackId: string, data: { content?: string }) {
     const feedback = await prisma.feedback.findFirst({ where: { id: feedbackId, deletedAt: null } });
     if (!feedback) throw new AppError("Feedback no encontrado", 404);
 
-    // REGLA: Actualizar CONTENIDO -> Solo el AUTOR
-    if (data.content) {
-      if (feedback.fromUserId !== userId) {
-        throw new AppError("Solo el autor puede editar el contenido", 403);
-      }
-    }
-
-    // REGLA: Actualizar ESTADO -> Solo el DESTINATARIO
-    if (data.status) {
-      if (feedback.toUserId !== userId) {
-        throw new AppError("Solo el destinatario puede cambiar el estado", 403);
-      }
+    if (data.content !== undefined && feedback.fromUserId !== userId) {
+      throw new AppError("Solo el autor puede editar el contenido", 403);
     }
 
     return await prisma.feedback.update({
       where: { id: feedbackId },
-      data
+      data: { ...(data.content !== undefined ? { content: data.content } : {}) },
     });
   },
 

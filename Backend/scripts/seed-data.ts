@@ -173,7 +173,6 @@ async function main() {
   let feedbacks: { id: string }[] = []
   try {
     const feedbackTypes = ['RECOGNITION', 'IMPROVEMENT', 'GENERAL'] as const
-    const feedbackStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED'] as const
     for (let i = 0; i < N; i++) {
       const from = users[i % users.length]
       const to = users[(i + 1) % users.length]
@@ -184,7 +183,6 @@ async function main() {
           toUserId: to.id,
           type: feedbackTypes[i % 3],
           content: `Feedback de prueba ${i + 1} de ${from.id.slice(0, 8)} a ${to.id.slice(0, 8)}.`,
-          status: feedbackStatuses[i % 3],
         },
       })
       feedbacks.push(fb)

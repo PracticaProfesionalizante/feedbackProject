@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FeedbackType, FeedbackStatus } from '@prisma/client'
+import { FeedbackType } from '@prisma/client'
 
 /**
  * ✅ NUEVO: schema reutilizable para acciones checklist
@@ -56,15 +56,9 @@ export const createFeedbackSchema = z.object({
 export const updateFeedbackSchema = z.object({
   body: z.object({
     content: z.string().min(10).optional(),
-    status: z.nativeEnum(FeedbackStatus).optional(),
 
     /**
-     * ✅ CAMBIO: actions opcional para que el AUTOR edite estructura/texto
-     * Motivo: el autor puede editar acciones (texto/add/remove) sin límite.
-     *
-     * Importante:
-     * - El receptor no debería usar este campo. Eso se controla en el controller
-     *   (403 si no es autor).
+     * actions opcional para que el AUTOR edite estructura/texto
      */
     actions: z.array(actionUpdateSchema).max(50).optional(),
   }),
@@ -73,23 +67,11 @@ export const updateFeedbackSchema = z.object({
   }),
 })
 
-export const updateStatusSchema = z.object({
-  body: z.object({
-    status: z.nativeEnum(FeedbackStatus, {
-      errorMap: () => ({ message: 'Estado inválido (PENDING, IN_PROGRESS, COMPLETED)' }),
-    }),
-  }),
-  params: z.object({
-    id: z.string().uuid({ message: 'ID de feedback inválido' }),
-  }),
-})
-
 export const queryFeedbackSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).transform(Number).optional(),
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
-    type: z.enum(['sent', 'received']).optional(), // Para filtrar "mis enviados" o "mis recibidos"
-    status: z.nativeEnum(FeedbackStatus).optional(),
+    type: z.enum(['sent', 'received']).optional(),
     feedbackType: z.nativeEnum(FeedbackType).optional(),
   }),
 })
@@ -107,7 +89,6 @@ export const idParamSchema = z.object({
 
 export const listFeedbacksQuerySchema = z.object({
   type: z.enum(['received', 'sent']).default('received'),
-  status: z.nativeEnum(FeedbackStatus).optional(),
   feedbackType: z.nativeEnum(FeedbackType).optional(),
   search: z.string().min(1).optional(),
   dateFrom: z.string().optional(),
@@ -134,13 +115,8 @@ export const createFeedbackPayloadSchema = z.object({
 export const updateFeedbackPayloadSchema = z
   .object({
     content: z.string().min(1).max(5000).optional(),
-    status: z.nativeEnum(FeedbackStatus).optional(),
-
-    /**
-     * ✅ CAMBIO: actions opcional en update interno
-     */
     actions: z.array(actionUpdateSchema).max(50).optional(),
   })
-  .refine((data) => data.content || data.status || data.actions, {
-    message: 'Debes enviar al menos content, status o actions',
+  .refine((data) => data.content || data.actions, {
+    message: 'Debes enviar al menos content o actions',
   })

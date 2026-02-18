@@ -1,25 +1,25 @@
 <template>
   <div class="d-flex flex-wrap ga-4">
-    <v-card class="stat-card" variant="tonal" color="grey">
-      <v-card-title class="text-caption text-medium-emphasis">Pendientes</v-card-title>
+    <v-card class="stat-card" variant="tonal" color="success">
+      <v-card-title class="text-caption text-medium-emphasis">Reconocimiento</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.pending }}</span>
+        <span v-if="!loading">{{ counts.recognition }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
 
     <v-card class="stat-card" variant="tonal" color="warning">
-      <v-card-title class="text-caption text-medium-emphasis">En progreso</v-card-title>
+      <v-card-title class="text-caption text-medium-emphasis">Mejora</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.inProgress }}</span>
+        <span v-if="!loading">{{ counts.improvement }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
 
-    <v-card class="stat-card" variant="tonal" color="success">
-      <v-card-title class="text-caption text-medium-emphasis">Completados</v-card-title>
+    <v-card class="stat-card" variant="tonal" color="info">
+      <v-card-title class="text-caption text-medium-emphasis">General</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.completed }}</span>
+        <span v-if="!loading">{{ counts.general }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
@@ -35,16 +35,17 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-// Normalizar la respuesta (puede venir como { data: ... } o directo)
 const stats = computed(() => {
   if (!props.data) return null
   return 'data' in props.data ? props.data.data : props.data
 })
 
+const byType = computed(() => stats.value?.feedbacksByType ?? stats.value?.byType)
+
 const counts = computed(() => ({
-  pending: stats.value?.pending ?? 0,
-  inProgress: stats.value?.inProgress ?? 0,
-  completed: stats.value?.completed ?? 0,
+  recognition: byType.value?.recognition ?? 0,
+  improvement: byType.value?.improvement ?? 0,
+  general: byType.value?.general ?? 0,
 }))
 </script>
 
