@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
+import { Prisma } from '@prisma/client'
 import { NODE_ENV } from '../config/constants'
 
 export class AppError extends Error {
@@ -12,6 +13,13 @@ export class AppError extends Error {
   }
 }
 
+function getPrismaCode(err: unknown): string | undefined {
+  if (err && typeof err === 'object' && 'code' in err && typeof (err as { code: string }).code === 'string') {
+    return (err as Prisma.PrismaClientKnownRequestError).code
+  }
+  return undefined
+}
+
 export const errorHandler = (
   err: AppError | Error,
   req: Request,
@@ -20,6 +28,8 @@ export const errorHandler = (
 ) => {
   const statusCode = err instanceof AppError ? (err.statusCode || 500) : 500
   const message = err.message || 'Internal Server Error'
+  const prismaCode = getPrismaCode(err)
+
   if (statusCode === 500) {
     console.error('Error 500:', err)
   }
@@ -27,6 +37,7 @@ export const errorHandler = (
   res.status(statusCode).json({
     success: false,
     message,
+    ...(prismaCode && { code: prismaCode }),
     ...(NODE_ENV === 'development' && { stack: err.stack }),
   })
 }

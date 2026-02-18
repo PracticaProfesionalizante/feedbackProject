@@ -37,6 +37,13 @@ npm run build
 npm start
 ```
 
+### Deploy en Render (u otro host)
+En el **Build Command** del servicio, asegurate de aplicar migraciones antes de arrancar:
+```bash
+npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+```
+Si las migraciones no se aplican, endpoints que usan la DB (p. ej. `/api/feedbacks`) pueden devolver 500. En ese caso revisá los logs; si el JSON de error incluye `code` (ej. `P2021`), es un error de Prisma (tabla/columna inexistente, conexión, etc.).
+
 ## 📁 Estructura
 
 ```
