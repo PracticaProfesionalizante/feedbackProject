@@ -183,10 +183,6 @@ const deleteMutation = useMutation({
    Handlers
 ========================= */
 
-function handleEditContent(content: string) {
-  updateContentMutation.mutate(content)
-}
-
 function handleToggleAction(payload: { feedbackId: string; actionId: string; done: boolean }) {
   // feedbackId viene del componente, pero acá usamos el del route para evitar inconsistencias
   toggleActionMutation.mutate({ actionId: payload.actionId, done: payload.done })

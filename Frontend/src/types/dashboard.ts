@@ -7,6 +7,10 @@ export type DashboardStats = {
   totalReceived?: number
   totalSent?: number
   unreadNotifications?: number
+  /** Feedbacks agrupados por tipo (reconocimiento, mejora, general). Opcional si el backend lo envía. */
+  byType?: { recognition: number; improvement: number; general: number }
+  /** Alias usado por algunos endpoints. */
+  feedbacksByType?: { recognition: number; improvement: number; general: number }
 }
 
 /**
