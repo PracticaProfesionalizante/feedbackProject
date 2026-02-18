@@ -42,11 +42,15 @@ export const getUnreadCount = async (req: Request, res: Response, next: NextFunc
   }
 }
 
+function paramStr(p: string | string[] | undefined): string {
+  return (Array.isArray(p) ? p[0] : p) ?? ''
+}
+
 // PATCH /api/notifications/:id/read
 export const markNotificationAsRead = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id
-    const { id } = req.params
+    const id = paramStr(req.params.id)
 
     const before = await prisma.notification.findFirst({ where: { id, userId }, select: { read: true } })
     const updated = await prisma.notification.updateMany({
@@ -59,7 +63,7 @@ export const markNotificationAsRead = async (req: Request, res: Response, next: 
     if (before && !before.read) {
       await auditLog(req, {
         tableName: 'Notification',
-        recordId: id,
+        recordId: id as string,
         action: 'UPDATE',
         oldData: { read: false },
         newData: { read: true },

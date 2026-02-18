@@ -10,6 +10,10 @@ function mapPrismaError(error: unknown): never {
   throw error
 }
 
+function paramStr(p: string | string[] | undefined): string {
+  return (Array.isArray(p) ? p[0] : p) ?? ''
+}
+
 export const rolesController = {
   async listRoles(req: Request, res: Response, next: NextFunction) {
     try {
@@ -35,7 +39,7 @@ export const rolesController = {
 
   async updateRole(req: Request, res: Response, next: NextFunction) {
     try {
-      const role = await rolesService.updateRole(req.params.id, req.body)
+      const role = await rolesService.updateRole(paramStr(req.params.id), req.body)
       res.json({ role })
     } catch (error) {
       try {
@@ -48,7 +52,7 @@ export const rolesController = {
 
   async deleteRole(req: Request, res: Response, next: NextFunction) {
     try {
-      await rolesService.deleteRole(req.params.id)
+      await rolesService.deleteRole(paramStr(req.params.id))
       res.status(204).send()
     } catch (error) {
       next(error)
@@ -57,7 +61,7 @@ export const rolesController = {
 
   async listUserRoles(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await rolesService.getUserRoles(req.params.userId)
+      const result = await rolesService.getUserRoles(paramStr(req.params.userId))
       res.json(result)
     } catch (error) {
       next(error)
@@ -66,7 +70,7 @@ export const rolesController = {
 
   async replaceUserRoles(req: Request, res: Response, next: NextFunction) {
     try {
-      const assignments = await rolesService.replaceUserRoles(req.params.userId, req.body.roleIds ?? [])
+      const assignments = await rolesService.replaceUserRoles(paramStr(req.params.userId), req.body.roleIds ?? [])
       res.json({ assignments })
     } catch (error) {
       next(error)

@@ -10,6 +10,10 @@ function mapPrismaError(error: unknown): never {
   throw error
 }
 
+function paramStr(p: string | string[] | undefined): string {
+  return (Array.isArray(p) ? p[0] : p) ?? ''
+}
+
 export const orgChartController = {
   async listAreas(req: Request, res: Response, next: NextFunction) {
     try {
@@ -35,7 +39,7 @@ export const orgChartController = {
 
   async updateArea(req: Request, res: Response, next: NextFunction) {
     try {
-      const area = await orgChartService.updateArea(req.params.id, req.body.name)
+      const area = await orgChartService.updateArea(paramStr(req.params.id), req.body.name)
       res.json({ area })
     } catch (error) {
       try {
@@ -48,7 +52,7 @@ export const orgChartController = {
 
   async deleteArea(req: Request, res: Response, next: NextFunction) {
     try {
-      await orgChartService.deleteArea(req.params.id)
+      await orgChartService.deleteArea(paramStr(req.params.id))
       res.status(204).send()
     } catch (error) {
       next(error)
@@ -80,7 +84,7 @@ export const orgChartController = {
 
   async updatePosition(req: Request, res: Response, next: NextFunction) {
     try {
-      const position = await orgChartService.updatePosition(req.params.id, req.body)
+      const position = await orgChartService.updatePosition(paramStr(req.params.id), req.body)
       res.json({ position })
     } catch (error) {
       try {
@@ -93,7 +97,7 @@ export const orgChartController = {
 
   async deletePosition(req: Request, res: Response, next: NextFunction) {
     try {
-      await orgChartService.deletePosition(req.params.id)
+      await orgChartService.deletePosition(paramStr(req.params.id))
       res.status(204).send()
     } catch (error) {
       next(error)
@@ -102,7 +106,7 @@ export const orgChartController = {
 
   async listUserPositions(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await orgChartService.getUserPositions(req.params.userId)
+      const result = await orgChartService.getUserPositions(paramStr(req.params.userId))
       res.json(result)
     } catch (error) {
       next(error)
@@ -112,7 +116,7 @@ export const orgChartController = {
   async replaceUserPositions(req: Request, res: Response, next: NextFunction) {
     try {
       const assignments = await orgChartService.replaceUserPositions(
-        req.params.userId,
+        paramStr(req.params.userId),
         req.body.positionIds ?? []
       )
       res.json({ assignments })

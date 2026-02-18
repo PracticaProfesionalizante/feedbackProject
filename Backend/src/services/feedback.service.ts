@@ -28,7 +28,7 @@ export const feedbackService = {
         fromUserId,
         toUserId: data.toUserId,
         content: data.content,
-      }
+      } as any,
     });
   },
 

@@ -15,9 +15,8 @@ export const feedbackActionController = {
       const user = req.user
       if (!user) throw new AppError('Usuario no autenticado', 401)
 
-      // ✅ validate(toggleActionSchema) ya garantizó que son UUID
-      const feedbackId = req.params.id
-      const actionId = req.params.actionId
+      const feedbackId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id ?? ''
+      const actionId = Array.isArray(req.params.actionId) ? req.params.actionId[0] : req.params.actionId ?? ''
       const done = Boolean(req.body?.done)
 
       // 1) Verificar feedback existente y que el usuario sea participante (privacidad 1 a 1)
@@ -35,7 +34,7 @@ export const feedbackActionController = {
       }
 
       // 2) Verificar que la acción pertenezca a ese feedback
-      const action = await prisma.feedbackAction.findFirst({
+      const action = await (prisma as any).feedbackAction.findFirst({
         where: { id: actionId, feedbackId },
         select: { id: true },
       })
@@ -44,7 +43,7 @@ export const feedbackActionController = {
 
       // 3) Actualizar solo el estado done
       // ✅ IMPORTANTE: NO tocar Feedback.contentEditedAt
-      const updated = await prisma.feedbackAction.update({
+      const updated = await (prisma as any).feedbackAction.update({
         where: { id: actionId },
         data: { done },
         select: { id: true, text: true, done: true, updatedAt: true },

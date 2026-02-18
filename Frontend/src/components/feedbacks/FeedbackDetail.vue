@@ -73,7 +73,7 @@
             :label="a.text"
             density="compact"
             hide-details
-            @update:model-value="(val: boolean) => onToggleAction(a.id, val)"
+            @update:model-value="(val: boolean | null) => onToggleAction(a.id, val ?? false)"
           />
         </div>
 

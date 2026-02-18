@@ -5,9 +5,13 @@ import { notificationService } from '../services/notification.service';
 import { auditLog } from '../services/audit.service';
 
 
+function paramStr(p: string | string[] | undefined): string {
+  return (Array.isArray(p) ? p[0] : p) ?? ''
+}
+
 export const getComments = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { feedbackId } = req.params;
+    const feedbackId = paramStr(req.params.feedbackId);
     
     const comments = await prisma.comment.findMany({
       where: { feedbackId, deletedAt: null },
@@ -27,7 +31,8 @@ export const getComments = async (req: Request, res: Response, next: NextFunctio
 
 export const createComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { feedbackId, content } = req.body;
+    const feedbackId = typeof req.body.feedbackId === 'string' ? req.body.feedbackId : ''
+    const content = typeof req.body.content === 'string' ? req.body.content : ''
     const userId = req.user!.id;
     
     // Verificar que el feedback existe y no está soft-deleted
@@ -80,7 +85,7 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
 
 export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const userId = req.user!.id;
     
     const comment = await prisma.comment.findFirst({
@@ -104,7 +109,7 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
 
     await auditLog(req, {
       tableName: 'Comment',
-      recordId: id,
+      recordId: id as string,
       action: 'DELETE',
       oldData: { feedbackId: comment.feedbackId, userId: comment.userId, content: comment.content },
     });

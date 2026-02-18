@@ -46,17 +46,18 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
     ]
   }
   if (dateFrom || dateTo) {
-    where.createdAt = {}
-    if (dateFrom) (where.createdAt as any).gte = new Date(dateFrom)
+    const createdAtFilter: { gte?: Date; lte?: Date } = {}
+    if (dateFrom) createdAtFilter.gte = new Date(dateFrom)
     if (dateTo) {
       const end = new Date(dateTo)
       end.setHours(23, 59, 59, 999)
-      (where.createdAt as any).lte = end
+      createdAtFilter.lte = end
     }
+    where.createdAt = createdAtFilter
   }
 
-  const page = query.page
-  const limit = query.limit
+  const page = Number(query.page) || 1
+  const limit = Number(query.limit) || 10
   const skip = (page - 1) * limit
 
   const [items, total] = await Promise.all([
@@ -72,7 +73,7 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
           orderBy: { createdAt: 'asc' },
           select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
         },
-      },
+      } as any,
     }),
     prisma.feedback.count({ where }),
   ])
@@ -103,7 +104,7 @@ async function getFeedbackByIdCore(userId: string, feedbackId: string) {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
       },
-    },
+    } as any,
   })
 
   if (!feedback) {
@@ -154,8 +155,7 @@ async function createFeedbackCore(req: Request) {
               .filter((a: any) => a.text),
           }
         : undefined,
-      // contentEditedAt: null (implícito al crear)
-    },
+    } as any,
     include: {
       fromUser: { select: { id: true, name: true, email: true } },
       toUser: { select: { id: true, name: true, email: true } },
@@ -163,7 +163,7 @@ async function createFeedbackCore(req: Request) {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
       },
-    },
+    } as any,
   })
 
   await Promise.all([
@@ -213,10 +213,10 @@ async function updateFeedbackCore(req: Request) {
 
   const updated = await prisma.$transaction(async (tx) => {
     if (actions !== undefined) {
-      await tx.feedbackAction.deleteMany({ where: { feedbackId: id } })
+      await (tx as any).feedbackAction.deleteMany({ where: { feedbackId: id } })
 
       if (actions.length) {
-        await tx.feedbackAction.createMany({
+        await (tx as any).feedbackAction.createMany({
           data: actions
             .map((a: any) => ({
               feedbackId: id,
@@ -240,7 +240,7 @@ async function updateFeedbackCore(req: Request) {
           orderBy: { createdAt: 'asc' },
           select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
         },
-      },
+      } as any,
     })
   })
 
@@ -291,32 +291,61 @@ async function deleteFeedbackCore(req: Request) {
    TOGGLE CHECKLIST (autor o receptor)
 ====================================================== */
 
+function paramStr(p: string | string[] | undefined): string {
+  return (Array.isArray(p) ? p[0] : p) ?? ''
+}
+
 async function toggleActionCore(req: Request, res: Response, next: NextFunction) {
   try {
     const user = getAuthUser(req)
-    const feedbackId = req.params.id
-    const actionId = req.params.actionId
+    const feedbackId = paramStr(req.params.id)
+    const actionId = paramStr(req.params.actionId)
 
-    const action = await prisma.feedbackAction.findFirst({
+    const action = await (prisma as any).feedbackAction.findFirst({
       where: { id: actionId, feedbackId },
-      include: { feedback: true },
+      select: { id: true, done: true, feedbackId: true },
     })
 
     if (!action) throw new AppError('Acción no encontrada', 404)
 
-    const feedback = action.feedback
-
-    if (feedback.fromUserId !== user.id && feedback.toUserId !== user.id) {
+    const feedback = await prisma.feedback.findUnique({
+      where: { id: action.feedbackId },
+      select: { fromUserId: true, toUserId: true },
+    })
+    if (!feedback || (feedback.fromUserId !== user.id && feedback.toUserId !== user.id)) {
       throw new AppError('Forbidden', 403)
     }
 
-    const updated = await prisma.feedbackAction.update({
+    const updated = await (prisma as any).feedbackAction.update({
       where: { id: actionId },
       data: { done: !action.done },
       select: { id: true, text: true, done: true, updatedAt: true },
     })
 
     res.json({ item: updated })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/* ======================================================
+   RECENT FEEDBACKS (GET /api/feedbacks/recent)
+====================================================== */
+
+export async function getRecentFeedbacks(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = getAuthUser(req)
+    const rawQuery = req.query as { limit?: string }
+    const limit = Math.min(Math.max(Number(rawQuery.limit) || 10, 1), 100)
+    const result = await listFeedbacksCore(user.id, {
+      type: 'received',
+      page: 1,
+      limit,
+      search: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+    })
+    return res.json({ feedbacks: result.items, ...result })
   } catch (error) {
     next(error)
   }
