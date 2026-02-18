@@ -91,6 +91,7 @@ model Feedback {
   fromUser        User            @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser          User            @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
   actions         FeedbackAction[]
+  notifications   Notification[]
 
   @@index([toUserId])
   @@index([fromUserId])
@@ -125,15 +126,18 @@ model Comment {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  message   String
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String           @id @default(uuid())
+  userId     String
+  feedbackId String?
+  type       NotificationType
+  message    String
+  read       Boolean          @default(false)
+  createdAt  DateTime        @default(now())
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback   Feedback?        @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
+  @@index([feedbackId])
 }
 
 model AccessRole {

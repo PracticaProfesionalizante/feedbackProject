@@ -1,6 +1,10 @@
 import type { Request, Response, NextFunction } from 'express'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../utils/prisma'
+
+function isPrismaError(e: unknown): e is Prisma.PrismaClientKnownRequestError {
+  return e != null && typeof e === 'object' && 'code' in e && typeof (e as { code: string }).code === 'string'
+}
 import { AppError } from '../middleware/error.handler'
 import { auditLog } from '../services/audit.service'
 import { notificationService } from '../services/notification.service'
@@ -60,33 +64,42 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
   const limit = Number(query.limit) || 10
   const skip = (page - 1) * limit
 
-  const [items, total] = await Promise.all([
-    prisma.feedback.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-      include: {
-        fromUser: { select: { id: true, name: true, email: true } },
-        toUser: { select: { id: true, name: true, email: true } },
-        actions: {
-          orderBy: { createdAt: 'asc' },
-          select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
-        },
-      } as any,
-    }),
-    prisma.feedback.count({ where }),
-  ])
+  try {
+    const [items, total] = await Promise.all([
+      prisma.feedback.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          fromUser: { select: { id: true, name: true, email: true } },
+          toUser: { select: { id: true, name: true, email: true } },
+          actions: {
+            orderBy: { createdAt: 'asc' },
+            select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
+          },
+        } as const,
+      }),
+      prisma.feedback.count({ where }),
+    ])
 
-  return {
-    items,
-    total,
-    pagination: {
-      page,
-      limit,
+    return {
+      items,
       total,
-      pages: Math.ceil(total / limit),
-    },
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    }
+  } catch (e) {
+    if (isPrismaError(e)) {
+      console.error('[listFeedbacksCore] Prisma error:', e.code, e.meta, e.message)
+    } else {
+      console.error('[listFeedbacksCore]', e)
+    }
+    throw e
   }
 }
 
@@ -173,7 +186,7 @@ async function createFeedbackCore(req: Request) {
       action: 'CREATE',
       newData: created,
     }),
-    notificationService.createFeedbackReceivedNotification(created.toUserId, user.name),
+    notificationService.createFeedbackReceivedNotification(created.toUserId, user.name, created.id),
   ])
 
   return created

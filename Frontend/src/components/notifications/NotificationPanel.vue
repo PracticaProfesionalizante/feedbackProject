@@ -108,7 +108,11 @@ async function handleNotificationClick(notification: Notification) {
     await notificationStore.markAsRead(notification.id)
   }
   emit('close')
-  router.push('/feedbacks')
+  if (notification.feedbackId) {
+    router.push(`/feedbacks/${notification.feedbackId}`)
+  } else {
+    router.push('/feedbacks')
+  }
 }
 
 async function handleMarkAllAsRead() {

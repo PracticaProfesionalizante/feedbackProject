@@ -60,15 +60,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import FeedbackDetail from '@/components/feedbacks/FeedbackDetail.vue'
 import CommentList from '@/components/comments/commentList.vue'
 
-import { feedbackService } from '../services/feedbackServices' // ✅ ajustá si tu archivo se llama distinto
+import { feedbackService } from '../services/feedbackServices'
 import { useAuthStore } from '../stores/authStore'
+import { useNotificationStore } from '../stores/notificationStore'
 import type { Feedback } from '../types/feedback'
 
 /* =========================
@@ -79,6 +80,7 @@ const route = useRoute()
 const router = useRouter()
 const queryClient = useQueryClient()
 const auth = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const feedbackId = route.params.id as string
 const currentUserId = computed(() => auth.user?.id ?? '')
@@ -106,6 +108,13 @@ const errorMessage = computed(() => {
   if (!error.value) return 'Error al cargar el feedback'
   return error.value instanceof Error ? error.value.message : 'Error desconocido'
 })
+
+// Al abrir el detalle, marcar notificaciones de este feedback como leídas (actualiza la campanita)
+watch(feedback, (fb) => {
+  if (fb && feedbackId) {
+    notificationStore.markReadByFeedback(feedbackId).catch(() => {})
+  }
+}, { immediate: true })
 
 /* =========================
    Mutations

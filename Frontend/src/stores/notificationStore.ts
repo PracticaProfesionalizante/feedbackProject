@@ -28,6 +28,15 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
+  /** Marcar como leídas las notificaciones del feedback (al abrir el detalle). Actualiza contador. */
+  async function markReadByFeedback(feedbackId: string) {
+    await notificationService.markReadByFeedback(feedbackId)
+    notifications.value.forEach((n) => {
+      if (n.feedbackId === feedbackId) n.read = true
+    })
+    await fetchUnreadCount()
+  }
+
   async function markAllAsRead() {
     await notificationService.markAllAsRead()
     notifications.value.forEach((n) => {
@@ -43,6 +52,7 @@ export const useNotificationStore = defineStore('notification', () => {
     fetchNotifications,
     fetchUnreadCount,
     markAsRead,
-    markAllAsRead
+    markReadByFeedback,
+    markAllAsRead,
   }
 })

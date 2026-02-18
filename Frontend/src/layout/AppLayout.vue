@@ -60,7 +60,6 @@ const navItems: NavItem[] = [
   { title: 'Mi Equipo', icon: 'mdi-account-group-outline', to: '/team' },
   { title: 'Gestión de roles', icon: 'mdi-shield-account-outline', to: '/roles', requireAdmin: true },
   { title: 'Organigrama', icon: 'mdi-sitemap', to: '/organigrama', requireLeader: true },
-  { title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/notifications' }
 ]
 
 const filteredNavItems = computed(() =>

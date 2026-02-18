@@ -56,17 +56,20 @@ export const updateFeedbackSchema = z.object({
   }),
 })
 
+// Acepta string o number (por si el proxy/entorno parsea query)
+const queryPageLimit = z.union([z.string().regex(/^\d+$/), z.number()]).transform(Number).optional()
+
 export const queryFeedbackSchema = z.object({
   query: z.object({
-    page: z.string().regex(/^\d+$/).transform(Number).optional(),
-    limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+    page: queryPageLimit,
+    limit: queryPageLimit,
     type: z.enum(['sent', 'received']).optional(),
   }),
 })
 
 export const recentFeedbacksSchema = z.object({
   query: z.object({
-    limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+    limit: queryPageLimit,
   }),
 })
 

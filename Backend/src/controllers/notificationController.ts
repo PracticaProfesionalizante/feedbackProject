@@ -19,11 +19,30 @@ export const getNotifications = async (req: Request, res: Response, next: NextFu
         where,
         orderBy: { createdAt: 'desc' },
         take: Number(limit),
+        select: { id: true, userId: true, feedbackId: true, type: true, message: true, read: true, createdAt: true },
       }),
       prisma.notification.count({ where: { userId, read: false } }),
     ])
 
     res.json({ notifications, unreadCount })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// PATCH /api/notifications/read-by-feedback/:feedbackId — marcar como leído al abrir el feedback
+export const markReadByFeedbackId = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id
+    const feedbackId = paramStr(req.params.feedbackId)
+    if (!feedbackId) {
+      throw new AppError('feedbackId requerido', 400)
+    }
+    const updated = await prisma.notification.updateMany({
+      where: { userId, feedbackId, read: false },
+      data: { read: true },
+    })
+    res.status(204).send()
   } catch (error) {
     next(error)
   }
@@ -38,6 +57,7 @@ export const getUnreadCount = async (req: Request, res: Response, next: NextFunc
     })
     res.json({ unreadCount })
   } catch (error) {
+    console.error('[notificationController.getUnreadCount]', error)
     next(error)
   }
 }

@@ -1,31 +1,21 @@
-import { NotificationType } from '@prisma/client';
-import { prisma } from '../utils/prisma';
+import { NotificationType } from '@prisma/client'
+import { prisma } from '../utils/prisma'
 
 class NotificationService {
+  /** Solo notificamos feedback nuevo. feedbackId permite marcar como leído al abrir ese feedback. */
   async createFeedbackReceivedNotification(
     userId: string,
-    fromUserName: string
+    fromUserName: string,
+    feedbackId: string
   ) {
     return prisma.notification.create({
       data: {
         userId,
+        feedbackId,
         type: NotificationType.FEEDBACK_RECEIVED,
-        message: `Nuevo feedback de ${fromUserName}`
-      }
-    });
-  }
-
-  async createCommentReceivedNotification(
-    userId: string,
-    commenterName: string
-  ) {
-    return prisma.notification.create({
-      data: {
-        userId,
-        type: NotificationType.COMMENT_RECEIVED,
-        message: `${commenterName} comentó en tu feedback`
-      }
-    });
+        message: `Nuevo feedback de ${fromUserName}`,
+      },
+    })
   }
 }
 

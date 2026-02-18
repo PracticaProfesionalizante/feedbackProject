@@ -1,4 +1,4 @@
-import type { Response } from 'express'
+import type { Response, NextFunction } from 'express'
 import type { AuthRequest } from '../middleware/auth.middleware'
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/error.handler'
@@ -167,15 +167,22 @@ async function updateProfile(req: AuthRequest, res: Response) {
 
 export const userController = {
   // GET /api/users/profile
-  async profile(req: AuthRequest, res: Response) {
-    return buildProfile(req, res)
-  },
-
-  // Alias para compatibilidad con imports/rutas anteriores.
-  async getProfile(req: AuthRequest, res: Response) {
-    return buildProfile(req, res)
+  async getProfile(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      return await buildProfile(req, res)
+    } catch (error) {
+      console.error('[userController.getProfile]', error)
+      next(error)
+    }
   },
 
   // PATCH /api/users/profile
-  updateProfile,
+  async updateProfile(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      return await updateProfile(req, res)
+    } catch (error) {
+      console.error('[userController.updateProfile]', error)
+      next(error)
+    }
+  },
 }

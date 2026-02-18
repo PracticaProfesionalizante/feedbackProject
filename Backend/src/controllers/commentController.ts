@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../middleware/error.handler';
-import { prisma } from '../utils/prisma';
-import { notificationService } from '../services/notification.service';
-import { auditLog } from '../services/audit.service';
+import { Request, Response, NextFunction } from 'express'
+import { AppError } from '../middleware/error.handler'
+import { prisma } from '../utils/prisma'
+import { auditLog } from '../services/audit.service'
 
 
 function paramStr(p: string | string[] | undefined): string {
@@ -68,14 +67,6 @@ export const createComment = async (req: Request, res: Response, next: NextFunct
       action: 'CREATE',
       newData: { feedbackId, userId, content: comment.content },
     });
-    
-    // Crear notificación para el owner del feedback si no es el mismo que comenta
-    if (feedback.toUserId !== userId) {
-      await notificationService.createCommentReceivedNotification(
-        feedback.toUserId,
-        req.user!.name
-      );
-    }
     
     res.status(201).json(comment);
   } catch (error) {

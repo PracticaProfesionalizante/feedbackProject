@@ -47,6 +47,18 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' })
 })
 
+// Diagnóstico: comprobar si la DB responde (sin auth)
+app.get('/health/db', async (req, res) => {
+  try {
+    const { prisma } = await import('./utils/prisma')
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', db: 'connected' })
+  } catch (e) {
+    console.error('[health/db]', e)
+    res.status(503).json({ status: 'error', db: 'disconnected', message: (e as Error).message })
+  }
+})
+
 app.use('/api/team', teamRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)

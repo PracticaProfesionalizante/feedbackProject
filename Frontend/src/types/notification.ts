@@ -7,6 +7,8 @@ export interface Notification {
   message: string
   read: boolean
   createdAt: string
+  /** Solo en notificaciones de tipo FEEDBACK_RECEIVED; para navegar y marcar leído al abrir */
+  feedbackId?: string | null
 }
 
 export type UnreadCountResponse = {

@@ -5,22 +5,22 @@ import {
   getUnreadCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  markReadByFeedbackId,
 } from '../controllers/notificationController'
 
 const router = Router()
 
-// Todo lo de notifications requiere auth
 router.use(authMiddleware)
 
 // GET /api/notifications?read=true|false&limit=50
 router.get('/', getNotifications)
-
 // GET /api/notifications/count
 router.get('/count', getUnreadCount)
 
+// Marcar leído por feedback (debe ir antes de /:id/read)
+router.patch('/read-by-feedback/:feedbackId', markReadByFeedbackId)
 // PATCH /api/notifications/:id/read
 router.patch('/:id/read', markNotificationAsRead)
-
 // PATCH /api/notifications/read-all
 router.patch('/read-all', markAllNotificationsAsRead)
 
