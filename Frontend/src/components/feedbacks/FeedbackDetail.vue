@@ -3,18 +3,15 @@
     <!-- Header -->
     <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
       <div class="d-flex align-center ga-2 flex-wrap">
-        <!-- Tipo -->
         <v-chip size="small" variant="tonal">
           {{ formatType(feedback.type) }}
         </v-chip>
 
-        <!-- Estado -->
         <v-chip size="small" variant="tonal">
           {{ formatStatus(feedback.status) }}
         </v-chip>
       </div>
 
-      <!-- Menú acciones (solo autor) -->
       <v-menu v-if="canSeeMenu">
         <template #activator="{ props: menuProps }">
           <v-btn icon variant="text" v-bind="menuProps">
@@ -53,7 +50,9 @@
             {{ feedback.fromUser?.name ?? feedback.fromUserId }}
           </span>
           <span class="text-medium-emphasis">·</span>
-          <span class="text-medium-emphasis">{{ formatDateTime(feedback.createdAt) }}</span>
+          <span class="text-medium-emphasis">
+            {{ metaLabel }} {{ formatDateTime(metaDateIso) }}
+          </span>
         </div>
 
         <div class="text-body-2">
@@ -87,39 +86,30 @@
         {{ feedback.content }}
       </div>
 
-      <!-- Comentarios (Sprint 3.1): por ahora solo placeholder si existen -->
-      <!-- <div class="mt-6">
-        <div class="text-subtitle-2 mb-2">Comentarios</div>
+      <!-- Acciones (Checklist) -->
+      <div class="mt-6">
+        <div class="text-subtitle-2 mb-2">Acciones</div>
 
-        <div v-if="hasComments" class="d-flex flex-column ga-3">
-          <v-card
-            v-for="c in (feedback as any).comments"
-            :key="c.id"
-            variant="outlined"
-            class="pa-3"
-          >
-            <div class="d-flex align-center justify-space-between">
-              <div class="text-body-2 font-weight-medium">
-                {{ c.user?.name ?? c.userId }}
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ formatDateTime(c.createdAt) }}
-              </div>
-            </div>
-            <div class="text-body-2 mt-2" style="white-space: pre-wrap;">
-              {{ c.content }}
-            </div>
-          </v-card>
+        <div v-if="hasActions" class="d-flex flex-column ga-2">
+          <v-checkbox
+            v-for="a in normalizedActions"
+            :key="a.id"
+            :model-value="a.done"
+            :label="a.text"
+            density="compact"
+            hide-details
+            @update:model-value="(val: boolean) => onToggleAction(a.id, val)"
+          />
         </div>
 
         <div v-else class="text-body-2 text-medium-emphasis">
-          Todavía no hay comentarios.
+          No hay acciones asignadas.
         </div>
-      </div> -->
+      </div>
     </v-card-text>
   </v-card>
 
-  <!-- Dialog editar contenido -->
+  <!-- Dialog editar contenido + acciones -->
   <v-dialog v-model="editDialog.open" max-width="680">
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
@@ -139,8 +129,43 @@
           auto-grow
           rows="5"
         />
-        <div class="text-caption text-medium-emphasis">
+
+        <div class="text-caption text-medium-emphasis mb-4">
           Solo el autor puede editar el contenido y únicamente si el feedback está en estado “Pendiente”.
+        </div>
+
+        <!-- ✅ NUEVO: editor de acciones -->
+        <div class="text-subtitle-2 mb-2">Acciones</div>
+
+        <div class="d-flex flex-column ga-2">
+          <v-text-field
+            v-for="(a, idx) in editDialog.actions"
+            :key="a._key"
+            v-model="a.text"
+            :label="`Acción ${idx + 1}`"
+            variant="outlined"
+            density="compact"
+            hide-details
+          >
+            <template #append-inner>
+              <v-btn
+                icon
+                variant="text"
+                :disabled="editDialog.actions.length === 1"
+                @click="removeAction(idx)"
+              >
+                <v-icon icon="mdi-close" />
+              </v-btn>
+            </template>
+          </v-text-field>
+
+          <v-btn variant="tonal" prepend-icon="mdi-plus" @click="addAction">
+            Agregar acción
+          </v-btn>
+
+          <div class="text-caption text-medium-emphasis">
+            El receptor solo puede marcar/desmarcar (no puede cambiar el texto).
+          </div>
         </div>
       </v-card-text>
 
@@ -156,7 +181,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import type { Feedback, FeedbackStatus } from '../../types/feedback'
+import type { Feedback, FeedbackStatus, FeedbackAction, FeedbackActionInput } from '../../types/feedback'
 
 const props = defineProps<{
   feedback: Feedback
@@ -165,8 +190,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update-status', status: FeedbackStatus): void
+
+  /** 👇 lo dejamos por compatibilidad, pero ya no lo vamos a usar desde este dialog */
   (e: 'edit-content', content: string): void
+
+  /** ✅ NUEVO: editar feedback completo (contenido + acciones) */
+  (e: 'edit-feedback', payload: { content: string; actions: FeedbackActionInput[] }): void
+
   (e: 'delete'): void
+
+  (e: 'toggle-action', payload: { feedbackId: string; actionId: string; done: boolean }): void
 }>()
 
 /* =========================
@@ -178,11 +211,15 @@ const isRecipient = computed(() => props.feedback.toUserId === props.currentUser
 
 const canChangeStatus = computed(() => isRecipient.value)
 const canDelete = computed(() => isAuthor.value)
-// regla: solo autor y solo si PENDING
 const canEditContent = computed(() => isAuthor.value && props.feedback.status === 'PENDING')
-
-// Mostrar menú solo si hay alguna acción
 const canSeeMenu = computed(() => canEditContent.value || canDelete.value)
+
+/* =========================
+   Meta: Creado vs Editado
+========================= */
+
+const metaLabel = computed(() => (props.feedback.contentEditedAt ? 'Editado ·' : 'Creado ·'))
+const metaDateIso = computed(() => (props.feedback.contentEditedAt ?? props.feedback.createdAt))
 
 /* =========================
    Estado editable
@@ -196,7 +233,6 @@ const statusOptions: Array<{ label: string; value: FeedbackStatus }> = [
 
 const statusModel = ref<FeedbackStatus>(props.feedback.status)
 
-// Si cambia el feedback (por refetch), sincronizamos el select
 watch(
   () => props.feedback.status,
   (s) => {
@@ -205,42 +241,92 @@ watch(
 )
 
 function onStatusChange(next: FeedbackStatus) {
-  // Si no cambió, no hacemos nada
   if (next === props.feedback.status) return
-  // Emitimos para que la vista haga la mutation (TanStack Query)
   emit('update-status', next)
 }
 
 /* =========================
-   Edit dialog
+   Acciones (Checklist)
 ========================= */
+
+const normalizedActions = computed<FeedbackAction[]>(() => {
+  return Array.isArray(props.feedback.actions) ? props.feedback.actions : []
+})
+const hasActions = computed(() => normalizedActions.value.length > 0)
+
+function onToggleAction(actionId: string, done: boolean) {
+  if (!isAuthor.value && !isRecipient.value) return
+  emit('toggle-action', { feedbackId: props.feedback.id, actionId, done })
+}
+
+/* =========================
+   Edit dialog (contenido + acciones)
+========================= */
+
+type EditActionRow = { _key: string; id?: string; text: string }
 
 const editDialog = reactive({
   open: false,
-  content: ''
+  content: '',
+  actions: [] as EditActionRow[],
 })
 
 function openEditDialog() {
   editDialog.content = props.feedback.content
+
+  // clonamos acciones existentes (solo texto, done se mantiene por backend si trae id)
+  const current = normalizedActions.value
+  editDialog.actions = (current.length ? current : [{ id: undefined, text: '' }]).map((a) => ({
+    _key: crypto.randomUUID(),
+    id: a.id,
+    text: a.text ?? '',
+  }))
+
   editDialog.open = true
 }
 
+function addAction() {
+  editDialog.actions.push({ _key: crypto.randomUUID(), text: '' })
+}
+
+function removeAction(idx: number) {
+  if (editDialog.actions.length <= 1) return
+  editDialog.actions.splice(idx, 1)
+}
+
 function confirmEdit() {
-  const next = (editDialog.content ?? '').trim()
-  if (!next) return
-  if (next === props.feedback.content.trim()) {
+  if (!canEditContent.value) {
     editDialog.open = false
     return
   }
-  emit('edit-content', next)
+
+  const nextContent = (editDialog.content ?? '').trim()
+  if (!nextContent) return
+
+  const nextActions: FeedbackActionInput[] = editDialog.actions
+    .map((a) => ({
+      id: a.id,
+      text: (a.text ?? '').trim(),
+    }))
+    .filter((a) => a.text.length > 0)
+
+  // si no hay acciones, mandamos [] (backend lo interpreta como "sin acciones")
+  const currentContent = props.feedback.content.trim()
+  const currentActions = normalizedActions.value.map((a) => ({ id: a.id, text: a.text.trim() }))
+
+  const changedContent = nextContent !== currentContent
+  const changedActions =
+    nextActions.length !== currentActions.length ||
+    nextActions.some((a, i) => a.text !== currentActions[i]?.text)
+
+  if (!changedContent && !changedActions) {
+    editDialog.open = false
+    return
+  }
+
+  emit('edit-feedback', { content: nextContent, actions: nextActions })
   editDialog.open = false
 }
-
-/* =========================
-   Comments (placeholder)
-========================= */
-
-// const hasComments = computed(() => Array.isArray((props.feedback as any)?.comments) && (props.feedback as any).comments.length > 0)
 
 /* =========================
    Format helpers

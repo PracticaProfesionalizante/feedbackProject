@@ -2,8 +2,8 @@ import { Router } from 'express'
 import {
   feedbackController,
   getRecentFeedbacks,
-  updateStatus,
 } from '../controllers/feedbackController'
+import { feedbackActionController } from '../controllers/feedbackActionController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
 import { validate } from '../middleware/validate.middleware'
@@ -13,6 +13,7 @@ import {
   updateStatusSchema,
   queryFeedbackSchema,
   recentFeedbacksSchema,
+  toggleActionSchema, // ✅ NUEVO
 } from '../validators/feedback.validator'
 
 const router = Router()
@@ -49,8 +50,17 @@ router.get('/:id', feedbackController.getById)
 // POST /api/feedbacks
 router.post('/', validate(createFeedbackSchema), feedbackController.create)
 
+// ✅ NUEVO: Toggle de checklist
+// Debe ir ANTES de /:id/status y /:id si agregáramos rutas más genéricas.
+// En tu caso, como incluye /actions/:actionId no pisa, pero lo dejamos ordenado.
+router.patch(
+  '/:id/actions/:actionId',
+  validate(toggleActionSchema),
+  feedbackController.toggleAction
+)
+
 // PATCH /api/feedbacks/:id/status (debe ir antes de /:id)
-router.patch('/:id/status', validate(updateStatusSchema), updateStatus)
+router.patch('/:id/status', validate(updateStatusSchema), feedbackController.updateStatus)
 
 // PATCH /api/feedbacks/:id
 router.patch('/:id', validate(updateFeedbackSchema), feedbackController.update)

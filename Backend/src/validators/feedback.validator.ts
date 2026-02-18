@@ -1,34 +1,88 @@
-import { z } from 'zod';
-import { FeedbackType, FeedbackStatus } from '@prisma/client';
+import { z } from 'zod'
+import { FeedbackType, FeedbackStatus } from '@prisma/client'
+
+/**
+ * ✅ NUEVO: schema reutilizable para acciones checklist
+ * Motivo: la nueva lógica agrega "Acciones" (checklist) al feedback.
+ * - text: requerido, sin HTML/imagenes (eso se valida mejor en UI; acá solo tamaño/trim)
+ */
+const actionCreateSchema = z.object({
+  text: z.string().trim().min(1, { message: 'El texto de la acción es requerido' }).max(300),
+})
+
+/**
+ * ✅ NUEVO: schema para update de acciones
+ * - id es opcional: si viene, el backend puede intentar preservar `done`
+ *   (cuando reemplaza acciones, usa el id previo para mapear done).
+ */
+const actionUpdateSchema = z.object({
+  id: z.string().uuid().optional(),
+  text: z.string().trim().min(1).max(300),
+})
+
+/**
+ * ✅ NUEVO: toggle schema para actualizar done (check/uncheck)
+ * Motivo: el receptor NO puede editar contenido ni texto de acciones,
+ * solo puede cambiar el estado done.
+ */
+export const toggleActionSchema = z.object({
+  body: z.object({
+    done: z.boolean(),
+  }),
+  params: z.object({
+    id: z.string().uuid({ message: 'ID de feedback inválido' }),
+    actionId: z.string().uuid({ message: 'ID de acción inválido' }),
+  }),
+})
 
 export const createFeedbackSchema = z.object({
   body: z.object({
-    toUserId: z.string().uuid({ message: "ID de usuario inválido" }),
-    type: z.nativeEnum(FeedbackType, { errorMap: () => ({ message: "Tipo de feedback inválido (RECOGNITION, IMPROVEMENT, GENERAL)" }) }),
-    content: z.string().min(10, { message: "El contenido debe tener al menos 10 caracteres" }),
+    toUserId: z.string().uuid({ message: 'ID de usuario inválido' }),
+    type: z.nativeEnum(FeedbackType, {
+      errorMap: () => ({
+        message: 'Tipo de feedback inválido (RECOGNITION, IMPROVEMENT, GENERAL)',
+      }),
+    }),
+    content: z.string().min(10, { message: 'El contenido debe tener al menos 10 caracteres' }),
+
+    /**
+     * ✅ CAMBIO: actions opcional para checklist
+     * Motivo: en creación se permite agregar múltiples ítems tipo checklist.
+     */
+    actions: z.array(actionCreateSchema).max(50).optional(),
   }),
-});
+})
 
 export const updateFeedbackSchema = z.object({
   body: z.object({
     content: z.string().min(10).optional(),
     status: z.nativeEnum(FeedbackStatus).optional(),
+
+    /**
+     * ✅ CAMBIO: actions opcional para que el AUTOR edite estructura/texto
+     * Motivo: el autor puede editar acciones (texto/add/remove) sin límite.
+     *
+     * Importante:
+     * - El receptor no debería usar este campo. Eso se controla en el controller
+     *   (403 si no es autor).
+     */
+    actions: z.array(actionUpdateSchema).max(50).optional(),
   }),
   params: z.object({
     id: z.string().uuid(),
   }),
-});
+})
 
 export const updateStatusSchema = z.object({
   body: z.object({
-    status: z.nativeEnum(FeedbackStatus, { 
-      errorMap: () => ({ message: "Estado inválido (PENDING, IN_PROGRESS, COMPLETED)" }) 
+    status: z.nativeEnum(FeedbackStatus, {
+      errorMap: () => ({ message: 'Estado inválido (PENDING, IN_PROGRESS, COMPLETED)' }),
     }),
   }),
   params: z.object({
-    id: z.string().uuid({ message: "ID de feedback inválido" }),
+    id: z.string().uuid({ message: 'ID de feedback inválido' }),
   }),
-});
+})
 
 export const queryFeedbackSchema = z.object({
   query: z.object({
@@ -38,18 +92,18 @@ export const queryFeedbackSchema = z.object({
     status: z.nativeEnum(FeedbackStatus).optional(),
     feedbackType: z.nativeEnum(FeedbackType).optional(),
   }),
-});
+})
 
 export const recentFeedbacksSchema = z.object({
   query: z.object({
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
   }),
-});
+})
 
 // Schemas internos para controladores (payload ya desempaquetado, sin body/query/params wrapper).
 export const idParamSchema = z.object({
   id: z.string().uuid(),
-});
+})
 
 export const listFeedbacksQuerySchema = z.object({
   type: z.enum(['received', 'sent']).default('received'),
@@ -60,23 +114,33 @@ export const listFeedbacksQuerySchema = z.object({
   dateTo: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-});
+})
 
 export const recentFeedbacksQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
-});
+})
 
 export const createFeedbackPayloadSchema = z.object({
   toUserId: z.string().uuid(),
   type: z.nativeEnum(FeedbackType),
   content: z.string().min(1).max(5000),
-});
+
+  /**
+   * ✅ CAMBIO: actions opcional en payload interno también
+   */
+  actions: z.array(actionCreateSchema).max(50).optional(),
+})
 
 export const updateFeedbackPayloadSchema = z
   .object({
     content: z.string().min(1).max(5000).optional(),
     status: z.nativeEnum(FeedbackStatus).optional(),
+
+    /**
+     * ✅ CAMBIO: actions opcional en update interno
+     */
+    actions: z.array(actionUpdateSchema).max(50).optional(),
   })
-  .refine((data) => data.content || data.status, {
-    message: 'Debes enviar al menos content o status',
-  });
+  .refine((data) => data.content || data.status || data.actions, {
+    message: 'Debes enviar al menos content, status o actions',
+  })

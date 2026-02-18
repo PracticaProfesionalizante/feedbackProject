@@ -10,20 +10,22 @@ export type FeedbackUser = {
   role?: Role
 }
 
-export type Feedback = {
+/** ✅ NUEVO: Acción tipo checklist */
+export type FeedbackAction = {
   id: string
-  fromUserId: string
-  toUserId: string
-  type: FeedbackType
-  content: string
-  status: FeedbackStatus
-  createdAt: string
-  updatedAt: string
-  comments?: Comment[]
+  text: string
+  done: boolean
+  createdAt?: string
+  updatedAt?: string
+}
 
-  // si el backend incluye relaciones:
-  fromUser?: FeedbackUser
-  toUser?: FeedbackUser
+/** ✅ NUEVO: DTO para enviar acciones */
+export type FeedbackActionInput = {
+  /** si existe, sirve para mapear en UI; backend puede ignorarlo al recrear acciones */
+  id?: string
+  text: string
+  /** opcional: solo para UI; backend puede ignorarlo */
+  done?: boolean
 }
 
 export type Comment = {
@@ -33,6 +35,29 @@ export type Comment = {
   createdAt: string
   updatedAt?: string
   user?: FeedbackUser
+}
+
+export type Feedback = {
+  id: string
+  fromUserId: string
+  toUserId: string
+  type: FeedbackType
+  content: string
+  status: FeedbackStatus
+  createdAt: string
+  updatedAt: string
+
+  /** ✅ NUEVO: para mostrar "Editado" estilo WhatsApp */
+  contentEditedAt?: string | null
+
+  /** ✅ NUEVO: checklist */
+  actions?: FeedbackAction[]
+
+  comments?: Comment[]
+
+  // relaciones
+  fromUser?: FeedbackUser
+  toUser?: FeedbackUser
 }
 
 export type FeedbackFilters = {
@@ -50,11 +75,24 @@ export type FeedbackFilters = {
   sortOrder?: 'asc' | 'desc'
 }
 
+/**
+ * ✅ Compatibilidad:
+ * - algunos endpoints devuelven array directo
+ * - tu backend de list devuelve: { items, pagination }
+ * - versiones viejas podrían devolver { items, total, page, limit }
+ */
 export type FeedbacksResponse =
   | Feedback[]
   | {
       items: Feedback[]
-      total: number
+      pagination?: {
+        page: number
+        limit: number
+        total: number
+        pages: number
+      }
+      // compat legacy
+      total?: number
       page?: number
       limit?: number
     }
@@ -63,10 +101,16 @@ export type CreateFeedbackDto = {
   toUserId: string
   type: FeedbackType
   content: string
+
+  /** ✅ NUEVO: acciones al crear */
+  actions?: FeedbackActionInput[]
 }
 
 export type UpdateFeedbackDto = {
   type?: FeedbackType
   content?: string
   status?: FeedbackStatus
+
+  /** ✅ NUEVO: acciones al editar (solo autor) */
+  actions?: FeedbackActionInput[]
 }

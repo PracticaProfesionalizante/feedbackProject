@@ -1,29 +1,30 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
-  provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
 }
 
 model User {
-  id                String         @id @default(uuid())
-  email             String         @unique
+  id                String            @id @default(uuid())
+  email             String            @unique
   name              String
-  role              Role           @default(EMPLOYEE)
+  role              Role              @default(EMPLOYEE)
   password          String
   birthdate         DateTime?
   country           String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  areaId            String?           @db.Uuid
+  positionId        String?           @db.Uuid
   comments          Comment[]
-  feedbacksSent     Feedback[]     @relation("FeedbackFrom")
-  feedbacksReceived Feedback[]     @relation("FeedbackTo")
+  feedbacksSent     Feedback[]        @relation("FeedbackFrom")
+  feedbacksReceived Feedback[]        @relation("FeedbackTo")
   notifications     Notification[]
-  teamsLed          TeamMember[]   @relation("TeamLeader")
-  teamMemberships   TeamMember[]   @relation("TeamMember")
+  teamsLed          TeamMember[]      @relation("TeamLeader")
+  teamMemberships   TeamMember[]      @relation("TeamMember")
   orgPositions      UserOrgPosition[]
   assignedRoles     UserRoleLink[]
 }
@@ -39,13 +40,13 @@ model OrgArea {
 }
 
 model OrgPosition {
-  id          String            @id @default(uuid())
-  name        String
-  areaId      String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  area        OrgArea           @relation(fields: [areaId], references: [id], onDelete: Restrict)
-  userLinks   UserOrgPosition[]
+  id        String            @id @default(uuid())
+  name      String
+  areaId    String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  area      OrgArea           @relation(fields: [areaId], references: [id])
+  userLinks UserOrgPosition[]
 
   @@unique([areaId, name])
   @@index([name])
@@ -57,8 +58,8 @@ model UserOrgPosition {
   userId     String
   positionId String
   createdAt  DateTime    @default(now())
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   position   OrgPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, positionId])
   @@index([userId])
@@ -87,10 +88,12 @@ model Feedback {
   status     FeedbackStatus @default(PENDING)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
-  deletedAt DateTime?
+  contentEditedAt DateTime?
+  deletedAt  DateTime?
   comments   Comment[]
   fromUser   User           @relation("FeedbackFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser     User           @relation("FeedbackTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  actions    FeedbackAction[]
 
   @@index([toUserId, status])
   @@index([fromUserId])
@@ -98,15 +101,27 @@ model Feedback {
   @@index([deletedAt])
 }
 
+model FeedbackAction {
+  id         String    @id @default(uuid())
+  feedbackId String
+  text       String
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  feedback   Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@index([feedbackId])
+}
+
 model Comment {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   feedbackId String
   userId     String
   content    String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
   deletedAt  DateTime?
-  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback   Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([feedbackId])
   @@index([deletedAt])
@@ -125,11 +140,11 @@ model Notification {
 }
 
 model AccessRole {
-  id          String         @id @default(uuid())
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String         @unique
   description String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
   users       UserRoleLink[]
 
   @@index([name])
@@ -137,17 +152,37 @@ model AccessRole {
 }
 
 model UserRoleLink {
-  id        String     @id @default(uuid())
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String
-  roleId    String
-  createdAt DateTime   @default(now())
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      AccessRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    String     @db.Uuid
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  role      AccessRole @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([userId, roleId])
   @@index([userId])
   @@index([roleId])
   @@map("user_roles")
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  tableName     String
+  recordId      String
+  action        AuditAction
+  userId        String?
+  ip            String?
+  userAgent     String?
+  requestMethod String?
+  requestPath   String?
+  description   String?
+  oldData       Json?
+  newData       Json?
+  createdAt     DateTime    @default(now())
+
+  @@index([tableName, recordId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum FeedbackType {
@@ -171,27 +206,6 @@ enum NotificationType {
 enum Role {
   LEADER
   EMPLOYEE
-}
-
-// Tabla de auditoría: registra quién (userId), desde qué IP y qué acción en cada tabla.
-model AuditLog {
-  id            String   @id @default(uuid())
-  tableName     String   // Feedback, Comment, Notification, User, etc.
-  recordId      String   // id del registro afectado
-  action        AuditAction
-  userId        String?  // quien realizó la acción (null si no autenticado)
-  ip            String?
-  userAgent     String?
-  requestMethod String?  // GET, POST, PATCH, DELETE
-  requestPath   String?  // ej. /api/feedbacks/abc-123
-  description   String?  // texto legible opcional, ej. "Login de juan@mail.com"
-  oldData       Json?
-  newData       Json?
-  createdAt     DateTime @default(now())
-
-  @@index([tableName, recordId])
-  @@index([userId])
-  @@index([createdAt])
 }
 
 enum AuditAction {
