@@ -214,8 +214,9 @@ export const useAuthStore = defineStore('auth', {
         const raw = await res.json()
         const data = raw?.data ?? raw
 
-        const token: string | undefined = data?.token
-        const user: User | null = data?.user ?? null
+        const token: string | undefined =
+          data?.token ?? data?.accessToken ?? (raw && 'token' in raw ? (raw as any).token : undefined)
+        const user: User | null = data?.user ?? (raw && 'user' in raw ? (raw as any).user : null)
 
         if (!token) {
           throw new Error('Respuesta inválida: no se recibió token')

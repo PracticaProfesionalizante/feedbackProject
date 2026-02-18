@@ -21,24 +21,7 @@ const router = Router()
 router.use(authenticate, requireAuth)
 
 // GET /api/feedbacks/recent
-// Compatibilidad: mantiene `items` (legacy) y agrega `feedbacks`.
-router.get('/recent', validate(recentFeedbacksSchema), async (req, res, next) => {
-  const originalJson = res.json.bind(res)
-  res.json = ((body: unknown) => {
-    if (
-      body &&
-      typeof body === 'object' &&
-      'feedbacks' in (body as Record<string, unknown>) &&
-      !('items' in (body as Record<string, unknown>))
-    ) {
-      const payload = body as { feedbacks: unknown }
-      return originalJson({ ...payload, items: payload.feedbacks })
-    }
-    return originalJson(body)
-  }) as typeof res.json
-
-  return getRecentFeedbacks(req, res, next)
-})
+router.get('/recent', validate(recentFeedbacksSchema), getRecentFeedbacks)
 
 // GET /api/feedbacks
 router.get('/', validate(queryFeedbackSchema), feedbackController.list)

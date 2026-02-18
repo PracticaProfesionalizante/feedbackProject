@@ -9,13 +9,12 @@ npm install
 
 ### Configuración
 
-Las URLs del API están centralizadas en `src/config/constants.ts` y se detectan automáticamente según el entorno:
-- **Desarrollo**: `http://localhost:3000/api`
-- **Producción**: `https://feedback-backend-dhlr.onrender.com/api`
+El API está en `src/config/constants.ts`. Por defecto todas las peticiones van a:
+`https://feedback-backend-dhlr.onrender.com/api`
 
-Si necesitas override para casos especiales, puedes crear `.env`:
+Para usar otro backend, crea `.env` con:
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=https://tu-backend.ejemplo.com/api
 ```
 
 ### Desarrollo

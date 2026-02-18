@@ -345,8 +345,15 @@ export async function getRecentFeedbacks(req: Request, res: Response, next: Next
       dateFrom: undefined,
       dateTo: undefined,
     })
-    return res.json({ feedbacks: result.items, ...result })
+    const payload = {
+      feedbacks: result.items,
+      items: result.items,
+      total: result.total,
+      pagination: result.pagination,
+    }
+    return res.json(payload)
   } catch (error) {
+    console.error('[getRecentFeedbacks]', error)
     next(error)
   }
 }
@@ -362,6 +369,7 @@ export const feedbackController = {
       const result = await listFeedbacksCore(user.id, req.query)
       res.json(result)
     } catch (error) {
+      console.error('[feedbackController.list]', error)
       next(error)
     }
   },

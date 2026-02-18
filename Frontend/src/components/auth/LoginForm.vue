@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
@@ -122,6 +122,7 @@ const onSubmit = handleSubmit(async (values) => {
     localStorage.setItem('auth_token', auth.token)
   }
 
+  await nextTick()
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
   await router.replace(redirect || '/dashboard')
 })

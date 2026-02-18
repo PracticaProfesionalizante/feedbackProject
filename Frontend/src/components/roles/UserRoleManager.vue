@@ -76,6 +76,7 @@ import { roleService } from '@/services/roleService'
 import { userRoleService } from '@/services/userRoleService'
 import type { AccessRole, UserListItem } from '@/types/roles'
 import { useAuthStore } from '@/stores/authStore'
+import { API_BASE_URL } from '@/config/constants'
 
 const emit = defineEmits<{
   (e: 'error', message: string): void
@@ -90,9 +91,7 @@ const usersQuery = useQuery<UserListItem[]>({
   queryKey: ['role-users'],
   enabled: computed(() => auth.isAdmin),
   queryFn: async () => {
-    // Preferimos /api/team/employees para líderes
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
-    const res = await fetch(`${base}/team/employees`, {
+    const res = await fetch(`${API_BASE_URL}/team/employees`, {
       headers: { ...auth.getAuthHeader() },
     })
     if (!res.ok) throw new Error(await res.text() || 'No se pudo obtener usuarios')
