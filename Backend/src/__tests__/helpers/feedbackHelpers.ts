@@ -9,7 +9,6 @@ export async function createTestFeedback(fromUserId: string, toUserId: string) {
     data: {
       fromUserId,
       toUserId,
-      type: 'GENERAL',
       content: 'Feedback test',
     },
   })

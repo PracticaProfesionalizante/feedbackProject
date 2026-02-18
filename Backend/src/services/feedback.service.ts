@@ -1,11 +1,10 @@
-import { FeedbackType } from '@prisma/client';
 import { AppError } from '../middleware/error.handler';
 import { prisma } from '../utils/prisma';
 
 export const feedbackService = {
   
   // 1. CREAR FEEDBACK (Validando Jerarquía)
-  async create(fromUserId: string, data: { toUserId: string; type: FeedbackType; content: string }) {
+  async create(fromUserId: string, data: { toUserId: string; content: string }) {
     if (fromUserId === data.toUserId) {
       throw new AppError("No puedes enviarte feedback a ti mismo", 400);
     }
@@ -29,7 +28,6 @@ export const feedbackService = {
         fromUserId,
         toUserId: data.toUserId,
         content: data.content,
-        type: data.type,
       }
     });
   },
@@ -44,8 +42,6 @@ export const feedbackService = {
     const whereClause: any = query.type === 'sent' 
       ? { fromUserId: userId, deletedAt: null } 
       : { toUserId: userId, deletedAt: null };
-
-    if (query.feedbackType) whereClause.type = query.feedbackType;
 
     const [total, feedbacks] = await Promise.all([
       prisma.feedback.count({ where: whereClause }),

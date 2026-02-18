@@ -30,28 +30,6 @@
         </template>
       </v-select>
 
-      <!-- Tipo de Feedback -->
-      <v-select
-        v-model="formData.type"
-        :items="feedbackTypes"
-        item-title="label"
-        item-value="value"
-        label="Tipo de Feedback"
-        :rules="[rules.required]"
-        prepend-inner-icon="mdi-tag"
-        variant="outlined"
-        density="comfortable"
-        class="mb-4"
-      >
-        <template #item="{ props, item }">
-          <v-list-item v-bind="props">
-            <template #prepend>
-              <v-icon :color="item.raw.color">{{ item.raw.icon }}</v-icon>
-            </template>
-          </v-list-item>
-        </template>
-      </v-select>
-
       <!-- Contenido -->
       <v-textarea
         v-model="formData.content"
@@ -89,7 +67,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { FeedbackType } from '../../types/feedback'
 
 type AvailableUser = {
   id: string
@@ -106,7 +83,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', data: { toUserId: string; type: FeedbackType; content: string }): void
+  (e: 'submit', data: { toUserId: string; content: string }): void
   (e: 'cancel'): void
 }>()
 
@@ -115,30 +92,8 @@ const valid = ref(false)
 
 const formData = ref({
   toUserId: props.initialToUserId || '',
-  type: '' as FeedbackType | '',
   content: ''
 })
-
-const feedbackTypes = [
-  {
-    value: 'RECOGNITION' as FeedbackType,
-    label: 'Reconocimiento',
-    icon: 'mdi-star',
-    color: 'success'
-  },
-  {
-    value: 'IMPROVEMENT' as FeedbackType,
-    label: 'Mejora',
-    icon: 'mdi-trending-up',
-    color: 'warning'
-  },
-  {
-    value: 'GENERAL' as FeedbackType,
-    label: 'General',
-    icon: 'mdi-information',
-    color: 'info'
-  }
-]
 
 const rules = {
   required: (v: any) => !!v || 'Este campo es requerido',
@@ -162,7 +117,6 @@ async function handleSubmit() {
 
   emit('submit', {
     toUserId: formData.value.toUserId,
-    type: formData.value.type as FeedbackType,
     content: formData.value.content.trim()
   })
 }
@@ -172,7 +126,6 @@ defineExpose({
   reset: () => {
     formData.value = {
       toUserId: props.initialToUserId || '',
-      type: '' as FeedbackType | '',
       content: ''
     }
     formRef.value?.resetValidation()

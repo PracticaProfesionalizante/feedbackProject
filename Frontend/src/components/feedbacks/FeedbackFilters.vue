@@ -2,20 +2,6 @@
   <v-card variant="tonal" class="mb-4">
     <v-card-text>
       <div class="d-flex flex-wrap align-center gap-3">
-        <!-- Tipo -->
-        <v-select
-          :model-value="typeValue"
-          :items="typeItems"
-          item-title="title"
-          item-value="value"
-          label="Tipo"
-          density="comfortable"
-          hide-details
-          clearable
-          style="max-width: 180px"
-          @update:model-value="onTypeChange($event)"
-        />
-
         <!-- Búsqueda por contenido o usuario -->
         <v-text-field
           :model-value="search"
@@ -67,34 +53,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useFeedbackFilters } from '../../composables/useFeedbackFilters'
-import type { FeedbackType } from '../../types/feedback'
 
 const {
-  type,
   search,
   dateFrom,
   dateTo,
   hasActiveFilters,
-  setType,
   setSearch,
   setDateRange,
   clearFilters,
 } = useFeedbackFilters()
-
-const typeValue = computed(() => type.value ?? 'Todos')
-
-const typeItems = [
-  { title: 'Todos', value: 'Todos' },
-  { title: 'Reconocimiento', value: 'RECOGNITION' },
-  { title: 'Mejora', value: 'IMPROVEMENT' },
-  { title: 'General', value: 'GENERAL' },
-]
-
-function onTypeChange(v: string | FeedbackType | 'Todos' | null | undefined) {
-  setType((v && v !== 'Todos' ? v : 'Todos') as FeedbackType | 'Todos' | '')
-}
 
 function onDateFromChange(v: string | null | undefined) {
   setDateRange(v ?? '', dateTo.value)

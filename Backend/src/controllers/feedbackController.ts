@@ -29,7 +29,30 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
   const where: Prisma.FeedbackWhereInput = {
     deletedAt: null,
     ...(query.type === 'received' ? { toUserId: userId } : { fromUserId: userId }),
-    ...(query.feedbackType ? { type: query.feedbackType } : {}),
+  }
+
+  const searchTrim = query.search?.trim()
+  const isDateOnly = searchTrim && /^\d{4}-\d{2}-\d{2}$/.test(searchTrim)
+  const dateFrom = query.dateFrom || (isDateOnly ? searchTrim : undefined)
+  const dateTo = query.dateTo || (isDateOnly ? searchTrim : undefined)
+
+  if (searchTrim && !isDateOnly) {
+    where.OR = [
+      { content: { contains: searchTrim, mode: 'insensitive' } },
+      { fromUser: { name: { contains: searchTrim, mode: 'insensitive' } } },
+      { fromUser: { email: { contains: searchTrim, mode: 'insensitive' } } },
+      { toUser: { name: { contains: searchTrim, mode: 'insensitive' } } },
+      { toUser: { email: { contains: searchTrim, mode: 'insensitive' } } },
+    ]
+  }
+  if (dateFrom || dateTo) {
+    where.createdAt = {}
+    if (dateFrom) (where.createdAt as any).gte = new Date(dateFrom)
+    if (dateTo) {
+      const end = new Date(dateTo)
+      end.setHours(23, 59, 59, 999)
+      (where.createdAt as any).lte = end
+    }
   }
 
   const page = query.page
@@ -56,6 +79,7 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
 
   return {
     items,
+    total,
     pagination: {
       page,
       limit,
@@ -122,7 +146,6 @@ async function createFeedbackCore(req: Request) {
     data: {
       fromUserId: user.id,
       toUserId: body.toUserId,
-      type: body.type,
       content: body.content,
       actions: actions.length
         ? {

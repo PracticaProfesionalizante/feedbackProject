@@ -8,23 +8,17 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const TIPOS = ['RECOGNITION', 'IMPROVEMENT', 'GENERAL'] as const
-
-const CONTENIDOS_RECONOCIMIENTO = [
+const CONTENIDOS = [
   'Excelente trabajo en el último sprint, la entrega fue a tiempo y con buena calidad.',
   'Muy buena disposición para ayudar al equipo. Gracias por el apoyo.',
   'La presentación del proyecto quedó muy clara. Buen trabajo.',
   'Reconozco tu esfuerzo en la resolución del incidente. Muy bien.',
   'Gran iniciativa con la documentación. El equipo se beneficia mucho.',
-]
-const CONTENIDOS_MEJORA = [
   'Sugerencia: podríamos mejorar los tiempos de respuesta en las reuniones.',
   'Sería bueno tener más check-ins cortos durante la semana.',
   'Propongo revisar el flujo de aprobación para agilizarlo.',
   'Consideremos documentar mejor los acuerdos de las reuniones.',
   'Podemos mejorar la comunicación en el canal de proyecto.',
-]
-const CONTENIDOS_GENERAL = [
   'Comentario general sobre el avance del Q2. Seguimos en buen camino.',
   'Actualización del estado del proyecto: en tiempo según lo planificado.',
   'Notas de la retro: priorizar la deuda técnica el próximo sprint.',
@@ -40,21 +34,18 @@ async function main() {
   }
 
   const count = 50
-  const tipos = [...TIPOS]
-  const contenidos = [...CONTENIDOS_RECONOCIMIENTO, ...CONTENIDOS_MEJORA, ...CONTENIDOS_GENERAL]
+  const contenidos = [...CONTENIDOS]
 
   for (let i = 0; i < count; i++) {
     const from = users[i % users.length]
     let to = users[(i + 1) % users.length]
     if (from.id === to.id) to = users[(i + 2) % users.length]!
-    const type = tipos[i % tipos.length]!
     const content = contenidos[i % contenidos.length]!
 
     await prisma.feedback.create({
       data: {
         fromUserId: from.id,
         toUserId: to.id,
-        type,
         content,
       },
     })

@@ -2,11 +2,7 @@
   <v-card>
     <!-- Header -->
     <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
-      <div class="d-flex align-center ga-2 flex-wrap">
-        <v-chip size="small" variant="tonal">
-          {{ formatType(feedback.type) }}
-        </v-chip>
-      </div>
+      <span />
 
       <v-menu v-if="canSeeMenu">
         <template #activator="{ props: menuProps }">
@@ -278,19 +274,6 @@ function confirmEdit() {
 /* =========================
    Format helpers
 ========================= */
-
-function formatType(type: Feedback['type']) {
-  switch (type) {
-    case 'RECOGNITION':
-      return 'Reconocimiento'
-    case 'IMPROVEMENT':
-      return 'Mejora'
-    case 'GENERAL':
-      return 'General'
-    default:
-      return type
-  }
-}
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)

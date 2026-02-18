@@ -1,25 +1,25 @@
 <template>
   <div class="d-flex flex-wrap ga-4">
-    <v-card class="stat-card" variant="tonal" color="success">
-      <v-card-title class="text-caption text-medium-emphasis">Reconocimiento</v-card-title>
+    <v-card class="stat-card" variant="tonal" color="primary">
+      <v-card-title class="text-caption text-medium-emphasis">Recibidos</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.recognition }}</span>
+        <span v-if="!loading">{{ counts.totalReceived }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
 
-    <v-card class="stat-card" variant="tonal" color="warning">
-      <v-card-title class="text-caption text-medium-emphasis">Mejora</v-card-title>
+    <v-card class="stat-card" variant="tonal" color="secondary">
+      <v-card-title class="text-caption text-medium-emphasis">Enviados</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.improvement }}</span>
+        <span v-if="!loading">{{ counts.totalSent }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
 
-    <v-card class="stat-card" variant="tonal" color="info">
-      <v-card-title class="text-caption text-medium-emphasis">General</v-card-title>
+    <v-card class="stat-card" variant="tonal" color="grey">
+      <v-card-title class="text-caption text-medium-emphasis">Notificaciones sin leer</v-card-title>
       <v-card-text class="text-h4 font-weight-bold">
-        <span v-if="!loading">{{ counts.general }}</span>
+        <span v-if="!loading">{{ counts.unreadNotifications }}</span>
         <v-skeleton-loader v-else type="text" />
       </v-card-text>
     </v-card>
@@ -40,12 +40,10 @@ const stats = computed(() => {
   return 'data' in props.data ? props.data.data : props.data
 })
 
-const byType = computed(() => stats.value?.feedbacksByType ?? stats.value?.byType)
-
 const counts = computed(() => ({
-  recognition: byType.value?.recognition ?? 0,
-  improvement: byType.value?.improvement ?? 0,
-  general: byType.value?.general ?? 0,
+  totalReceived: stats.value?.totalReceived ?? 0,
+  totalSent: stats.value?.totalSent ?? 0,
+  unreadNotifications: stats.value?.unreadNotifications ?? 0,
 }))
 </script>
 

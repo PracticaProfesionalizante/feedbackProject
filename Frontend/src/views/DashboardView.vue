@@ -10,10 +10,6 @@
     <StatsCards :data="statsData" :loading="statsLoading" />
 
     <div class="mt-6">
-      <FeedbackChart :data="statsData" :loading="statsLoading" />
-    </div>
-
-    <div class="mt-6">
       <RecentFeedbacks
         :items="recentItems"
         :loading="recentLoading"
@@ -38,7 +34,6 @@ import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '../stores/authStore'
 import { dashboardService } from '../services/dashboardService'
 import StatsCards from '../components/dashboard/StatsCards.vue'
-import FeedbackChart from '../components/dashboard/FeedbackChart.vue'
 import RecentFeedbacks from '../components/dashboard/RecentFeedbacks.vue'
 
 const router = useRouter()

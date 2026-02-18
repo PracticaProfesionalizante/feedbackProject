@@ -83,7 +83,6 @@ model Feedback {
   id              String           @id @default(uuid())
   fromUserId      String
   toUserId        String
-  type            FeedbackType
   content         String
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -182,12 +181,6 @@ model AuditLog {
   @@index([tableName, recordId])
   @@index([userId])
   @@index([createdAt])
-}
-
-enum FeedbackType {
-  RECOGNITION
-  IMPROVEMENT
-  GENERAL
 }
 
 enum NotificationType {

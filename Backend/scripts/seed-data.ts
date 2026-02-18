@@ -172,7 +172,6 @@ async function main() {
   // 8. Feedback - 20
   let feedbacks: { id: string }[] = []
   try {
-    const feedbackTypes = ['RECOGNITION', 'IMPROVEMENT', 'GENERAL'] as const
     for (let i = 0; i < N; i++) {
       const from = users[i % users.length]
       const to = users[(i + 1) % users.length]
@@ -181,7 +180,6 @@ async function main() {
         data: {
           fromUserId: from.id,
           toUserId: to.id,
-          type: feedbackTypes[i % 3],
           content: `Feedback de prueba ${i + 1} de ${from.id.slice(0, 8)} a ${to.id.slice(0, 8)}.`,
         },
       })

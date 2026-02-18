@@ -1,22 +1,24 @@
 <template>
-  <v-card>
-    <v-card-title class="d-flex align-center justify-space-between">
-      <div class="text-subtitle-1 font-weight-bold">
-        {{ title }}
-        <span class="text-medium-emphasis">({{ totalLabel }})</span>
-      </div>
+  <v-card class="feedback-list-card" rounded="lg" elevation="1">
+    <template v-if="!hideCardTitle">
+      <v-card-title class="d-flex align-center justify-space-between">
+        <div class="text-subtitle-1 font-weight-bold">
+          {{ title }}
+          <span class="text-medium-emphasis">({{ totalLabel }})</span>
+        </div>
 
-      <v-btn
-        v-if="showNewButton"
-        color="primary"
-        prepend-icon="mdi-plus"
-        @click="emit('new')"
-      >
-        Nuevo feedback
-      </v-btn>
-    </v-card-title>
+        <v-btn
+          v-if="showNewButton"
+          color="primary"
+          prepend-icon="mdi-plus"
+          @click="emit('new')"
+        >
+          Nuevo feedback
+        </v-btn>
+      </v-card-title>
 
-    <v-divider />
+      <v-divider />
+    </template>
 
     <v-data-table
       :headers="headers"
@@ -27,18 +29,11 @@
       :items-length="itemsLength"
       loading-text="Cargando..."
       no-data-text="No hay feedbacks para mostrar."
-      class="elevation-0"
+      class="elevation-0 feedback-table"
       @update:page="emit('update:page', $event)"
       @click:row="onRowClick"
     >
       <template v-if="hideFooter" #bottom />
-      <!-- Tipo -->
-      <template #item.type="{ item }">
-        <v-chip size="small" variant="tonal" :color="getTypeColor(item.type)">
-          {{ formatType(item.type) }}
-        </v-chip>
-      </template>
-
       <!-- De/Para según mode -->
       <template #item.counterpart="{ item }">
         <div class="d-flex flex-column">
@@ -99,13 +94,16 @@ const props = withDefaults(
     showNewButton?: boolean
     /** Oculta el footer de paginación para usar v-pagination externo */
     hideFooter?: boolean
+    /** Oculta el título de la card (solo se muestra la tabla con sus cabeceras) */
+    hideCardTitle?: boolean
   }>(),
   {
     title: 'Feedbacks',
     itemsPerPage: 20,
     total: undefined,
     showNewButton: false,
-    hideFooter: false
+    hideFooter: false,
+    hideCardTitle: false
   }
 )
 
@@ -121,7 +119,6 @@ const emit = defineEmits<{
  */
 const headers = computed(() => {
   return [
-    { title: 'Tipo', key: 'type', sortable: false },
     {
       title: props.mode === 'received' ? 'De' : 'Para',
       key: 'counterpart',
@@ -147,32 +144,6 @@ function onRowClick(_: unknown, row: any) {
   // Vuetify entrega { item } en row; defendemos por si cambia
   const id: string | undefined = row?.item?.id
   if (id) emit('open', id)
-}
-
-function formatType(type: Feedback['type']) {
-  switch (type) {
-    case 'RECOGNITION':
-      return 'Reconocimiento'
-    case 'IMPROVEMENT':
-      return 'Mejora'
-    case 'GENERAL':
-      return 'General'
-    default:
-      return type
-  }
-}
-
-function getTypeColor(type: Feedback['type']): string {
-  switch (type) {
-    case 'RECOGNITION':
-      return 'success'
-    case 'IMPROVEMENT':
-      return 'warning'
-    case 'GENERAL':
-      return 'info'
-    default:
-      return 'default'
-  }
 }
 
 function preview(text: string) {
@@ -202,3 +173,13 @@ function getCounterpartEmail(f: Feedback) {
   return f.toUser?.email ?? ''
 }
 </script>
+
+<style scoped>
+.feedback-list-card {
+  overflow: hidden;
+}
+.feedback-table :deep(thead th) {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+</style>

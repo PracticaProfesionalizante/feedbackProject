@@ -41,7 +41,6 @@ import { useAuthStore } from '../stores/authStore'
 import { feedbackService } from '../services/feedbackServices'
 import FeedbackForm from '../components/feedbacks/FeedbackForm.vue'
 import { API_BASE_URL } from '../config/constants'
-import type { FeedbackType } from '../types/feedback'
 
 type AvailableUser = {
   id: string
@@ -147,14 +146,12 @@ async function fetchAvailableUsers() {
 
 async function handleSubmit(data: {
   toUserId: string
-  type: FeedbackType
   content: string
 }) {
   submitting.value = true
   try {
     const feedback = await feedbackService.createFeedback({
       toUserId: data.toUserId,
-      type: data.type,
       content: data.content
     })
 

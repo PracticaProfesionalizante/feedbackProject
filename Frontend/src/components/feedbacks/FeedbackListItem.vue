@@ -14,13 +14,6 @@
     <template #title>
       <div class="d-flex align-center ga-2">
         <span class="font-weight-medium">{{ displayName }}</span>
-        <v-chip
-          :color="typeColor"
-          size="small"
-          variant="tonal"
-        >
-          {{ typeLabel }}
-        </v-chip>
       </div>
     </template>
 
@@ -93,32 +86,6 @@ const previewText = computed(() => {
 
 const relativeTime = computed(() => {
   return formatRelativeTime(props.feedback.createdAt)
-})
-
-const typeLabel = computed(() => {
-  switch (props.feedback.type) {
-    case 'RECOGNITION':
-      return 'Reconocimiento'
-    case 'IMPROVEMENT':
-      return 'Mejora'
-    case 'GENERAL':
-      return 'General'
-    default:
-      return props.feedback.type
-  }
-})
-
-const typeColor = computed(() => {
-  switch (props.feedback.type) {
-    case 'RECOGNITION':
-      return 'success'
-    case 'IMPROVEMENT':
-      return 'warning'
-    case 'GENERAL':
-      return 'info'
-    default:
-      return 'grey'
-  }
 })
 
 function handleClick() {

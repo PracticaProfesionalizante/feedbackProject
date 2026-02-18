@@ -1,7 +1,5 @@
 export type Role = 'LEADER' | 'EMPLOYEE'
 
-export type FeedbackType = 'RECOGNITION' | 'IMPROVEMENT' | 'GENERAL'
-
 export type FeedbackUser = {
   id: string
   name: string
@@ -40,7 +38,6 @@ export type Feedback = {
   id: string
   fromUserId: string
   toUserId: string
-  type: FeedbackType
   content: string
   createdAt: string
   updatedAt: string
@@ -59,7 +56,6 @@ export type Feedback = {
 
 export type FeedbackFilters = {
   type?: 'received' | 'sent'
-  feedbackType?: FeedbackType
   search?: string
   dateFrom?: string
   dateTo?: string
@@ -93,15 +89,11 @@ export type FeedbacksResponse =
 
 export type CreateFeedbackDto = {
   toUserId: string
-  type: FeedbackType
   content: string
-
-  /** ✅ NUEVO: acciones al crear */
   actions?: FeedbackActionInput[]
 }
 
 export type UpdateFeedbackDto = {
-  type?: FeedbackType
   content?: string
   actions?: FeedbackActionInput[]
 }

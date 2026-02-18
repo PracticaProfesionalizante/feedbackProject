@@ -1,20 +1,9 @@
 import type { Feedback } from '../types/feedback'
 
 /**
- * Conteos por tipo de feedback (opcional, para gráficos).
- */
-export type DashboardStatsByType = {
-  recognition: number
-  improvement: number
-  general: number
-}
-
-/**
- * Estadísticas del dashboard (por tipo, recibidos/enviados, notificaciones).
+ * Estadísticas del dashboard (recibidos, enviados, notificaciones).
  */
 export type DashboardStats = {
-  feedbacksByType?: DashboardStatsByType
-  byType?: DashboardStatsByType // alias para compatibilidad con FeedbackChart
   totalReceived?: number
   totalSent?: number
   unreadNotifications?: number
@@ -47,7 +36,7 @@ export type RecentFeedbacksResponse =
  */
 export type RecentFeedbackItem = Pick<
   Feedback,
-  'id' | 'type' | 'content' | 'createdAt' | 'fromUserId' | 'toUserId'
+  'id' | 'content' | 'createdAt' | 'fromUserId' | 'toUserId'
 > & {
   fromUser?: Feedback['fromUser']
   toUser?: Feedback['toUser']

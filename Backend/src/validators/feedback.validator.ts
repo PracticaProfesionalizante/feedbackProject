@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { FeedbackType } from '@prisma/client'
 
 /**
  * ✅ NUEVO: schema reutilizable para acciones checklist
@@ -38,17 +37,7 @@ export const toggleActionSchema = z.object({
 export const createFeedbackSchema = z.object({
   body: z.object({
     toUserId: z.string().uuid({ message: 'ID de usuario inválido' }),
-    type: z.nativeEnum(FeedbackType, {
-      errorMap: () => ({
-        message: 'Tipo de feedback inválido (RECOGNITION, IMPROVEMENT, GENERAL)',
-      }),
-    }),
     content: z.string().min(10, { message: 'El contenido debe tener al menos 10 caracteres' }),
-
-    /**
-     * ✅ CAMBIO: actions opcional para checklist
-     * Motivo: en creación se permite agregar múltiples ítems tipo checklist.
-     */
     actions: z.array(actionCreateSchema).max(50).optional(),
   }),
 })
@@ -72,7 +61,6 @@ export const queryFeedbackSchema = z.object({
     page: z.string().regex(/^\d+$/).transform(Number).optional(),
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
     type: z.enum(['sent', 'received']).optional(),
-    feedbackType: z.nativeEnum(FeedbackType).optional(),
   }),
 })
 
@@ -89,7 +77,6 @@ export const idParamSchema = z.object({
 
 export const listFeedbacksQuerySchema = z.object({
   type: z.enum(['received', 'sent']).default('received'),
-  feedbackType: z.nativeEnum(FeedbackType).optional(),
   search: z.string().min(1).optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
@@ -103,12 +90,7 @@ export const recentFeedbacksQuerySchema = z.object({
 
 export const createFeedbackPayloadSchema = z.object({
   toUserId: z.string().uuid(),
-  type: z.nativeEnum(FeedbackType),
   content: z.string().min(1).max(5000),
-
-  /**
-   * ✅ CAMBIO: actions opcional en payload interno también
-   */
   actions: z.array(actionCreateSchema).max(50).optional(),
 })
 

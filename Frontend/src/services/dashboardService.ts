@@ -41,10 +41,7 @@ export const dashboardService = {
     if (!res.ok) throw new Error(await parseErrorMessage(res))
     const raw = await parseJson<any>(res)
     const data = unwrap<any>(raw)
-    // Backend devuelve: feedbacksByType, totalReceived, totalSent, unreadNotifications
     return {
-      feedbacksByType: data?.feedbacksByType ?? { recognition: 0, improvement: 0, general: 0 },
-      byType: data?.feedbacksByType ?? { recognition: 0, improvement: 0, general: 0 },
       totalReceived: data?.totalReceived ?? 0,
       totalSent: data?.totalSent ?? 0,
       unreadNotifications: data?.unreadNotifications ?? 0,

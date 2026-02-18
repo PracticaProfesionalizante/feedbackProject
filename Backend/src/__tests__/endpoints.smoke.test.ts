@@ -49,7 +49,7 @@ describe('Endpoints smoke', () => {
       .get('/api/dashboard/stats')
       .set('Authorization', `Bearer ${token}`)
     expect([200, 401]).toContain(res.status)
-    if (res.status === 200) expect(res.body).toHaveProperty('feedbacksByType')
+    if (res.status === 200) expect(res.body).toHaveProperty('totalReceived')
   })
 
   test('GET /api/notifications/count', async () => {

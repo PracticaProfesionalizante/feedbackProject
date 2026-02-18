@@ -21,12 +21,12 @@
           </template>
 
           <v-list-item-title class="d-flex flex-wrap align-center ga-2">
-            <v-chip size="x-small" variant="tonal" :color="getTypeColor(f.type)">{{ formatType(f.type) }}</v-chip>
+            <span class="font-weight-medium">{{ whoLabel(f) }}</span>
           </v-list-item-title>
 
           <v-list-item-subtitle class="mt-1">
             <div class="text-caption text-medium-emphasis">
-              {{ whoLabel(f) }} · {{ formatDate(f.createdAt) }}
+              {{ formatDate(f.createdAt) }}
             </div>
             <div class="text-body-2">
               {{ preview(f.content) }}
@@ -61,36 +61,10 @@ function preview(text: string) {
   return `${t.slice(0, 100)}…`
 }
 
-function formatType(type: Feedback['type']) {
-  switch (type) {
-    case 'RECOGNITION':
-      return 'Reconocimiento'
-    case 'IMPROVEMENT':
-      return 'Mejora'
-    case 'GENERAL':
-      return 'General'
-    default:
-      return type
-  }
-}
-
 function formatDate(iso: string) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleString()
-}
-
-function getTypeColor(type: Feedback['type']): string {
-  switch (type) {
-    case 'RECOGNITION':
-      return 'success'
-    case 'IMPROVEMENT':
-      return 'warning'
-    case 'GENERAL':
-      return 'info'
-    default:
-      return 'default'
-  }
 }
 
 function whoLabel(f: Feedback) {
