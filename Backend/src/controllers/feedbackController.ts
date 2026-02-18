@@ -66,8 +66,8 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
       skip,
       take: limit,
       include: {
-        fromUser: { select: { id: true, name: true, email: true, role: true } },
-        toUser: { select: { id: true, name: true, email: true, role: true } },
+        fromUser: { select: { id: true, name: true, email: true } },
+        toUser: { select: { id: true, name: true, email: true } },
         actions: {
           orderBy: { createdAt: 'asc' },
           select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -97,8 +97,8 @@ async function getFeedbackByIdCore(userId: string, feedbackId: string) {
   const feedback = await prisma.feedback.findFirst({
     where: { id: feedbackId, deletedAt: null },
     include: {
-      fromUser: { select: { id: true, name: true, email: true, role: true } },
-      toUser: { select: { id: true, name: true, email: true, role: true } },
+      fromUser: { select: { id: true, name: true, email: true } },
+      toUser: { select: { id: true, name: true, email: true } },
       actions: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -157,8 +157,8 @@ async function createFeedbackCore(req: Request) {
       // contentEditedAt: null (implícito al crear)
     },
     include: {
-      fromUser: { select: { id: true, name: true, email: true, role: true } },
-      toUser: { select: { id: true, name: true, email: true, role: true } },
+      fromUser: { select: { id: true, name: true, email: true } },
+      toUser: { select: { id: true, name: true, email: true } },
       actions: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -234,8 +234,8 @@ async function updateFeedbackCore(req: Request) {
         ...(shouldMarkEdited ? { contentEditedAt: new Date() } : {}),
       },
       include: {
-        fromUser: { select: { id: true, name: true, email: true, role: true } },
-        toUser: { select: { id: true, name: true, email: true, role: true } },
+        fromUser: { select: { id: true, name: true, email: true } },
+        toUser: { select: { id: true, name: true, email: true } },
         actions: {
           orderBy: { createdAt: 'asc' },
           select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },

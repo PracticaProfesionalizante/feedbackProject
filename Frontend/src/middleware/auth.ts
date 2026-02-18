@@ -22,5 +22,10 @@ export const authGuard = async (
     return next('/dashboard')
   }
 
+  const requiresAdmin = Boolean(to.meta.requiresAdmin)
+  if (requiresAdmin && !auth.isAdmin) {
+    return next('/dashboard')
+  }
+
   return next()
 }

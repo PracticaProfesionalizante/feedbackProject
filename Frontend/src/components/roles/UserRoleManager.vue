@@ -88,7 +88,7 @@ const auth = useAuthStore()
 // TODO: Reemplazar con endpoint real de usuarios (usar Team endpoints como fallback)
 const usersQuery = useQuery<UserListItem[]>({
   queryKey: ['role-users'],
-  enabled: computed(() => auth.user?.role === 'LEADER'),
+  enabled: computed(() => auth.isAdmin),
   queryFn: async () => {
     // Preferimos /api/team/employees para líderes
     const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -105,7 +105,7 @@ const usersQuery = useQuery<UserListItem[]>({
 const rolesQuery = useQuery<AccessRole[]>({
   queryKey: ['roles'],
   queryFn: roleService.getRoles,
-  enabled: computed(() => auth.user?.role === 'LEADER'),
+  enabled: computed(() => auth.isAdmin),
 })
 
 const users = computed(() => usersQuery.data.value ?? [])
@@ -120,7 +120,7 @@ const error = computed(() => usersQuery.error.value?.message || rolesQuery.error
 
 const userRolesQuery = useQuery({
   queryKey: computed(() => ['user-roles', selectedUserId.value]),
-  enabled: computed(() => Boolean(selectedUserId.value) && auth.user?.role === 'LEADER'),
+  enabled: computed(() => Boolean(selectedUserId.value) && auth.isAdmin),
   queryFn: async () => {
     if (!selectedUserId.value) return { roleIds: [], roles: [] }
     return userRoleService.getUserRoles(selectedUserId.value)

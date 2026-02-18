@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-alert
-      v-if="!isLeader"
+      v-if="!isAdmin"
       type="error"
       variant="tonal"
       class="mb-4"
@@ -83,12 +83,12 @@ const snackbar = reactive({
   color: 'success',
 })
 
-const isLeader = computed(() => auth.user?.role === 'LEADER')
+const isAdmin = computed(() => auth.isAdmin)
 
 const rolesQuery = useQuery<AccessRole[]>({
   queryKey: ['roles'],
   queryFn: roleService.getRoles,
-  enabled: isLeader,
+  enabled: isAdmin,
 })
 
 const roles = computed(() => rolesQuery.data.value ?? [])

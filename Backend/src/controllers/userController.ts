@@ -7,7 +7,6 @@ type ProfileUser = {
   id: string
   email: string
   name: string
-  role: string
   birthdate: Date | null
   country: string | null
   createdAt: Date
@@ -36,7 +35,6 @@ async function buildProfile(req: AuthRequest, res: Response) {
       id: true,
       email: true,
       name: true,
-      role: true,
       birthdate: true,
       country: true,
       createdAt: true,

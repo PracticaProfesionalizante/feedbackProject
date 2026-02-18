@@ -4,10 +4,10 @@ export type UserProfile = {
   id: string
   email: string
   name: string
-  role: 'LEADER' | 'EMPLOYEE'
   birthdate?: string | null
   country?: string | null
   createdAt: string
+  assignedRoles?: Array<{ role: { id: string; name: string; description?: string | null } }>
   stats: {
     feedbacksGiven: number
     feedbacksReceived: number

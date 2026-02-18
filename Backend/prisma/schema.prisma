@@ -5,13 +5,13 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 model User {
   id                String            @id @default(uuid())
   email             String            @unique
   name              String
-  role              Role              @default(EMPLOYEE)
   password          String
   birthdate         DateTime?
   country           String?
@@ -187,11 +187,6 @@ enum NotificationType {
   FEEDBACK_RECEIVED
   COMMENT_RECEIVED
   FEEDBACK_UPDATED
-}
-
-enum Role {
-  LEADER
-  EMPLOYEE
 }
 
 enum AuditAction {

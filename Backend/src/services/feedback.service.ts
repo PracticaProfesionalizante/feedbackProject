@@ -51,8 +51,8 @@ export const feedbackService = {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          fromUser: { select: { id: true, name: true, role: true } },
-          toUser: { select: { id: true, name: true, role: true } }
+          fromUser: { select: { id: true, name: true } },
+          toUser: { select: { id: true, name: true } }
         }
       })
     ]);

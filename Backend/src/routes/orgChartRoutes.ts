@@ -2,8 +2,7 @@ import { Router } from 'express'
 import { orgChartController } from '../controllers/orgChartController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
-import { requireRole } from '../middleware/require.role'
-import { Role } from '@prisma/client'
+import { requireAdmin } from '../middleware/require.admin'
 import { validate } from '../middleware/validate.middleware'
 import {
   areaIdSchema,
@@ -20,7 +19,7 @@ const router = Router()
 
 router.use(authenticate)
 router.use(requireAuth)
-router.use(requireRole(Role.LEADER))
+router.use(requireAdmin)
 
 router.get('/areas', orgChartController.listAreas)
 router.post('/areas', validate(createAreaSchema), orgChartController.createArea)

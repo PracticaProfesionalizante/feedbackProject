@@ -4,7 +4,7 @@ import { computed } from 'vue'
 type Props = {
   name: string
   email: string
-  role: 'LEADER' | 'EMPLOYEE'
+  role: string
   createdAt: string
   birthdate?: string | null
   country?: string | null

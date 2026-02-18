@@ -1,9 +1,8 @@
 import { Router } from 'express'
-import { Role } from '@prisma/client'
 import { rolesController } from '../controllers/rolesController'
 import { authenticate } from '../middleware/auth.middleware'
 import { requireAuth } from '../middleware/require.auth'
-import { requireRole } from '../middleware/require.role'
+import { requireAdmin } from '../middleware/require.admin'
 import { validate } from '../middleware/validate.middleware'
 import {
   assignUserRolesSchema,
@@ -17,7 +16,7 @@ const router = Router()
 
 router.use(authenticate)
 router.use(requireAuth)
-router.use(requireRole(Role.LEADER))
+router.use(requireAdmin)
 
 router.get('/', rolesController.listRoles)
 router.post('/', validate(createRoleSchema), rolesController.createRole)

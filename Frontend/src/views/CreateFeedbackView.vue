@@ -46,7 +46,6 @@ type AvailableUser = {
   id: string
   name: string
   email: string
-  role?: 'LEADER' | 'EMPLOYEE'
 }
 
 const router = useRouter()
@@ -78,54 +77,36 @@ async function fetchAvailableUsers() {
       return
     }
 
-    const isLeader = auth.isLeader
+    const isAdmin = auth.isAdmin
     const users: AvailableUser[] = []
 
-    // Si es LEADER: obtener empleados directos + sus propios líderes
-    if (isLeader) {
-      // Empleados directos
+    // Si es admin: puede ver empleados y líderes de su equipo
+    if (isAdmin) {
       const employeesRes = await fetch(`${API_BASE_URL}/team/employees`, {
         headers: { ...auth.getAuthHeader() }
       })
       if (employeesRes.ok) {
         const employeesData = await employeesRes.json()
         const employees = employeesData?.employees || employeesData || []
-        users.push(...employees.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(...employees.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
       }
 
-      // Sus propios líderes
       const leadersRes = await fetch(`${API_BASE_URL}/team/leaders`, {
         headers: { ...auth.getAuthHeader() }
       })
       if (leadersRes.ok) {
         const leadersData = await leadersRes.json()
         const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(...leaders.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
       }
     } else {
-      // Si es EMPLOYEE: solo sus líderes directos
       const leadersRes = await fetch(`${API_BASE_URL}/team/leaders`, {
         headers: { ...auth.getAuthHeader() }
       })
       if (leadersRes.ok) {
         const leadersData = await leadersRes.json()
         const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role
-        })))
+        users.push(...leaders.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
       }
     }
 

@@ -76,7 +76,7 @@ const snackbar = reactive({
 })
 
 // ✅ Solo un LEADER puede ver "Mis Empleados"
-const canSeeEmployees = computed(() => auth.user?.role === 'LEADER')
+const canSeeEmployees = computed(() => auth.isAdmin)
 
 function showError(message: string) {
   snackbar.message = message

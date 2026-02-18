@@ -17,6 +17,12 @@ const { data, isLoading, isError, error, refetch } = useQuery({
 
 const profile = computed(() => data.value)
 
+const profileRoleDisplay = computed(() => {
+  const p = profile.value
+  if (!p?.assignedRoles?.length) return 'Usuario'
+  return p.assignedRoles.map((a: { role: { name: string } }) => a.role.name).join(', ')
+})
+
 function goBack() {
   router.back()
 }
@@ -64,7 +70,7 @@ function goTeam() {
           <ProfileInfo
             :name="profile.name"
             :email="profile.email"
-            :role="profile.role"
+            :role="profileRoleDisplay"
             :createdAt="profile.createdAt"
             :birthdate="profile.birthdate"
             :country="profile.country"

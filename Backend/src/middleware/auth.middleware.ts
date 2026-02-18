@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { Role } from '@prisma/client'
 import { AppError } from './error.handler'
 import { prisma } from '../utils/prisma'
 import { JWT_SECRET } from '../config/constants'
 
 export type AuthUser = {
   id: string
-  role: Role
   email: string
   name: string
 }
@@ -50,7 +48,6 @@ export const authenticate = (
         where: { id: decoded.userId },
         select: {
           id: true,
-          role: true,
           email: true,
           name: true,
         },
@@ -62,7 +59,6 @@ export const authenticate = (
 
       req.user = {
         id: user.id,
-        role: user.role,
         email: user.email,
         name: user.name,
       }

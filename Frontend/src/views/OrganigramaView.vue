@@ -72,7 +72,7 @@ import PositionAssignDialog from '@/components/organigrama/PositionAssignDialog.
 const auth = useAuthStore()
 const queryClient = useQueryClient()
 
-const isLeader = computed(() => auth.user?.role === 'LEADER')
+const isLeader = computed(() => auth.isAdmin)
 
 const areasQuery = useQuery<OrgArea[]>({
   queryKey: ['org-chart', 'areas'],

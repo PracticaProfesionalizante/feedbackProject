@@ -69,7 +69,7 @@ const router = createRouter({
         {
           path: 'roles',
           component: () => import('../views/RolesView.vue'),
-          meta: { title: 'Gestión de roles' }
+          meta: { title: 'Gestión de roles', requiresAdmin: true }
         },
         {
           path: 'organigrama',

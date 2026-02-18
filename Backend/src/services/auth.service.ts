@@ -38,7 +38,6 @@ export const authService = {
   },
 
   async login(email: string, password: string) {
-    // Buscar usuario
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
@@ -46,7 +45,6 @@ export const authService = {
         email: true,
         name: true,
         password: true,
-        role: true,
       },
     })
 
@@ -55,15 +53,14 @@ export const authService = {
       throw error
     }
 
-    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, user.password)
-
     if (!isValidPassword) {
       const error = new AppError('Invalid credentials', 401)
       throw error
     }
 
-    // Generar JWT
+    const accessRoleNames = await this.getUserAccessRoleNames(user.id)
+
     const token = jwt.sign(
       { userId: user.id },
       JWT_SECRET,
@@ -75,7 +72,7 @@ export const authService = {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        accessRoleNames,
       },
       token,
     }
@@ -90,7 +87,6 @@ export const authService = {
         name: true,
         createdAt: true,
         updatedAt: true,
-        role: true,
       },
     })
 
@@ -98,6 +94,18 @@ export const authService = {
       throw new AppError('User not found', 404)
     }
 
-    return user
+    const accessRoleNames = await this.getUserAccessRoleNames(userId)
+    return {
+      ...user,
+      accessRoleNames,
+    }
+  },
+
+  async getUserAccessRoleNames(userId: string): Promise<string[]> {
+    const links = await prisma.userRoleLink.findMany({
+      where: { userId },
+      include: { role: { select: { name: true } } },
+    })
+    return links.map((l) => l.role.name)
   },
 }

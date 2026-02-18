@@ -12,7 +12,7 @@ export const teamController = {
       orderBy: { createdAt: 'desc' },
       include: {
         member: {
-          select: { id: true, name: true, email: true, role: true },
+          select: { id: true, name: true, email: true },
         },
       },
     })
@@ -34,7 +34,7 @@ export const teamController = {
       orderBy: { createdAt: 'desc' },
       include: {
         leader: {
-          select: { id: true, name: true, email: true, role: true },
+          select: { id: true, name: true, email: true },
         },
       },
     })

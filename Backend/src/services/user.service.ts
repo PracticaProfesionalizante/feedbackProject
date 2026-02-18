@@ -8,7 +8,6 @@ export const findUserById = async (userId: string) => {
       id: true,
       name: true,
       email: true,
-      role: true,
       createdAt: true,
       // ⛔ PASSWORD EXCLUIDO POR SEGURIDAD
     },

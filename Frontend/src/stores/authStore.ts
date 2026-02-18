@@ -4,13 +4,11 @@ import { defineStore } from 'pinia'
    Tipos
 ========================= */
 
-export type Role = 'LEADER' | 'EMPLOYEE'
-
 export type User = {
   id: string
   email: string
   name: string
-  role: Role
+  accessRoleNames?: string[]
   createdAt?: string
   updatedAt?: string
 }
@@ -86,8 +84,9 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
-    isLeader: (state) => state.user?.role === 'LEADER',
-    isEmployee: (state) => state.user?.role === 'EMPLOYEE',
+    isLeader: (state) => state.user?.accessRoleNames?.includes('admin') ?? false,
+    isEmployee: (state) => (state.user?.accessRoleNames?.includes('admin') ? false : true),
+    isAdmin: (state) => state.user?.accessRoleNames?.includes('admin') ?? false,
   },
 
   actions: {
@@ -149,7 +148,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         const data = await res.json()
-        const user = (data?.user ?? data) as User
+        const user = (data?.data ?? data?.user ?? data) as User
         this.setUser(user)
         return user
       } catch (e: any) {

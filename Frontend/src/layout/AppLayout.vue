@@ -43,6 +43,7 @@ type NavItem = {
   to?: string
   action?: 'logout'
   requireLeader?: boolean
+  requireAdmin?: boolean
 }
 
 const auth = useAuthStore()
@@ -57,13 +58,16 @@ const navItems: NavItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', to: '/dashboard' },
   { title: 'Feedbacks', icon: 'mdi-clipboard-text-outline', to: '/feedbacks' },
   { title: 'Mi Equipo', icon: 'mdi-account-group-outline', to: '/team' },
-  { title: 'Gestión de roles', icon: 'mdi-shield-account-outline', to: '/roles', requireLeader: true },
+  { title: 'Gestión de roles', icon: 'mdi-shield-account-outline', to: '/roles', requireAdmin: true },
   { title: 'Organigrama', icon: 'mdi-sitemap', to: '/organigrama', requireLeader: true },
   { title: 'Notificaciones', icon: 'mdi-bell-outline', to: '/notifications' }
 ]
 
 const filteredNavItems = computed(() =>
-  navItems.filter((item) => !item.requireLeader || auth.isLeader)
+  navItems.filter(
+    (item) =>
+      (!item.requireLeader || auth.isLeader) && (!item.requireAdmin || auth.isAdmin)
+  )
 )
 
 onMounted(async () => {
