@@ -147,12 +147,14 @@ async function fetchAvailableUsers() {
 async function handleSubmit(data: {
   toUserId: string
   content: string
+  actions?: { text: string }[]
 }) {
   submitting.value = true
   try {
     const feedback = await feedbackService.createFeedback({
       toUserId: data.toUserId,
-      content: data.content
+      content: data.content,
+      ...(data.actions?.length ? { actions: data.actions } : {})
     })
 
     showSuccess('Feedback creado exitosamente')

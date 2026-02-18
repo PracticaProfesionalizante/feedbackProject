@@ -13,11 +13,11 @@
 
         <v-list density="comfortable">
           <v-list-item
-            v-if="canEditContent"
+            v-if="canEditChecklist"
             prepend-icon="mdi-pencil-outline"
             @click="openEditDialog"
           >
-            <v-list-item-title>Editar</v-list-item-title>
+            <v-list-item-title>{{ canEditContent ? 'Editar contenido y checklist' : 'Editar checklist' }}</v-list-item-title>
           </v-list-item>
 
           <v-list-item
@@ -103,10 +103,11 @@
           variant="outlined"
           auto-grow
           rows="5"
+          :readonly="!canEditContent"
         />
 
         <div class="text-caption text-medium-emphasis mb-4">
-          Solo el autor puede editar el contenido y las acciones.
+          Solo el autor puede editar el contenido. Tanto el autor como el destinatario pueden editar la checklist.
         </div>
 
         <!-- ✅ NUEVO: editor de acciones -->
@@ -179,7 +180,8 @@ const isRecipient = computed(() => props.feedback.toUserId === props.currentUser
 
 const canDelete = computed(() => isAuthor.value)
 const canEditContent = computed(() => isAuthor.value)
-const canSeeMenu = computed(() => canEditContent.value || canDelete.value)
+const canEditChecklist = computed(() => isAuthor.value || isRecipient.value)
+const canSeeMenu = computed(() => canEditChecklist.value || canDelete.value)
 
 /* =========================
    Meta: Creado vs Editado
@@ -238,13 +240,8 @@ function removeAction(idx: number) {
 }
 
 function confirmEdit() {
-  if (!canEditContent.value) {
-    editDialog.open = false
-    return
-  }
-
   const nextContent = (editDialog.content ?? '').trim()
-  if (!nextContent) return
+  if (canEditContent.value && !nextContent) return
 
   const nextActions: FeedbackActionInput[] = editDialog.actions
     .map((a) => ({
@@ -253,11 +250,10 @@ function confirmEdit() {
     }))
     .filter((a) => a.text.length > 0)
 
-  // si no hay acciones, mandamos [] (backend lo interpreta como "sin acciones")
   const currentContent = props.feedback.content.trim()
   const currentActions = normalizedActions.value.map((a) => ({ id: a.id, text: a.text.trim() }))
 
-  const changedContent = nextContent !== currentContent
+  const changedContent = canEditContent.value && nextContent !== currentContent
   const changedActions =
     nextActions.length !== currentActions.length ||
     nextActions.some((a, i) => a.text !== currentActions[i]?.text)
@@ -267,7 +263,9 @@ function confirmEdit() {
     return
   }
 
-  emit('edit-feedback', { content: nextContent, actions: nextActions })
+  // Enviar contenido solo si es autor; si es destinatario se mantiene el actual
+  const contentToSend = canEditContent.value ? nextContent : currentContent
+  emit('edit-feedback', { content: contentToSend, actions: nextActions })
   editDialog.open = false
 }
 

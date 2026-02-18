@@ -199,10 +199,13 @@ async function updateFeedbackCore(req: Request) {
     throw new AppError('Solo el autor puede modificar el contenido', 403)
   }
 
-  // acciones (texto/estructura) solo autor
+  // checklist: puede editar tanto el autor (líder) como el destinatario (empleado)
   const actions = (body as any).actions
-  if (actions !== undefined && feedback.fromUserId !== user.id) {
-    throw new AppError('Solo el autor puede modificar las acciones', 403)
+  if (actions !== undefined) {
+    const canEditActions = feedback.fromUserId === user.id || feedback.toUserId === user.id
+    if (!canEditActions) {
+      throw new AppError('Solo el autor o el destinatario pueden editar la checklist', 403)
+    }
   }
 
   // ✅ contentEditedAt SOLO si se edita contenido o estructura de acciones

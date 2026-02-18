@@ -34,6 +34,19 @@
       @click:row="onRowClick"
     >
       <template v-if="hideFooter" #bottom />
+      <!-- Indicador checklist: círculo verde sutil si pendientes, verde lleno si todo hecho -->
+      <template #item.checklist="{ item }">
+        <v-tooltip v-if="getChecklistStatus(item)" location="top">
+          <template #activator="{ props: tooltipProps }">
+            <span v-bind="tooltipProps" class="checklist-indicator" :class="getChecklistStatus(item)">
+              <v-icon v-if="getChecklistStatus(item) === 'done'" size="small" color="success">mdi-check-circle-fill</v-icon>
+              <v-icon v-else size="small" color="success" class="checklist-pending">mdi-check-circle-outline</v-icon>
+            </span>
+          </template>
+          <span>{{ getChecklistStatus(item) === 'done' ? 'Checklist completada' : 'Checklist con ítems pendientes' }}</span>
+        </v-tooltip>
+      </template>
+
       <!-- De/Para según mode -->
       <template #item.counterpart="{ item }">
         <div class="d-flex flex-column">
@@ -119,6 +132,7 @@ const emit = defineEmits<{
  */
 const headers = computed(() => {
   return [
+    { title: '', key: 'checklist', sortable: false, width: '48px', align: 'center' },
     {
       title: props.mode === 'received' ? 'De' : 'Para',
       key: 'counterpart',
@@ -172,6 +186,14 @@ function getCounterpartEmail(f: Feedback) {
   }
   return f.toUser?.email ?? ''
 }
+
+/** 'pending' = tiene checklist con ítems pendientes, 'done' = checklist todo hecho, '' = sin checklist */
+function getChecklistStatus(f: Feedback): 'pending' | 'done' | '' {
+  const actions = f.actions ?? []
+  if (actions.length === 0) return ''
+  const allDone = actions.every((a) => a.done)
+  return allDone ? 'done' : 'pending'
+}
 </script>
 
 <style scoped>
@@ -181,5 +203,13 @@ function getCounterpartEmail(f: Feedback) {
 .feedback-table :deep(thead th) {
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+.checklist-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.checklist-pending {
+  opacity: 0.6;
 }
 </style>
