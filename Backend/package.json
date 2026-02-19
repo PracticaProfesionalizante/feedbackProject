@@ -21,7 +21,8 @@
     "seed:all": "ts-node scripts/seed-all.ts",
     "db:inspect": "ts-node scripts/db-inspect-full.ts",
     "db:inspect-users": "ts-node scripts/db-inspect-users.ts",
-    "db:normalize": "ts-node scripts/db-normalize.ts"
+    "db:normalize": "ts-node scripts/db-normalize.ts",
+    "db:fix-notification": "ts-node scripts/run-supabase-fix.ts"
   },
   "keywords": [],
   "author": "",

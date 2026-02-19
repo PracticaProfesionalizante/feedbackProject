@@ -37,16 +37,13 @@ npm run build
 npm start
 ```
 
-### Deploy en Render — configuración única
-1. **Root Directory:** La carpeta donde está este `package.json`. En GitHub suele ser `Backend` o `src/Backend`; en Render tiene que coincidir (ej. si en el repo ves `feedbackProject/Backend/package.json`, poné `Backend`; si ves `feedbackProject/src/Backend/package.json`, poné `src/Backend`).
-2. **Variables de entorno:** En el servicio, agregá `DATABASE_URL` con la URL de PostgreSQL de Render.
-3. **Build Command:**
-   ```bash
-   npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-   ```
-4. **Start Command:** `npm start`
+### Deploy en Render
 
-`@prisma/client` y `prisma` están en **dependencies** para que se instalen en el build y `prisma generate` encuentre el cliente. La URL de la BD se toma de `prisma.config.cjs` (usa `process.env.DATABASE_URL`).
+**Configuración detallada (la que anda en Render):** ver **[RENDER.md](./RENDER.md)**. No modificar build/start ni variables si el deploy está estable.
+
+Resumen: **Root Directory** = carpeta del Backend; **Build:** `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`; **Start:** `npm start`. Variables: `DATABASE_URL` (pooler, 6543) y `DIRECT_URL` (directa, 5432) para migraciones.
+
+**Si la API de feedback devuelve 500** (error P2022, columna no existe): desde el Backend ejecutá `npm run db:fix-notification` (con tu `.env` apuntando a Supabase), o ejecutá **`scripts/supabase-fix-notification.sql`** en Supabase → SQL Editor (ver RENDER.md).
 
 ## 📁 Estructura
 
