@@ -33,6 +33,11 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
   const where: Prisma.FeedbackWhereInput = {
     deletedAt: null,
     ...(query.type === 'received' ? { toUserId: userId } : { fromUserId: userId }),
+    ...(query.userId
+      ? query.type === 'received'
+        ? { fromUserId: query.userId }
+        : { toUserId: query.userId }
+      : {}),
   }
 
   const searchTrim = query.search?.trim()
@@ -337,6 +342,35 @@ async function toggleActionCore(req: Request, res: Response, next: NextFunction)
 
     res.json({ item: updated })
   } catch (error) {
+    next(error)
+  }
+}
+
+/* ======================================================
+   COUNTERPARTS (GET /api/feedbacks/counterparts)
+   Usuarios con los que tengo al menos un feedback (enviado o recibido).
+====================================================== */
+
+export async function getCounterparts(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = getAuthUser(req)
+    const feedbacks = await prisma.feedback.findMany({
+      where: { deletedAt: null, OR: [{ toUserId: user.id }, { fromUserId: user.id }] },
+      select: {
+        fromUser: { select: { id: true, name: true, email: true } },
+        toUser: { select: { id: true, name: true, email: true } },
+      },
+      take: 2000,
+    })
+    const byId = new Map<string, { id: string; name: string; email: string }>()
+    for (const f of feedbacks) {
+      if (f.fromUser.id !== user.id) byId.set(f.fromUser.id, f.fromUser)
+      if (f.toUser.id !== user.id) byId.set(f.toUser.id, f.toUser)
+    }
+    const list = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name))
+    return res.json(list)
+  } catch (error) {
+    console.error('[getCounterparts]', error)
     next(error)
   }
 }

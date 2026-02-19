@@ -2,6 +2,7 @@ import { Router } from 'express'
 import {
   feedbackController,
   getRecentFeedbacks,
+  getCounterparts,
 } from '../controllers/feedbackController'
 import { feedbackActionController } from '../controllers/feedbackActionController'
 import { authenticate } from '../middleware/auth.middleware'
@@ -22,6 +23,9 @@ router.use(authenticate, requireAuth)
 
 // GET /api/feedbacks/recent
 router.get('/recent', validate(recentFeedbacksSchema), getRecentFeedbacks)
+
+// GET /api/feedbacks/counterparts (debe ir antes de /:id)
+router.get('/counterparts', getCounterparts)
 
 // GET /api/feedbacks
 router.get('/', validate(queryFeedbackSchema), feedbackController.list)

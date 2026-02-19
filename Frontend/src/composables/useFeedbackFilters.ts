@@ -33,6 +33,7 @@ export function useFeedbackFilters() {
       search: (q.search ?? '').trim() || undefined,
       dateFrom: q.dateFrom || undefined,
       dateTo: q.dateTo || undefined,
+      userId: q.userId || undefined,
       page: Math.max(1, parseInt(String(q.page || '1'), 10) || 1),
       limit: Math.max(1, Math.min(100, parseInt(String(q.limit || DEFAULT_LIMIT), 10) || DEFAULT_LIMIT)),
     }
@@ -42,6 +43,7 @@ export function useFeedbackFilters() {
   const search = computed<string>(() => (query.value.search as string) ?? '')
   const dateFrom = computed<string>(() => (query.value.dateFrom as string) ?? '')
   const dateTo = computed<string>(() => (query.value.dateTo as string) ?? '')
+  const userId = computed<string | undefined>(() => query.value.userId as string | undefined)
   const page = computed<number>(() => query.value.page as number)
   const limit = computed<number>(() => query.value.limit as number)
 
@@ -49,7 +51,8 @@ export function useFeedbackFilters() {
     return !!(
       (query.value.search && String(query.value.search).trim()) ||
       query.value.dateFrom ||
-      query.value.dateTo
+      query.value.dateTo ||
+      query.value.userId
     )
   })
 
@@ -70,6 +73,14 @@ export function useFeedbackFilters() {
       search: undefined,
       dateFrom: undefined,
       dateTo: undefined,
+      userId: undefined,
+      page: 1,
+    })
+  }
+
+  function setUserId(value: string | undefined) {
+    updateQuery({
+      userId: value || undefined,
       page: 1,
     })
   }
@@ -98,6 +109,7 @@ export function useFeedbackFilters() {
       search: undefined,
       dateFrom: undefined,
       dateTo: undefined,
+      userId: undefined,
       page: 1,
     })
   }
@@ -107,6 +119,7 @@ export function useFeedbackFilters() {
     search: search.value || undefined,
     dateFrom: dateFrom.value || undefined,
     dateTo: dateTo.value || undefined,
+    userId: userId.value || undefined,
     page: page.value,
     limit: limit.value,
   }))
@@ -116,12 +129,14 @@ export function useFeedbackFilters() {
     search,
     dateFrom,
     dateTo,
+    userId,
     page,
     limit,
     hasActiveFilters,
     apiFilters,
     setTab,
     setSearch,
+    setUserId,
     setDateRange,
     setPage,
     clearFilters,

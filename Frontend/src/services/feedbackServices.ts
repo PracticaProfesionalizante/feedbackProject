@@ -5,7 +5,8 @@ import type {
   Feedback,
   FeedbackFilters,
   FeedbacksResponse,
-  UpdateFeedbackDto
+  UpdateFeedbackDto,
+  FeedbackCounterpart
 } from '../types/feedback'
 
 const API_BASE = API_BASE_URL
@@ -74,6 +75,18 @@ function unwrapArray<T>(raw: any): T[] {
 }
 
 export const feedbackService = {
+  /** Lista de usuarios con los que tengo feedbacks (para filtro por usuario) */
+  async getCounterparts(): Promise<FeedbackCounterpart[]> {
+    const auth = useAuthStore()
+    const res = await fetch(buildUrl('/feedbacks/counterparts'), {
+      headers: { ...auth.getAuthHeader() }
+    })
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+    const raw = await parseJson<any>(res)
+    const data = Array.isArray(raw) ? raw : raw?.data ?? raw?.items ?? []
+    return data as FeedbackCounterpart[]
+  },
+
   async getFeedbacks(filters: FeedbackFilters = {}): Promise<FeedbacksResponse> {
     const auth = useAuthStore()
     const qs = buildQuery(filters)

@@ -64,6 +64,10 @@ export const queryFeedbackSchema = z.object({
     page: queryPageLimit,
     limit: queryPageLimit,
     type: z.enum(['sent', 'received']).optional(),
+    userId: z.string().uuid().optional(),
+    search: z.string().optional(),
+    dateFrom: z.string().optional(),
+    dateTo: z.string().optional(),
   }),
 })
 
@@ -85,6 +89,8 @@ export const listFeedbacksQuerySchema = z.object({
   dateTo: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  /** Filtrar por usuario contraparte: en "received" = fromUserId, en "sent" = toUserId */
+  userId: z.string().uuid().optional(),
 })
 
 export const recentFeedbacksQuerySchema = z.object({

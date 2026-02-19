@@ -61,8 +61,17 @@ export type FeedbackFilters = {
   dateTo?: string
   page?: number
   limit?: number
+  /** Filtrar por usuario contraparte (quien envía en recibidos, quien recibe en enviados) */
+  userId?: string
   sortBy?: 'createdAt'
   sortOrder?: 'asc' | 'desc'
+}
+
+/** Usuario contraparte para el selector (id, name, email) */
+export type FeedbackCounterpart = {
+  id: string
+  name: string
+  email: string
 }
 
 /**
