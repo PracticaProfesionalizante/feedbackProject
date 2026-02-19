@@ -1,6 +1,16 @@
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/error.handler'
 
+/** Nodo del árbol de puestos (público para el tipo de retorno del servicio). */
+export type PositionTreeNode = {
+  id: string
+  name: string
+  area: { id: string; name: string }
+  parentPositionId: string | null
+  assignedUsers: Array<{ id: string; name: string; email: string }>
+  children: PositionTreeNode[]
+}
+
 type UpsertPositionInput = {
   name: string
   areaId: string
@@ -165,11 +175,12 @@ export const orgChartService = {
         while (current) {
           if (visited.has(current)) throw new AppError('That parent would create a cycle', 400)
           visited.add(current)
-          const next = await prisma.orgPosition.findUnique({
-            where: { id: current },
-            select: { parentPositionId: true },
-          })
-          current = next?.parentPositionId ?? null
+          const parentPos: { parentPositionId: string | null } | null =
+            await prisma.orgPosition.findUnique({
+              where: { id: current },
+              select: { parentPositionId: true },
+            })
+          current = parentPos?.parentPositionId ?? null
         }
       }
     }
@@ -283,7 +294,7 @@ export const orgChartService = {
    * Árbol jerárquico por PUESTOS: raíces = puestos sin padre (parentPositionId null).
    * Cada nodo es un puesto con área, hijos (puestos) y usuarios asignados (0, 1 o varios).
    */
-  async getPositionHierarchyTree() {
+  async getPositionHierarchyTree(): Promise<{ tree: PositionTreeNode[] }> {
     const positions = await prisma.orgPosition.findMany({
       orderBy: [{ area: { name: 'asc' } }, { name: 'asc' }],
       include: {
@@ -296,16 +307,7 @@ export const orgChartService = {
       },
     })
 
-    type PositionNode = {
-      id: string
-      name: string
-      area: { id: string; name: string }
-      parentPositionId: string | null
-      assignedUsers: Array<{ id: string; name: string; email: string }>
-      children: PositionNode[]
-    }
-
-    const nodeMap = new Map<string, PositionNode>()
+    const nodeMap = new Map<string, PositionTreeNode>()
     for (const p of positions) {
       nodeMap.set(p.id, {
         id: p.id,
@@ -317,7 +319,7 @@ export const orgChartService = {
       })
     }
 
-    const roots: PositionNode[] = []
+    const roots: PositionTreeNode[] = []
     for (const p of positions) {
       const node = nodeMap.get(p.id)!
       if (!p.parentPositionId) {
@@ -329,7 +331,7 @@ export const orgChartService = {
       }
     }
 
-    function sortChildren(n: PositionNode) {
+    function sortChildren(n: PositionTreeNode) {
       n.children.sort((a, b) => a.name.localeCompare(b.name))
       n.children.forEach(sortChildren)
     }
