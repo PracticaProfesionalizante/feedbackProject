@@ -4,9 +4,30 @@ import { AppError } from '../middleware/error.handler'
 type UpsertPositionInput = {
   name: string
   areaId: string
+  parentPositionId?: string | null
 }
 
 export const orgChartService = {
+  /** Lista usuarios para asignar a puestos (admin). Búsqueda opcional por nombre o email. */
+  async listUsersForAssignment(search?: string) {
+    const searchTrim = typeof search === 'string' ? search.trim() : ''
+    const where =
+      searchTrim.length > 0
+        ? {
+            OR: [
+              { name: { contains: searchTrim, mode: 'insensitive' as const } },
+              { email: { contains: searchTrim, mode: 'insensitive' as const } },
+            ],
+          }
+        : undefined
+    return prisma.user.findMany({
+      where,
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+      take: 100,
+    })
+  },
+
   async listAreasWithPositions() {
     return prisma.orgArea.findMany({
       orderBy: { name: 'asc' },
@@ -15,6 +36,7 @@ export const orgChartService = {
           orderBy: { name: 'asc' },
           include: {
             _count: { select: { userLinks: true } },
+            parent: { select: { id: true, name: true } },
           },
         },
       },
@@ -73,6 +95,7 @@ export const orgChartService = {
       include: {
         area: { select: { id: true, name: true } },
         _count: { select: { userLinks: true } },
+        parent: { select: { id: true, name: true } },
       },
     })
   },
@@ -87,13 +110,23 @@ export const orgChartService = {
       throw new AppError('Area not found', 404)
     }
 
+    if (input.parentPositionId) {
+      const parent = await prisma.orgPosition.findUnique({
+        where: { id: input.parentPositionId },
+        select: { id: true },
+      })
+      if (!parent) throw new AppError('Parent position not found', 404)
+    }
+
     return prisma.orgPosition.create({
       data: {
         name: input.name.trim(),
         areaId: input.areaId,
+        parentPositionId: input.parentPositionId || undefined,
       },
       include: {
         area: { select: { id: true, name: true } },
+        parent: { select: { id: true, name: true } },
       },
     })
   },
@@ -118,14 +151,39 @@ export const orgChartService = {
       }
     }
 
+    if (input.parentPositionId !== undefined) {
+      if (input.parentPositionId) {
+        const parent = await prisma.orgPosition.findUnique({
+          where: { id: input.parentPositionId },
+          select: { id: true },
+        })
+        if (!parent) throw new AppError('Parent position not found', 404)
+        if (parent.id === id) throw new AppError('A position cannot be its own parent', 400)
+        // Evitar ciclo: el padre no puede ser descendiente de id
+        let current: string | null = input.parentPositionId
+        const visited = new Set<string>([id])
+        while (current) {
+          if (visited.has(current)) throw new AppError('That parent would create a cycle', 400)
+          visited.add(current)
+          const next = await prisma.orgPosition.findUnique({
+            where: { id: current },
+            select: { parentPositionId: true },
+          })
+          current = next?.parentPositionId ?? null
+        }
+      }
+    }
+
     return prisma.orgPosition.update({
       where: { id },
       data: {
         name: input.name?.trim(),
         areaId: input.areaId,
+        parentPositionId: input.parentPositionId === null ? null : input.parentPositionId,
       },
       include: {
         area: { select: { id: true, name: true } },
+        parent: { select: { id: true, name: true } },
       },
     })
   },
@@ -219,6 +277,66 @@ export const orgChartService = {
       user,
       assignments,
     }
+  },
+
+  /**
+   * Árbol jerárquico por PUESTOS: raíces = puestos sin padre (parentPositionId null).
+   * Cada nodo es un puesto con área, hijos (puestos) y usuarios asignados (0, 1 o varios).
+   */
+  async getPositionHierarchyTree() {
+    const positions = await prisma.orgPosition.findMany({
+      orderBy: [{ area: { name: 'asc' } }, { name: 'asc' }],
+      include: {
+        area: { select: { id: true, name: true } },
+        userLinks: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
+    })
+
+    type PositionNode = {
+      id: string
+      name: string
+      area: { id: string; name: string }
+      parentPositionId: string | null
+      assignedUsers: Array<{ id: string; name: string; email: string }>
+      children: PositionNode[]
+    }
+
+    const nodeMap = new Map<string, PositionNode>()
+    for (const p of positions) {
+      nodeMap.set(p.id, {
+        id: p.id,
+        name: p.name,
+        area: p.area,
+        parentPositionId: p.parentPositionId ?? null,
+        assignedUsers: p.userLinks.map((l) => l.user),
+        children: [],
+      })
+    }
+
+    const roots: PositionNode[] = []
+    for (const p of positions) {
+      const node = nodeMap.get(p.id)!
+      if (!p.parentPositionId) {
+        roots.push(node)
+      } else {
+        const parent = nodeMap.get(p.parentPositionId)
+        if (parent) parent.children.push(node)
+        else roots.push(node)
+      }
+    }
+
+    function sortChildren(n: PositionNode) {
+      n.children.sort((a, b) => a.name.localeCompare(b.name))
+      n.children.forEach(sortChildren)
+    }
+    roots.sort((a, b) => a.name.localeCompare(b.name))
+    roots.forEach(sortChildren)
+
+    return { tree: roots }
   },
 }
 

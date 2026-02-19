@@ -123,5 +123,24 @@ export const orgChartController = {
       next(error)
     }
   },
+
+  async listUsersForAssignment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const search = typeof req.query.search === 'string' ? req.query.search : undefined
+      const users = await orgChartService.listUsersForAssignment(search)
+      res.json({ users })
+    } catch (error) {
+      next(error)
+    }
+  },
+
+  async getPositionHierarchyTree(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await orgChartService.getPositionHierarchyTree()
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  },
 }
 

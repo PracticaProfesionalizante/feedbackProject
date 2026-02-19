@@ -8,6 +8,12 @@ const userIdParamSchema = z.object({
   userId: z.string().uuid('Invalid user id format'),
 })
 
+export const listUsersSchema = z.object({
+  query: z.object({
+    search: z.string().max(100).optional().default(''),
+  }).optional().default({}),
+})
+
 export const listPositionsSchema = z.object({
   query: z.object({
     areaId: z.string().uuid('Invalid area id format').optional(),
@@ -35,6 +41,7 @@ export const createPositionSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1, 'Position name is required').max(120, 'Position name is too long'),
     areaId: z.string().uuid('Invalid area id format'),
+    parentPositionId: z.string().uuid('Invalid parent position id').nullable().optional(),
   }),
 })
 
@@ -43,9 +50,11 @@ export const updatePositionSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1, 'Position name is required').max(120, 'Position name is too long').optional(),
     areaId: z.string().uuid('Invalid area id format').optional(),
-  }).refine((data) => data.name !== undefined || data.areaId !== undefined, {
-    message: 'At least one field must be provided',
-  }),
+    parentPositionId: z.string().uuid('Invalid parent position id').nullable().optional(),
+  }).refine(
+    (data) => data.name !== undefined || data.areaId !== undefined || data.parentPositionId !== undefined,
+    { message: 'At least one field must be provided' }
+  ),
 })
 
 export const positionIdSchema = z.object({
@@ -58,4 +67,5 @@ export const assignUserPositionsSchema = z.object({
     positionIds: z.array(z.string().uuid('Invalid position id format')).max(50, 'Too many positions').default([]),
   }),
 })
+
 

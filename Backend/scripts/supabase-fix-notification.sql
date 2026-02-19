@@ -1,5 +1,13 @@
--- Ejecutar en Supabase → SQL Editor si los feedbacks devuelven 500 (P2022).
+-- Ejecutar en Supabase → SQL Editor si hay P2022 (columna no existe) en User o Feedback.
 -- Añade columnas que el schema de Prisma espera y pueden faltar. Idempotente.
+
+-- User (para /api/users/profile)
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "birthdate" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "country" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "areaId" UUID;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "positionId" UUID;
 
 -- Feedback: contentEditedAt, deletedAt (suelen faltar si la tabla es vieja)
 ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "contentEditedAt" TIMESTAMP(3);

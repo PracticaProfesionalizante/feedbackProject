@@ -39,17 +39,21 @@ model OrgArea {
 }
 
 model OrgPosition {
-  id        String            @id @default(uuid())
-  name      String
-  areaId    String
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  area      OrgArea           @relation(fields: [areaId], references: [id])
-  userLinks UserOrgPosition[]
+  id               String            @id @default(uuid())
+  name             String
+  areaId           String
+  parentPositionId String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  area             OrgArea           @relation(fields: [areaId], references: [id])
+  userLinks        UserOrgPosition[]
+  parent           OrgPosition?      @relation("PositionHierarchy", fields: [parentPositionId], references: [id], onDelete: SetNull)
+  children         OrgPosition[]     @relation("PositionHierarchy")
 
   @@unique([areaId, name])
   @@index([name])
   @@index([areaId])
+  @@index([parentPositionId])
 }
 
 model UserOrgPosition {

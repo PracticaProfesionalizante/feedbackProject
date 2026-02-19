@@ -25,3 +25,20 @@ export type OrgChartUser = {
   email: string
   role?: 'LEADER' | 'EMPLOYEE'
 }
+
+/** Usuario asignado a un puesto (para mostrar en el árbol) */
+export type AssignedUser = {
+  id: string
+  name: string
+  email: string
+}
+
+/** Nodo del árbol = PUESTO con área, usuarios asignados (0, 1 o varios) e hijos (puestos) */
+export type HierarchyNode = {
+  id: string
+  name: string
+  area: { id: string; name: string }
+  parentPositionId?: string | null
+  assignedUsers: AssignedUser[]
+  children: HierarchyNode[]
+}

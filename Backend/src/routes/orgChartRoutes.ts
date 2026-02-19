@@ -10,6 +10,7 @@ import {
   createAreaSchema,
   createPositionSchema,
   listPositionsSchema,
+  listUsersSchema,
   positionIdSchema,
   updateAreaSchema,
   updatePositionSchema,
@@ -19,8 +20,14 @@ const router = Router()
 
 router.use(authenticate)
 router.use(requireAuth)
+
+// Árbol jerárquico por puestos (cualquier usuario autenticado puede verlo)
+router.get('/hierarchy', orgChartController.getPositionHierarchyTree)
+
+// Rutas de áreas, posiciones y asignación de manager: solo admin
 router.use(requireAdmin)
 
+router.get('/users', validate(listUsersSchema), orgChartController.listUsersForAssignment)
 router.get('/areas', orgChartController.listAreas)
 router.post('/areas', validate(createAreaSchema), orgChartController.createArea)
 router.patch('/areas/:id', validate(updateAreaSchema), orgChartController.updateArea)

@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import ProfileInfo from '../components/profile/ProfileInfo.vue'
-import ProfileStats from '../components/profile/ProfileStats.vue'
 import { UserService } from '../services/userServices'
 
 const router = useRouter()
@@ -77,14 +76,6 @@ function goTeam() {
             :employeesCount="profile.teamInfo.employeesCount"
             :leadersCount="profile.teamInfo.leadersCount"
             @goTeam="goTeam"
-          />
-
-          <v-divider class="my-6" />
-
-          <ProfileStats
-            :feedbacksGiven="profile.stats.feedbacksGiven"
-            :feedbacksReceived="profile.stats.feedbacksReceived"
-            :comments="profile.stats.comments"
           />
         </div>
       </v-card-text>

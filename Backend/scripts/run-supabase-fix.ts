@@ -18,6 +18,15 @@ async function main() {
     await client.connect()
     console.log('Conectado. Aplicando fixes...')
 
+    // --- User: columnas que el schema espera y pueden faltar (evita P2022 en /api/users/profile)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "birthdate" TIMESTAMP(3)`)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "country" TEXT`)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP`)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP`)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "areaId" UUID`)
+    await client.query(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "positionId" UUID`)
+    console.log('  - User: birthdate, country, createdAt, updatedAt, areaId, positionId ok')
+
     // --- Feedback: quitar columnas viejas (type, status) que ya no están en el schema
     await client.query(`ALTER TABLE "Feedback" DROP COLUMN IF EXISTS "type"`)
     await client.query(`ALTER TABLE "Feedback" DROP COLUMN IF EXISTS "status"`)
