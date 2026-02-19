@@ -219,7 +219,7 @@ const editDialog = reactive({
 function openEditDialog() {
   editDialog.content = props.feedback.content
 
-  // clonamos acciones existentes (solo texto, done se mantiene por backend si trae id)
+  // clonamos acciones existentes (sosaddddxto, done se mantiene por backend si trae id)
   const current = normalizedActions.value
   editDialog.actions = (current.length ? current : [{ id: undefined, text: '' }]).map((a) => ({
     _key: crypto.randomUUID(),
