@@ -339,40 +339,32 @@ const sortedCounterparts = computed(() => {
   return [selected, ...rest]
 })
 
-const query = useQuery<FeedbacksResponse, Error>({
-  queryKey: computed(() => ['feedbacks', { ...apiFilters.value }]),
-  queryFn: ({ queryKey }) => {
-    const [, filters] = queryKey as [string, typeof apiFilters.value]
-    return feedbackService.getFeedbacks(filters ?? apiFilters.value)
-  },
-})
+const listItems = ref<Feedback[]>([])
+const listTotal = ref<number | undefined>(undefined)
+const isLoading = ref(false)
 
 watch(
-  () => query.error.value,
-  (err) => {
-    if (err) showError(err.message || 'Error al cargar feedbacks')
-  }
+  () => [apiFilters.value.type, apiFilters.value.page, apiFilters.value.limit, apiFilters.value.search, apiFilters.value.userId, apiFilters.value.dateFrom, apiFilters.value.dateTo],
+  async () => {
+    const filters = apiFilters.value
+    isLoading.value = true
+    listItems.value = []
+    listTotal.value = undefined
+    try {
+      const res = await feedbackService.getFeedbacks(filters)
+      const raw = res as any
+      const items = Array.isArray(raw?.items) ? (raw.items as Feedback[]) : []
+      const total = typeof raw?.total === 'number' ? raw.total : undefined
+      listItems.value = items
+      listTotal.value = total
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Error al cargar feedbacks')
+    } finally {
+      isLoading.value = false
+    }
+  },
+  { immediate: true }
 )
-
-const listItems = computed<Feedback[]>(() => {
-  const data = query.data.value as any
-  if (!data) return []
-  if (Array.isArray(data?.items)) return data.items as Feedback[]
-  if (Array.isArray(data)) return data as Feedback[]
-  if (Array.isArray(data?.data?.items)) return data.data.items as Feedback[]
-  if (Array.isArray(data?.data)) return data.data as Feedback[]
-  return []
-})
-
-const listTotal = computed<number | undefined>(() => {
-  const data = query.data.value as any
-  if (!data) return undefined
-  if (typeof data?.total === 'number') return data.total
-  if (Array.isArray(data)) return data.length
-  return undefined
-})
-
-const isLoading = computed(() => query.isLoading.value)
 
 const totalPages = computed(() => {
   const total = listTotal.value

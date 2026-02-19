@@ -34,16 +34,17 @@
       @click:row="onRowClick"
     >
       <template v-if="hideFooter" #bottom />
-      <!-- Indicador checklist: círculo verde sutil si pendientes, verde lleno si todo hecho -->
+      <!-- Indicador checklist: 3 estados (completo / pendiente / sin checklist) -->
       <template #item.checklist="{ item }">
-        <v-tooltip v-if="getChecklistStatus(item)" location="top">
+        <v-tooltip location="top">
           <template #activator="{ props: tooltipProps }">
-            <span v-bind="tooltipProps" class="checklist-indicator" :class="getChecklistStatus(item)">
-              <v-icon v-if="getChecklistStatus(item) === 'done'" size="small" color="success">mdi-check-circle-fill</v-icon>
-              <v-icon v-else size="small" color="success" class="checklist-pending">mdi-check-circle-outline</v-icon>
+            <span v-bind="tooltipProps" class="checklist-indicator" :class="'checklist--' + getChecklistStatus(item)">
+              <v-icon size="default" :class="'checklist-icon checklist-icon--' + getChecklistStatus(item)">
+                {{ getChecklistIcon(item) }}
+              </v-icon>
             </span>
           </template>
-          <span>{{ getChecklistStatus(item) === 'done' ? 'Checklist completada' : 'Checklist con ítems pendientes' }}</span>
+          <span>{{ getChecklistTooltip(item) }}</span>
         </v-tooltip>
       </template>
 
@@ -192,12 +193,26 @@ function getCounterpartEmail(f: Feedback) {
   return f.toUser?.email ?? ''
 }
 
-/** 'pending' = tiene checklist con ítems pendientes, 'done' = checklist todo hecho, '' = sin checklist */
-function getChecklistStatus(f: Feedback): 'pending' | 'done' | '' {
+/** 'pending' = tiene checklist con ítems pendientes, 'done' = checklist todo hecho, 'none' = sin checklist */
+function getChecklistStatus(f: Feedback): 'pending' | 'done' | 'none' {
   const actions = f.actions ?? []
-  if (actions.length === 0) return ''
+  if (actions.length === 0) return 'none'
   const allDone = actions.every((a) => a.done)
   return allDone ? 'done' : 'pending'
+}
+
+function getChecklistIcon(f: Feedback): string {
+  const status = getChecklistStatus(f)
+  if (status === 'done') return 'mdi-check-circle'
+  if (status === 'pending') return 'mdi-clock-outline'
+  return 'mdi-format-list-bulleted'
+}
+
+function getChecklistTooltip(f: Feedback): string {
+  const status = getChecklistStatus(f)
+  if (status === 'done') return 'Checklist completo'
+  if (status === 'pending') return 'Checklist pendiente'
+  return 'Sin checklist'
 }
 </script>
 
@@ -213,8 +228,18 @@ function getChecklistStatus(f: Feedback): 'pending' | 'done' | '' {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 28px;
 }
-.checklist-pending {
-  opacity: 0.6;
+.checklist-icon {
+  opacity: 1 !important;
+}
+.checklist-icon--done {
+  color: #2e7d32 !important;
+}
+.checklist-icon--pending {
+  color: #f9a825 !important;
+}
+.checklist-icon--none {
+  color: #757575 !important;
 }
 </style>
