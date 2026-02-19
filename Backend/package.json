@@ -18,6 +18,7 @@
     "seed:roles": "ts-node scripts/seed-roles.ts",
     "seed:org": "ts-node scripts/seed-org-chart.ts",
     "seed:feedback": "ts-node scripts/seed-feedback.ts",
+    "seed:feedback-20": "ts-node scripts/seed-feedback-20-per-user.ts",
     "seed:all": "ts-node scripts/seed-all.ts",
     "db:inspect": "ts-node scripts/db-inspect-full.ts",
     "db:inspect-users": "ts-node scripts/db-inspect-users.ts",

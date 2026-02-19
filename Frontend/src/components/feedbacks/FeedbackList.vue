@@ -112,7 +112,7 @@ const props = withDefaults(
   }>(),
   {
     title: 'Feedbacks',
-    itemsPerPage: 20,
+    itemsPerPage: 10,
     total: undefined,
     showNewButton: false,
     hideFooter: false,

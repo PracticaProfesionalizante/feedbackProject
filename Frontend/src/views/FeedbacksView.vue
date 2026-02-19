@@ -13,31 +13,32 @@
         <v-tab value="sent">Enviados</v-tab>
       </v-tabs>
 
-      <div class="tabs-actions">
-        <v-btn
-          v-if="hasActiveFilters"
-          color="secondary"
-          variant="tonal"
-          prepend-icon="mdi-filter-off"
-          rounded="lg"
-          @click="clearFilters"
-        >
-          Borrar filtros
-        </v-btn>
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-plus"
-          variant="elevated"
-          rounded="lg"
-          class="btn-new"
-          @click="goToNew"
-        >
-          Nuevo Feedback
-        </v-btn>
-      </div>
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-plus"
+        variant="elevated"
+        rounded="lg"
+        class="btn-new"
+        @click="goToNew"
+      >
+        Nuevo Feedback
+      </v-btn>
     </div>
 
     <v-divider class="content-divider" />
+
+    <div class="clear-filters-row">
+      <v-btn
+        :disabled="!hasActiveFilters"
+        color="secondary"
+        variant="tonal"
+        icon="mdi-filter-off"
+        rounded="lg"
+        class="btn-clear-filters"
+        title="Borrar filtros"
+        @click="clearFilters"
+      />
+    </div>
 
     <div class="layout-row">
       <!-- Sidebar izquierdo: filtro por usuario -->
@@ -65,13 +66,12 @@
           </div>
           <v-list v-else density="compact" class="user-list">
             <v-list-item
-              v-for="u in filteredCounterparts"
+              v-for="u in sortedCounterparts"
               :key="u.id"
-              :active="userId === u.id"
               :title="u.name"
               :subtitle="u.email"
               rounded="lg"
-              class="user-list-item"
+              :class="['user-list-item', { 'user-list-item--selected': userId === u.id }]"
               @click="toggleUserFilter(u.id)"
             />
           </v-list>
@@ -171,16 +171,14 @@
   justify-content: space-between;
   padding-block: 0.5rem 0.25rem;
 }
-.tabs-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
 .content-divider {
   margin: 0.5rem 0 1rem;
   opacity: 0.6;
 }
-
+.clear-filters-row {
+  margin-bottom: 1rem;
+  padding: 0.25rem 0;
+}
 .layout-row {
   display: flex;
   gap: 1.5rem;
@@ -221,6 +219,13 @@
 }
 .user-list-item {
   margin-bottom: 2px;
+}
+.user-list-item--selected {
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+}
+.user-list-item--selected :deep(.v-list-item-subtitle) {
+  opacity: 0.9;
 }
 
 .content-area {
@@ -323,6 +328,17 @@ const filteredCounterparts = computed(() => {
   )
 })
 
+/** Lista con el usuario seleccionado siempre primero (y con estilo distinto) */
+const sortedCounterparts = computed(() => {
+  const list = filteredCounterparts.value
+  const selectedId = userId.value
+  if (!selectedId) return list
+  const selected = list.find((u) => u.id === selectedId)
+  if (!selected) return list
+  const rest = list.filter((u) => u.id !== selectedId)
+  return [selected, ...rest]
+})
+
 const query = useQuery<FeedbacksResponse, Error>({
   queryKey: computed(() => ['feedbacks', { ...apiFilters.value }]),
   queryFn: () => feedbackService.getFeedbacks(apiFilters.value),
@@ -361,6 +377,16 @@ const totalPages = computed(() => {
   const lim = limit.value
   if (total == null || lim <= 0) return 1
   return Math.max(1, Math.ceil(total / lim))
+})
+
+// Si la página actual queda fuera de rango (ej. filtros redujeron el total), volver a página 1
+watch([listTotal, limit, page], () => {
+  const total = listTotal.value
+  const lim = limit.value
+  const p = page.value
+  if (total == null || lim <= 0) return
+  const maxPage = Math.max(1, Math.ceil(total / lim))
+  if (p > maxPage) setPage(1)
 })
 
 function onTabChange(e: unknown) {

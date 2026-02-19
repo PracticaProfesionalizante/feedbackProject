@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 export type TabValue = 'received' | 'sent'
 
-const DEFAULT_LIMIT = 20
+const DEFAULT_LIMIT = 10
 
 type QueryMap = Record<string, string | number | undefined>
 

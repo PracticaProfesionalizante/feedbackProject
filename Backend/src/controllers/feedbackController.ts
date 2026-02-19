@@ -353,21 +353,34 @@ async function toggleActionCore(req: Request, res: Response, next: NextFunction)
 
 export async function getCounterparts(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = getAuthUser(req)
-    const feedbacks = await prisma.feedback.findMany({
-      where: { deletedAt: null, OR: [{ toUserId: user.id }, { fromUserId: user.id }] },
-      select: {
-        fromUser: { select: { id: true, name: true, email: true } },
-        toUser: { select: { id: true, name: true, email: true } },
-      },
-      take: 2000,
-    })
-    const byId = new Map<string, { id: string; name: string; email: string }>()
-    for (const f of feedbacks) {
-      if (f.fromUser.id !== user.id) byId.set(f.fromUser.id, f.fromUser)
-      if (f.toUser.id !== user.id) byId.set(f.toUser.id, f.toUser)
+    const me = getAuthUser(req)
+    const myId = me.id
+    if (!myId) {
+      return res.status(401).json({ message: 'Usuario no autenticado' })
     }
-    const list = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name))
+    // Solo usuarios que aparecen en un feedback conmigo: yo envío a ellos O ellos me envían a mí
+    const sentTo = await prisma.feedback.findMany({
+      where: { fromUserId: myId, deletedAt: null },
+      select: { toUserId: true },
+      distinct: ['toUserId'],
+    })
+    const receivedFrom = await prisma.feedback.findMany({
+      where: { toUserId: myId, deletedAt: null },
+      select: { fromUserId: true },
+      distinct: ['fromUserId'],
+    })
+    const ids = new Set<string>()
+    for (const r of sentTo) ids.add(r.toUserId)
+    for (const r of receivedFrom) ids.add(r.fromUserId)
+    ids.delete(myId)
+    if (ids.size === 0) {
+      return res.json([])
+    }
+    const users = await prisma.user.findMany({
+      where: { id: { in: Array.from(ids) } },
+      select: { id: true, name: true, email: true },
+    })
+    const list = users.sort((a, b) => a.name.localeCompare(b.name))
     return res.json(list)
   } catch (error) {
     console.error('[getCounterparts]', error)
