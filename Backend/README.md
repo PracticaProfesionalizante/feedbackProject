@@ -37,15 +37,16 @@ npm run build
 npm start
 ```
 
-### Deploy en Render (u otro host)
-- **Root Directory:** debe ser la carpeta donde está este `package.json` (ej. `Backend` o `src/Backend` según tu repo).
-- **Build Command:**
-```bash
-npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-```
-- **Start Command:** `npm start`
+### Deploy en Render — configuración única
+1. **Root Directory:** La carpeta donde está este `package.json`. En GitHub suele ser `Backend` o `src/Backend`; en Render tiene que coincidir (ej. si en el repo ves `feedbackProject/Backend/package.json`, poné `Backend`; si ves `feedbackProject/src/Backend/package.json`, poné `src/Backend`).
+2. **Variables de entorno:** En el servicio, agregá `DATABASE_URL` con la URL de PostgreSQL de Render.
+3. **Build Command:**
+   ```bash
+   npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+   ```
+4. **Start Command:** `npm start`
 
-Si el servicio está en la raíz del repo y el backend está en `src/Backend`, usá en Build y Start: `cd src/Backend &&` antes de los comandos.
+`@prisma/client` y `prisma` están en **dependencies** para que se instalen en el build y `prisma generate` encuentre el cliente. La URL de la BD se toma de `prisma.config.cjs` (usa `process.env.DATABASE_URL`).
 
 ## 📁 Estructura
 
