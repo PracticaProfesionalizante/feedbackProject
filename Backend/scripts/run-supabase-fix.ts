@@ -18,6 +18,11 @@ async function main() {
     await client.connect()
     console.log('Conectado. Aplicando fixes...')
 
+    // --- Feedback: quitar columnas viejas (type, status) que ya no están en el schema
+    await client.query(`ALTER TABLE "Feedback" DROP COLUMN IF EXISTS "type"`)
+    await client.query(`ALTER TABLE "Feedback" DROP COLUMN IF EXISTS "status"`)
+    console.log('  - Feedback: columnas type y status eliminadas (si existían)')
+
     // --- Feedback: columnas que suelen faltar si la tabla se creó con un schema viejo
     await client.query(
       `ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "contentEditedAt" TIMESTAMP(3)`
@@ -31,6 +36,31 @@ async function main() {
       `CREATE INDEX IF NOT EXISTS "Feedback_deletedAt_idx" ON "Feedback"("deletedAt")`
     )
     console.log('  - Índice Feedback.deletedAt ok')
+
+    // --- Tabla FeedbackAction (si no existe)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "FeedbackAction" (
+        "id" TEXT NOT NULL,
+        "feedbackId" TEXT NOT NULL,
+        "text" TEXT NOT NULL,
+        "done" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "FeedbackAction_pkey" PRIMARY KEY ("id")
+      )
+    `)
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS "FeedbackAction_feedbackId_idx" ON "FeedbackAction"("feedbackId")`
+    )
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE "FeedbackAction" ADD CONSTRAINT "FeedbackAction_feedbackId_fkey"
+          FOREIGN KEY ("feedbackId") REFERENCES "Feedback"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$
+    `)
+    console.log('  - Tabla FeedbackAction ok')
 
     // --- Notification.feedbackId (para notificaciones por feedback)
     await client.query(
