@@ -112,7 +112,6 @@ export const orgChartController = {
       next(error)
     }
   },
-//probando cambio
   async replaceUserPositions(req: Request, res: Response, next: NextFunction) {
     try {
       const assignments = await orgChartService.replaceUserPositions(

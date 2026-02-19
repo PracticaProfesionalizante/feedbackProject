@@ -38,11 +38,14 @@ npm start
 ```
 
 ### Deploy en Render (u otro host)
-En el **Build Command** del servicio, asegurate de aplicar migraciones antes de arrancar:
+- **Root Directory:** debe ser la carpeta donde está este `package.json` (ej. `Backend` o `src/Backend` según tu repo).
+- **Build Command:**
 ```bash
 npm install && npx prisma generate && npx prisma migrate deploy && npm run build
 ```
-Si las migraciones no se aplican, endpoints que usan la DB (p. ej. `/api/feedbacks`) pueden devolver 500. En ese caso revisá los logs; si el JSON de error incluye `code` (ej. `P2021`), es un error de Prisma (tabla/columna inexistente, conexión, etc.).
+- **Start Command:** `npm start`
+
+Si el servicio está en la raíz del repo y el backend está en `src/Backend`, usá en Build y Start: `cd src/Backend &&` antes de los comandos.
 
 ## 📁 Estructura
 
