@@ -1,14 +1,14 @@
 /**
- * Aplica el fix de la columna Notification.feedbackId en la BD.
+ * Aplica en la BD las columnas que el schema de Prisma espera y que pueden faltar en Supabase.
  * Ejecutar una vez con: npm run db:fix-notification
- * Requiere DIRECT_URL o DATABASE_URL en .env (usa DIRECT_URL si está definida).
+ * Usa la URL definida en src/config/constants.ts (DIRECT_URL).
  */
-import 'dotenv/config'
+import { DIRECT_URL } from '../src/config/constants'
 import { Client } from 'pg'
 
-const url = process.env.DIRECT_URL || process.env.DATABASE_URL
+const url = DIRECT_URL
 if (!url) {
-  console.error('Falta DIRECT_URL o DATABASE_URL en el .env')
+  console.error('Falta DIRECT_URL en src/config/constants.ts')
   process.exit(1)
 }
 
@@ -16,18 +16,29 @@ async function main() {
   const client = new Client({ connectionString: url })
   try {
     await client.connect()
-    console.log('Conectado. Aplicando fix Notification.feedbackId...')
+    console.log('Conectado. Aplicando fixes...')
 
+    // --- Feedback: columnas que suelen faltar si la tabla se creó con un schema viejo
+    await client.query(
+      `ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "contentEditedAt" TIMESTAMP(3)`
+    )
+    await client.query(
+      `ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3)`
+    )
+    console.log('  - Feedback.contentEditedAt y deletedAt ok')
+
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS "Feedback_deletedAt_idx" ON "Feedback"("deletedAt")`
+    )
+    console.log('  - Índice Feedback.deletedAt ok')
+
+    // --- Notification.feedbackId (para notificaciones por feedback)
     await client.query(
       `ALTER TABLE "Notification" ADD COLUMN IF NOT EXISTS "feedbackId" TEXT`
     )
-    console.log('  - Columna feedbackId ok')
-
     await client.query(
       `CREATE INDEX IF NOT EXISTS "Notification_feedbackId_idx" ON "Notification"("feedbackId")`
     )
-    console.log('  - Índice ok')
-
     await client.query(`
       DO $$ BEGIN
         ALTER TABLE "Notification" ADD CONSTRAINT "Notification_feedbackId_fkey"
@@ -36,9 +47,9 @@ async function main() {
         WHEN duplicate_object THEN NULL;
       END $$
     `)
-    console.log('  - FK ok')
+    console.log('  - Notification.feedbackId ok')
 
-    console.log('Listo. La API de feedback no debería devolver 500 por esta columna.')
+    console.log('Listo. Probá de nuevo GET /api/feedbacks/recent.')
   } catch (e) {
     console.error('Error:', e)
     process.exit(1)

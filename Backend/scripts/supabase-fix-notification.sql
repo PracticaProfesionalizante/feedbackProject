@@ -1,13 +1,14 @@
--- Ejecutar en Supabase → SQL Editor si los feedbacks devuelven 500 (P2022)
--- por columna faltante en Notification. Es idempotente: se puede ejecutar más de una vez.
+-- Ejecutar en Supabase → SQL Editor si los feedbacks devuelven 500 (P2022).
+-- Añade columnas que el schema de Prisma espera y pueden faltar. Idempotente.
 
--- Columna feedbackId en Notification
+-- Feedback: contentEditedAt, deletedAt (suelen faltar si la tabla es vieja)
+ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "contentEditedAt" TIMESTAMP(3);
+ALTER TABLE "Feedback" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+CREATE INDEX IF NOT EXISTS "Feedback_deletedAt_idx" ON "Feedback"("deletedAt");
+
+-- Notification.feedbackId
 ALTER TABLE "Notification" ADD COLUMN IF NOT EXISTS "feedbackId" TEXT;
-
--- Índice
 CREATE INDEX IF NOT EXISTS "Notification_feedbackId_idx" ON "Notification"("feedbackId");
-
--- FK a Feedback (ignora si ya existe)
 DO $$ BEGIN
   ALTER TABLE "Notification" ADD CONSTRAINT "Notification_feedbackId_fkey"
     FOREIGN KEY ("feedbackId") REFERENCES "Feedback"("id") ON DELETE CASCADE ON UPDATE CASCADE;
