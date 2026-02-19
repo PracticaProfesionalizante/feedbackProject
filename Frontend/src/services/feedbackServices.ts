@@ -29,6 +29,9 @@ function buildQuery(filters?: FeedbackFilters) {
     const stringValue = typeof value === 'string' ? value : String(value)
     params.set(key as string, stringValue)
   })
+  if (!params.has('page')) params.set('page', '1')
+  if (!params.has('limit')) params.set('limit', '10')
+  if (!params.has('type')) params.set('type', 'received')
 
   const qs = params.toString()
   return qs ? `?${qs}` : ''

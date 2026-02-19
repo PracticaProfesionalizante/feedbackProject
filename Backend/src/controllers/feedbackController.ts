@@ -426,7 +426,17 @@ export const feedbackController = {
   list: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = getAuthUser(req)
-      const result = await listFeedbacksCore(user.id, req.query)
+      const q = req.query as Record<string, string | undefined>
+      const queryForList = {
+        type: q.type ?? q.tab ?? 'received',
+        search: q.search,
+        dateFrom: q.dateFrom,
+        dateTo: q.dateTo,
+        page: q.page ?? '1',
+        limit: q.limit ?? '10',
+        userId: q.userId,
+      }
+      const result = await listFeedbacksCore(user.id, queryForList)
       res.json(result)
     } catch (error) {
       console.error('[feedbackController.list]', error)
