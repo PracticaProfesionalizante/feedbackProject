@@ -30,7 +30,7 @@
       loading-text="Cargando..."
       no-data-text="No hay feedbacks para mostrar."
       class="elevation-0 feedback-table"
-      @update:page="emit('update:page', $event)"
+      @update:page="onTablePageChange"
       @click:row="onRowClick"
     >
       <template v-if="hideFooter" #bottom />
@@ -158,6 +158,11 @@ function onRowClick(_: unknown, row: any) {
   // Vuetify entrega { item } en row; defendemos por si cambia
   const id: string | undefined = row?.item?.id
   if (id) emit('open', id)
+}
+
+/** Solo reenviar cambio de página si la paginación es de la tabla (no externa). Con hideFooter la paginación es externa y la tabla no debe resetear la página. */
+function onTablePageChange(newPage: number) {
+  if (!props.hideFooter) emit('update:page', newPage)
 }
 
 function preview(text: string) {

@@ -65,8 +65,8 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
     where.createdAt = createdAtFilter
   }
 
-  const page = Number(query.page) || 1
-  const limit = Number(query.limit) || 10
+  const page = Math.max(1, Number(query.page) || 1)
+  const limit = Math.max(1, Math.min(100, Number(query.limit) || 10))
   const skip = (page - 1) * limit
 
   try {

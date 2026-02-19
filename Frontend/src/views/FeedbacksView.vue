@@ -341,8 +341,10 @@ const sortedCounterparts = computed(() => {
 
 const query = useQuery<FeedbacksResponse, Error>({
   queryKey: computed(() => ['feedbacks', { ...apiFilters.value }]),
-  queryFn: () => feedbackService.getFeedbacks(apiFilters.value),
-  placeholderData: (prev) => prev
+  queryFn: ({ queryKey }) => {
+    const [, filters] = queryKey as [string, typeof apiFilters.value]
+    return feedbackService.getFeedbacks(filters ?? apiFilters.value)
+  },
 })
 
 watch(
