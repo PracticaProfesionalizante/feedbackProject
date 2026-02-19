@@ -1,7 +1,7 @@
 // Importar constants primero para establecer process.env antes de que Prisma se inicialice
 import './config/constants'
 
-import express from 'express'
+import express, { type Request, type Response } from 'express'
 import cors from 'cors'
 import { errorHandler } from './middleware/error.handler'
 import { authRoutes } from './routes/authRoutes'
@@ -19,7 +19,7 @@ export const app = express()
 
 // Middlewares
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Permitir requests sin origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true)
     
@@ -43,12 +43,12 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Routes
-app.get('/health', (req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Server is running' })
 })
 
 // Diagnóstico: comprobar si la DB responde (sin auth)
-app.get('/health/db', async (req, res) => {
+app.get('/health/db', async (_req: Request, res: Response) => {
   try {
     const { prisma } = await import('./utils/prisma')
     await prisma.$queryRaw`SELECT 1`
