@@ -70,6 +70,7 @@ function goTeam() {
             :name="profile.name"
             :email="profile.email"
             :role="profileRoleDisplay"
+            :positions="profile.positions"
             :createdAt="profile.createdAt"
             :birthdate="profile.birthdate"
             :country="profile.country"

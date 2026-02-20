@@ -4,10 +4,24 @@
     <div
       class="node-card"
       :class="[depthClass, { 'node-card-clickable': selectable }]"
-      @click.stop="selectable && $emit('select', node)"
+      :style="areaColor ? { '--area-color': areaColor, '--area-color-light': areaColorLight } : undefined"
+      @click.stop="selectable && emit('select', node)"
     >
-      <div class="node-card-name">{{ node.name }}</div>
-      <div class="node-card-area">{{ node.area.name }}</div>
+      <div class="node-card-header">
+        <div class="node-card-main">
+          <div class="node-card-name">{{ node.name }}</div>
+          <div class="node-card-area">{{ node.area.name }}</div>
+        </div>
+        <button
+          v-if="node.children.length > 0"
+          type="button"
+          class="node-expand-btn"
+          :aria-label="isExpanded ? 'Colapsar' : 'Expandir'"
+          @click.stop="emit('toggle-expand', node.id)"
+        >
+          <v-icon :icon="isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'" size="small" />
+        </button>
+      </div>
       <!-- Usuarios asignados: 0, 1 o varios -->
       <div v-if="node.assignedUsers.length === 0" class="node-card-users empty">
         Sin asignar
@@ -24,8 +38,8 @@
       </div>
     </div>
 
-    <!-- Conector hacia abajo y luego puestos hijos -->
-    <template v-if="node.children.length > 0">
+    <!-- Conector hacia abajo y luego puestos hijos (solo si está expandido) -->
+    <template v-if="node.children.length > 0 && isExpanded">
       <div class="node-connector-down" />
       <div class="node-children-row">
         <template v-for="child in node.children" :key="child.id">
@@ -34,8 +48,12 @@
             <HierarchyNodeCard
               :node="child"
               :depth="depth + 1"
+              :area-color="areaColorsMap?.get(child.area.id)"
+              :area-colors-map="areaColorsMap"
+              :expanded-ids="expandedIds"
               :selectable="selectable"
-              @select="$emit('select', $event)"
+              @select="emit('select', $event)"
+              @toggle-expand="(id: string) => emit('toggle-expand', id)"
             />
           </div>
         </template>
@@ -51,17 +69,39 @@ import type { HierarchyNode } from '@/types/orgChart'
 const props = defineProps<{
   node: HierarchyNode
   depth: number
+  /** Color por área (hex). Si viene, se usa en lugar del color por profundidad. */
+  areaColor?: string
+  /** Mapa areaId -> color para pasar a hijos */
+  areaColorsMap?: Map<string, string>
+  /** IDs de nodos expandidos (estilo Human). Si no se pasa, se considera expandido. */
+  expandedIds?: Set<string>
   selectable?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'select', node: HierarchyNode): void
+  (e: 'toggle-expand', nodeId: string): void
 }>()
 
+const isExpanded = computed(() => {
+  if (props.expandedIds == null) return true
+  return props.expandedIds.has(props.node.id)
+})
+
 const depthClass = computed(() => {
+  if (props.areaColor) return 'node-card-by-area'
   if (props.depth === 0) return 'node-card-depth-0'
   if (props.depth === 1) return 'node-card-depth-1'
   return 'node-card-depth-2'
+})
+
+const areaColorLight = computed(() => {
+  if (!props.areaColor) return ''
+  const hex = props.areaColor.replace('#', '')
+  const r = Math.min(255, parseInt(hex.slice(0, 2), 16) + 40)
+  const g = Math.min(255, parseInt(hex.slice(2, 4), 16) + 40)
+  const b = Math.min(255, parseInt(hex.slice(4, 6), 16) + 40)
+  return `rgb(${r}, ${g}, ${b})`
 })
 </script>
 
@@ -73,18 +113,19 @@ const depthClass = computed(() => {
 }
 
 .node-card {
-  padding: 10px 16px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
   text-align: center;
-  min-width: 160px;
+  min-width: 168px;
   max-width: 220px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
   transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .node-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .node-card-clickable {
@@ -113,6 +154,53 @@ const depthClass = computed(() => {
   font-weight: 500;
   font-size: 0.82rem;
   border: 2px solid #1976d2;
+}
+
+.node-card-by-area {
+  background: var(--area-color);
+  color: white;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 2px solid var(--area-color-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.node-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.node-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-expand-btn {
+  flex-shrink: 0;
+  margin: -4px -4px 0 0;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.node-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.node-card-depth-2 .node-expand-btn,
+.node-card-depth-2 .node-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.node-card-depth-2 .node-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.14);
 }
 
 .node-card-name {
@@ -148,18 +236,19 @@ const depthClass = computed(() => {
 
 .node-connector-down {
   width: 2px;
-  height: 18px;
-  background: rgba(0, 0, 0, 0.25);
+  height: 20px;
+  background: rgba(0, 0, 0, 0.22);
   margin: 0 auto;
+  border-radius: 1px;
 }
 
 .node-children-row {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 16px 24px;
+  gap: 20px 28px;
   align-items: flex-start;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .node-child-wrapper {
@@ -171,10 +260,11 @@ const depthClass = computed(() => {
 
 .node-connector-horizontal {
   position: absolute;
-  top: -18px;
+  top: -20px;
   left: 50%;
   width: 2px;
-  height: 18px;
-  background: rgba(0, 0, 0, 0.25);
+  height: 20px;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 1px;
 }
 </style>

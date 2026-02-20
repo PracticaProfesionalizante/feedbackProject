@@ -1,13 +1,7 @@
 <template>
   <v-card variant="tonal">
-    <v-card-title class="d-flex justify-space-between align-center">
-      <span class="text-subtitle-1 font-weight-medium">Asignar roles a usuarios</span>
-      <v-btn icon="mdi-refresh" variant="text" :disabled="loadingUsers" @click="refetchUsers">
-        <v-progress-circular v-if="loadingUsers" indeterminate size="16" width="2" />
-        <template v-else>
-          <v-icon icon="mdi-refresh" />
-        </template>
-      </v-btn>
+    <v-card-title class="text-subtitle-1 font-weight-medium">
+      Asignar roles a usuarios
     </v-card-title>
     <v-divider />
     <v-card-text>
@@ -44,22 +38,23 @@
       </div>
 
       <div v-else class="mt-3">
-        <div class="text-body-2 text-medium-emphasis mb-2">Selecciona roles para el usuario</div>
-        <v-checkbox
-          v-for="role in availableRoles"
-          :key="role.id"
-          v-model="selectedRoleIds"
-          :label="role.name"
-          :value="role.id"
-          :messages="role.description || ''"
-        />
+        <div class="text-body-2 text-medium-emphasis mb-2">Selecciona un rol para el usuario (solo uno)</div>
+        <v-radio-group v-model="selectedRoleId" hide-details>
+          <v-radio
+            v-for="role in availableRoles"
+            :key="role.id"
+            :label="role.name"
+            :value="role.id"
+            :messages="role.description || ''"
+          />
+        </v-radio-group>
       </div>
 
       <div class="d-flex justify-end mt-4">
         <v-btn
           color="primary"
           :loading="saving"
-          :disabled="!selectedUserId || saving"
+          :disabled="!selectedUserId || saving || !selectedRoleId"
           @click="saveRoles"
         >
           Guardar roles
@@ -86,18 +81,18 @@ const emit = defineEmits<{
 const queryClient = useQueryClient()
 const auth = useAuthStore()
 
-// TODO: Reemplazar con endpoint real de usuarios (usar Team endpoints como fallback)
+// Lista de usuarios para asignar roles (mismo endpoint que organigrama: todos los usuarios, admin)
 const usersQuery = useQuery<UserListItem[]>({
   queryKey: ['role-users'],
   enabled: computed(() => auth.isAdmin),
   queryFn: async () => {
-    const res = await fetch(`${API_BASE_URL}/team/employees`, {
+    const res = await fetch(`${API_BASE_URL}/org-chart/users`, {
       headers: { ...auth.getAuthHeader() },
     })
     if (!res.ok) throw new Error(await res.text() || 'No se pudo obtener usuarios')
     const data = await res.json()
-    const employees = data.employees ?? []
-    return employees as UserListItem[]
+    const users = data.users ?? []
+    return users as UserListItem[]
   },
 })
 
@@ -110,7 +105,8 @@ const rolesQuery = useQuery<AccessRole[]>({
 const users = computed(() => usersQuery.data.value ?? [])
 
 const selectedUserId = ref<string | null>(null)
-const selectedRoleIds = ref<string[]>([])
+/** Un solo rol por usuario: admin o default */
+const selectedRoleId = ref<string | null>(null)
 
 const availableRoles = computed(() => rolesQuery.data.value ?? [])
 const loadingUsers = computed(() => usersQuery.isLoading.value)
@@ -131,14 +127,15 @@ const userRolesQuery = useQuery({
 watch(
   () => userRolesQuery.data.value,
   (val: { roleIds?: string[] } | undefined) => {
-    if (val?.roleIds) selectedRoleIds.value = [...val.roleIds]
+    if (val?.roleIds?.length) selectedRoleId.value = val.roleIds[0] ?? null
+    else selectedRoleId.value = null
   }
 )
 
 watch(
   () => selectedUserId.value,
   () => {
-    selectedRoleIds.value = []
+    selectedRoleId.value = null
     if (selectedUserId.value) {
       userRolesQuery.refetch()
     }
@@ -146,14 +143,15 @@ watch(
 )
 
 function onUserChange() {
-  selectedRoleIds.value = []
+  selectedRoleId.value = null
   userRolesQuery.refetch()
 }
 
 const saveMutation = useMutation({
   mutationFn: async () => {
     if (!selectedUserId.value) throw new Error('Selecciona un usuario')
-    await userRoleService.setUserRoles(selectedUserId.value, selectedRoleIds.value)
+    const roleIds = selectedRoleId.value ? [selectedRoleId.value] : []
+    await userRoleService.setUserRoles(selectedUserId.value, roleIds)
   },
   onSuccess: async () => {
     emit('success', 'Roles actualizados')
@@ -161,6 +159,9 @@ const saveMutation = useMutation({
       queryClient.invalidateQueries({ queryKey: ['user-roles', selectedUserId.value] }),
       queryClient.invalidateQueries({ queryKey: ['roles'] }),
     ])
+    // Limpiar selección para seguir gestionando otro usuario
+    selectedUserId.value = null
+    selectedRoleId.value = null
   },
   onError: (err: any) => emit('error', err?.message || 'No se pudo guardar'),
 })
@@ -169,9 +170,5 @@ const saving = computed(() => saveMutation.isPending.value)
 
 async function saveRoles() {
   await saveMutation.mutateAsync()
-}
-
-function refetchUsers() {
-  usersQuery.refetch()
 }
 </script>

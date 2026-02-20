@@ -119,11 +119,13 @@
             :loading="usersLoading"
             item-title="name"
             item-value="id"
-            placeholder="Buscar por nombre o email..."
+            placeholder="Buscar por nombre o email (o hacer clic para ver todos)..."
             density="compact"
             hide-details="auto"
             clearable
+            no-filter
             @update:search="searchUsers"
+            @focus="loadAllUsersIfEmpty"
           >
             <template #item="{ props: itemProps, item }">
               <v-list-item v-bind="itemProps" :subtitle="(item.raw as AssignedUser).email" />
@@ -211,15 +213,34 @@ watch(
   { immediate: true }
 )
 
-async function searchUsers(q: string) {
-  searchQuery.value = typeof q === 'string' ? q : ''
-  if (!searchQuery.value.trim()) {
-    userSearchResults.value = []
-    return
+watch(
+  () => props.open && props.position,
+  (shouldLoad) => {
+    if (shouldLoad) loadAllUsers()
   }
+)
+
+async function loadAllUsers() {
   usersLoading.value = true
   try {
-    userSearchResults.value = await orgChartService.getUsersForAssignment(searchQuery.value)
+    userSearchResults.value = await orgChartService.getUsersForAssignment()
+  } catch {
+    userSearchResults.value = []
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+function loadAllUsersIfEmpty() {
+  if (userSearchResults.value.length === 0 && !usersLoading.value) loadAllUsers()
+}
+
+async function searchUsers(q: string) {
+  const term = typeof q === 'string' ? q.trim() : ''
+  searchQuery.value = term
+  usersLoading.value = true
+  try {
+    userSearchResults.value = await orgChartService.getUsersForAssignment(term || undefined)
   } catch {
     userSearchResults.value = []
   } finally {

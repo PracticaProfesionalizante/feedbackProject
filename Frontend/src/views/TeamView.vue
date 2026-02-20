@@ -7,7 +7,7 @@
     <!-- Tabs -->
     <v-tabs v-model="tab" color="primary" density="comfortable">
       <v-tab value="leaders">Mis Líderes</v-tab>
-      <v-tab v-if="canSeeEmployees" value="employees">Mis Empleados</v-tab>
+      <v-tab v-if="canSeeEmployees" value="employees">Personas a cargo</v-tab>
     </v-tabs>
 
     <v-divider class="mb-4" />
@@ -25,13 +25,13 @@
         />
       </v-window-item>
 
-      <!-- Employees (solo leaders) -->
+      <!-- Personas a cargo (solo leaders/admin) -->
       <v-window-item v-if="canSeeEmployees" value="employees">
         <TeamMemberList
-          title="Mis Empleados"
+          title="Personas a cargo"
           :items="employees"
           :loading="loadingEmployees"
-          empty-text="Todavía no tenés empleados asignados."
+          empty-text="Todavía no tenés personas a cargo."
           @give-feedback="goToFeedback"
         />
       </v-window-item>
@@ -161,7 +161,7 @@ async function fetchEmployees() {
     const raw = await parseJsonOrThrow(res)
     employees.value = extractUsers(raw)
   } catch (e: any) {
-    showError(e?.message ?? 'No se pudieron cargar tus empleados.')
+    showError(e?.message ?? 'No se pudieron cargar las personas a cargo.')
     employees.value = []
   } finally {
     loadingEmployees.value = false

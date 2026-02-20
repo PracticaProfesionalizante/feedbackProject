@@ -41,13 +41,10 @@ export const userRoleService = {
     })
     if (!res.ok) throw new Error(await parseErrorMessage(res))
     const raw = await parseJson<any>(res)
-    const data = unwrap<UserRoleAssignmentsResponse | { roles: AccessRole[] }>(raw)
-    const roles =
-      Array.isArray((data as any).roles) ? ((data as any).roles as AccessRole[]) : (data as any).assignments?.map((a: any) => a.role).filter(Boolean) ?? []
-    const roleIds =
-      Array.isArray((data as any).roles) && (data as any).roles.length > 0
-        ? ((data as any).roles as AccessRole[]).map((r) => r.id)
-        : (data as any).assignments?.map((a: any) => a.roleId).filter(Boolean) ?? []
+    // Backend devuelve { user, assignments } con assignments[] de { roleId, role }
+    const assignments = Array.isArray(raw?.assignments) ? raw.assignments : []
+    const roles = assignments.map((a: { role?: AccessRole }) => a.role).filter(Boolean) as AccessRole[]
+    const roleIds = assignments.map((a: { roleId: string }) => a.roleId).filter(Boolean)
     return { roleIds, roles }
   },
 

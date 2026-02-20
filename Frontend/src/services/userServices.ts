@@ -1,5 +1,11 @@
 import api from './api' // tu axios instance
 
+export type UserProfilePosition = {
+  id: string
+  name: string
+  area: { id: string; name: string }
+}
+
 export type UserProfile = {
   id: string
   email: string
@@ -8,6 +14,7 @@ export type UserProfile = {
   country?: string | null
   createdAt: string
   assignedRoles?: Array<{ role: { id: string; name: string; description?: string | null } }>
+  positions?: UserProfilePosition[]
   stats: {
     feedbacksGiven: number
     feedbacksReceived: number
@@ -34,8 +41,9 @@ export const UserService = {
       employeesCount: 0,
       leadersCount: 0
     }
+    const positions = user.positions ?? []
 
-    return { ...user, stats, teamInfo }
+    return { ...user, stats, teamInfo, positions }
   },
 
   patchProfile: async (payload: {

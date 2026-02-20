@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+type PositionItem = {
+  id: string
+  name: string
+  area: { id: string; name: string }
+}
+
 type Props = {
   name: string
   email: string
   role: string
+  positions?: PositionItem[]
   createdAt: string
   birthdate?: string | null
   country?: string | null
@@ -28,6 +35,12 @@ const birthdateFormatted = computed(() => {
   if (!props.birthdate) return null
   const d = new Date(props.birthdate)
   return isNaN(d.getTime()) ? props.birthdate : d.toLocaleDateString()
+})
+
+const positionsDisplay = computed(() => {
+  const list = props.positions ?? []
+  if (list.length === 0) return null
+  return list.map((p) => `${p.name} (${p.area.name})`).join(', ')
 })
 </script>
 
@@ -59,6 +72,16 @@ const birthdateFormatted = computed(() => {
       </template>
       <v-list-item-title>Rol</v-list-item-title>
       <v-list-item-subtitle class="mt-1">{{ role }}</v-list-item-subtitle>
+    </v-list-item>
+
+    <v-list-item>
+      <template #prepend>
+        <v-icon icon="mdi-briefcase-outline" />
+      </template>
+      <v-list-item-title>Puesto</v-list-item-title>
+      <v-list-item-subtitle class="mt-1">
+        {{ positionsDisplay ?? 'Sin puesto asignado' }}
+      </v-list-item-subtitle>
     </v-list-item>
 
     <v-list-item>

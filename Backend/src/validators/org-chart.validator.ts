@@ -61,6 +61,12 @@ export const positionIdSchema = z.object({
   params: idParamSchema,
 })
 
+/** Solo params (GET lista de puestos del usuario) */
+export const listUserPositionsSchema = z.object({
+  params: userIdParamSchema,
+})
+
+/** Params + body con positionIds (PUT reemplazar puestos del usuario) */
 export const assignUserPositionsSchema = z.object({
   params: userIdParamSchema,
   body: z.object({

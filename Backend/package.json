@@ -23,7 +23,9 @@
     "db:inspect": "ts-node scripts/db-inspect-full.ts",
     "db:inspect-users": "ts-node scripts/db-inspect-users.ts",
     "db:normalize": "ts-node scripts/db-normalize.ts",
-    "db:fix-notification": "ts-node scripts/run-supabase-fix.ts"
+    "db:fix-notification": "ts-node scripts/run-supabase-fix.ts",
+    "db:country-birthdate": "ts-node scripts/db-set-users-country-birthdate.ts",
+    "db:assign-roles-positions": "ts-node scripts/db-assign-roles-and-positions.ts"
   },
   "keywords": [],
   "author": "",

@@ -38,17 +38,24 @@
           <div class="tree-root-label">
             <span class="company-name">Sociallearning</span>
           </div>
+          <p v-if="hasMultipleRootsAndNoChildren" class="tree-hint text-caption text-medium-emphasis mt-2 mb-0">
+            Para ver el árbol jerárquico, hacé clic en un puesto y asigná «Rinde cuentas a» en el panel.
+          </p>
           <div class="tree-connector-vertical" style="height: 20px" />
 
-          <!-- Raíces: puestos sin padre -->
+          <!-- Raíces: puestos sin padre (hijos se muestran recursivamente; expand/collapse tipo Humand) -->
           <div class="tree-level tree-level-roots">
             <HierarchyNodeCard
               v-for="node in tree"
               :key="node.id"
               :node="node"
               :depth="0"
+              :area-color="areaColorMap.get(node.area.id)"
+              :area-colors-map="areaColorMap"
+              :expanded-ids="expandedIds"
               :selectable="isAdmin"
               @select="(n) => emit('select', n)"
+              @toggle-expand="toggleExpand"
             />
           </div>
         </template>
@@ -58,14 +65,71 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { HierarchyNode } from '@/types/orgChart'
 import HierarchyNodeCard from './HierarchyNodeCard.vue'
 
-defineProps<{
+function collectAllIds(nodes: HierarchyNode[]): string[] {
+  const ids: string[] = []
+  function walk(n: HierarchyNode) {
+    ids.push(n.id)
+    n.children.forEach(walk)
+  }
+  nodes.forEach(walk)
+  return ids
+}
+
+const props = defineProps<{
   tree: HierarchyNode[]
   isAdmin?: boolean
 }>()
+
+const expandedIds = ref<Set<string>>(new Set())
+
+watch(
+  () => props.tree,
+  (t) => {
+    if (t && t.length) expandedIds.value = new Set(collectAllIds(t))
+  },
+  { immediate: true }
+)
+
+function toggleExpand(nodeId: string) {
+  const next = new Set(expandedIds.value)
+  if (next.has(nodeId)) next.delete(nodeId)
+  else next.add(nodeId)
+  expandedIds.value = next
+}
+
+const AREA_PALETTE = [
+  '#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#0277bd', '#0288d1', '#039be5',
+  '#2e7d32', '#388e3c', '#43a047', '#66bb6a', '#00897b', '#26a69a',
+  '#7b1fa2', '#8e24aa', '#ab47bc', '#6a1b9a',
+  '#e65100', '#ef6c00', '#f57c00', '#ff9800', '#ffa726',
+  '#c62828', '#d32f2f', '#e53935',
+]
+
+const areaColorMap = computed(() => {
+  const map = new Map<string, string>()
+  const areas: string[] = []
+  function collectAreas(nodes: HierarchyNode[]) {
+    for (const n of nodes) {
+      if (!map.has(n.area.id)) {
+        map.set(n.area.id, AREA_PALETTE[areas.length % AREA_PALETTE.length]!)
+        areas.push(n.area.id)
+      }
+      if (n.children.length) collectAreas(n.children)
+    }
+  }
+  collectAreas(props.tree)
+  return map
+})
+
+const hasMultipleRootsAndNoChildren = computed(() => {
+  if (props.tree.length <= 1) return false
+  const hasAnyChild = props.tree.some((n) => n.children.length > 0)
+  return !hasAnyChild
+})
 
 const emit = defineEmits<{
   (e: 'refresh'): void
@@ -166,11 +230,17 @@ function onPanEnd() {
   box-shadow: 0 2px 10px rgba(26, 35, 126, 0.35);
 }
 
+.tree-hint {
+  max-width: 360px;
+  text-align: center;
+}
+
 .tree-connector-vertical {
   width: 2px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.22);
   margin: 0 auto;
   min-height: 16px;
+  border-radius: 1px;
 }
 
 .tree-level-roots {

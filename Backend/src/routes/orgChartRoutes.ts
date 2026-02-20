@@ -10,6 +10,7 @@ import {
   createAreaSchema,
   createPositionSchema,
   listPositionsSchema,
+  listUserPositionsSchema,
   listUsersSchema,
   positionIdSchema,
   updateAreaSchema,
@@ -38,7 +39,7 @@ router.post('/positions', validate(createPositionSchema), orgChartController.cre
 router.patch('/positions/:id', validate(updatePositionSchema), orgChartController.updatePosition)
 router.delete('/positions/:id', validate(positionIdSchema), orgChartController.deletePosition)
 
-router.get('/users/:userId/positions', validate(assignUserPositionsSchema), orgChartController.listUserPositions)
+router.get('/users/:userId/positions', validate(listUserPositionsSchema), orgChartController.listUserPositions)
 router.put('/users/:userId/positions', validate(assignUserPositionsSchema), orgChartController.replaceUserPositions)
 
 export { router as orgChartRoutes }
