@@ -38,13 +38,13 @@
       </div>
     </div>
 
-    <!-- Conector hacia abajo y luego puestos hijos (solo si está expandido) -->
-    <template v-if="node.children.length > 0 && isExpanded">
+    <!-- Conector hacia abajo y luego puestos hijos en columna (solo si está expandido y no se renderizan fuera) -->
+    <template v-if="node.children.length > 0 && isExpanded && !hideChildren">
       <div class="node-connector-down" />
-      <div class="node-children-row">
-        <template v-for="child in node.children" :key="child.id">
+      <div class="node-children-column">
+        <template v-for="(child, idx) in node.children" :key="child.id">
           <div class="node-child-wrapper">
-            <div class="node-connector-horizontal" v-if="node.children.length > 1" />
+            <div v-if="idx > 0" class="node-connector-down" />
             <HierarchyNodeCard
               :node="child"
               :depth="depth + 1"
@@ -66,17 +66,22 @@
 import { computed } from 'vue'
 import type { HierarchyNode } from '@/types/orgChart'
 
-const props = defineProps<{
-  node: HierarchyNode
-  depth: number
-  /** Color por área (hex). Si viene, se usa en lugar del color por profundidad. */
-  areaColor?: string
-  /** Mapa areaId -> color para pasar a hijos */
-  areaColorsMap?: Map<string, string>
-  /** IDs de nodos expandidos (estilo Human). Si no se pasa, se considera expandido. */
-  expandedIds?: Set<string>
-  selectable?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    node: HierarchyNode
+    depth: number
+    /** Color por área (hex). Si viene, se usa en lugar del color por profundidad. */
+    areaColor?: string
+    /** Mapa areaId -> color para pasar a hijos */
+    areaColorsMap?: Map<string, string>
+    /** IDs de nodos expandidos (estilo Human). Si no se pasa, se considera expandido. */
+    expandedIds?: Set<string>
+    selectable?: boolean
+    /** Si true, no se renderizan los hijos (para que el padre los muestre en layout horizontal). */
+    hideChildren?: boolean
+  }>(),
+  { hideChildren: false }
+)
 
 const emit = defineEmits<{
   (e: 'select', node: HierarchyNode): void
@@ -242,12 +247,11 @@ const areaColorLight = computed(() => {
   border-radius: 1px;
 }
 
-.node-children-row {
+.node-children-column {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px 28px;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
   margin-top: 6px;
 }
 
@@ -255,16 +259,5 @@ const areaColorLight = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-}
-
-.node-connector-horizontal {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  width: 2px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.22);
-  border-radius: 1px;
 }
 </style>

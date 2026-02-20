@@ -43,20 +43,68 @@
           </p>
           <div class="tree-connector-vertical" style="height: 20px" />
 
-          <!-- Raíces: puestos sin padre (hijos se muestran recursivamente; expand/collapse tipo Humand) -->
-          <div class="tree-level tree-level-roots">
-            <HierarchyNodeCard
-              v-for="node in tree"
-              :key="node.id"
-              :node="node"
-              :depth="0"
-              :area-color="areaColorMap.get(node.area.id)"
-              :area-colors-map="areaColorMap"
-              :expanded-ids="expandedIds"
-              :selectable="isAdmin"
-              @select="(n) => emit('select', n)"
-              @toggle-expand="toggleExpand"
-            />
+          <!-- Caso organigrama clásico: 1 raíz (CEO) → sus hijos (jefes de área) en fila horizontal por color -->
+          <template v-if="isCeoLayout">
+            <div class="tree-ceo-row">
+              <HierarchyNodeCard
+                :node="singleRoot"
+                :depth="0"
+                :area-color="areaColorMap.get(singleRoot.area.id)"
+                :area-colors-map="areaColorMap"
+                :expanded-ids="expandedIds"
+                :selectable="isAdmin"
+                hide-children
+                @select="(n) => emit('select', n)"
+                @toggle-expand="toggleExpand"
+              />
+            </div>
+            <div class="tree-connector-vertical" style="height: 20px" />
+            <div class="tree-chiefs-row">
+              <div
+                v-for="chief in chiefsSortedByArea"
+                :key="chief.id"
+                class="tree-chief-column"
+                :style="areaColorMap.get(chief.area.id) ? { '--area-accent': areaColorMap.get(chief.area.id) } : undefined"
+              >
+                <div class="tree-area-label">{{ chief.area.name }}</div>
+                <HierarchyNodeCard
+                  :node="chief"
+                  :depth="0"
+                  :area-color="areaColorMap.get(chief.area.id)"
+                  :area-colors-map="areaColorMap"
+                  :expanded-ids="expandedIds"
+                  :selectable="isAdmin"
+                  @select="(n) => emit('select', n)"
+                  @toggle-expand="toggleExpand"
+                />
+              </div>
+            </div>
+          </template>
+
+          <!-- Fallback: varias raíces → áreas en fila horizontal, puestos en columna por área -->
+          <div v-else class="tree-areas-row">
+            <div
+              v-for="group in treeByArea"
+              :key="group.area.id"
+              class="tree-area-column"
+              :style="group.color ? { '--area-accent': group.color } : undefined"
+            >
+              <div class="tree-area-label">{{ group.area.name }}</div>
+              <div class="tree-area-roots">
+                <HierarchyNodeCard
+                  v-for="node in group.roots"
+                  :key="node.id"
+                  :node="node"
+                  :depth="0"
+                  :area-color="areaColorMap.get(node.area.id)"
+                  :area-colors-map="areaColorMap"
+                  :expanded-ids="expandedIds"
+                  :selectable="isAdmin"
+                  @select="(n) => emit('select', n)"
+                  @toggle-expand="toggleExpand"
+                />
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -129,6 +177,37 @@ const hasMultipleRootsAndNoChildren = computed(() => {
   if (props.tree.length <= 1) return false
   const hasAnyChild = props.tree.some((n) => n.children.length > 0)
   return !hasAnyChild
+})
+
+/** Una sola raíz (CEO) con hijos = jefes de área → layout clásico: CEO arriba, chiefs en fila horizontal */
+const singleRoot = computed(() =>
+  props.tree.length === 1 ? props.tree[0]! : null
+)
+const isCeoLayout = computed(
+  () => singleRoot.value != null && singleRoot.value.children.length > 0
+)
+/** Jefes de área bajo el CEO, ordenados por nombre de área para fila horizontal */
+const chiefsSortedByArea = computed(() => {
+  const root = singleRoot.value
+  if (!root?.children.length) return []
+  return [...root.children].sort((a, b) => a.area.name.localeCompare(b.area.name))
+})
+
+/** Agrupa raíces por área para mostrar áreas en horizontal y puestos/descendencia en vertical (fallback) */
+const treeByArea = computed(() => {
+  const byArea = new Map<string, { area: { id: string; name: string }; roots: HierarchyNode[] }>()
+  for (const node of props.tree) {
+    const id = node.area.id
+    const name = node.area.name
+    if (!byArea.has(id)) byArea.set(id, { area: { id, name }, roots: [] })
+    byArea.get(id)!.roots.push(node)
+  }
+  const list = Array.from(byArea.values())
+  list.sort((a, b) => a.area.name.localeCompare(b.area.name))
+  return list.map((g) => ({
+    ...g,
+    color: areaColorMap.value.get(g.area.id),
+  }))
 })
 
 const emit = defineEmits<{
@@ -243,12 +322,60 @@ function onPanEnd() {
   border-radius: 1px;
 }
 
-.tree-level-roots {
+/* Layout CEO: una raíz, luego jefes de área en fila horizontal */
+.tree-ceo-row {
   display: flex;
+  justify-content: center;
+}
+
+.tree-chiefs-row {
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 32px;
+  gap: 24px 32px;
   align-items: flex-start;
+}
+
+.tree-chief-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+}
+
+.tree-areas-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px 32px;
+  align-items: flex-start;
+}
+
+.tree-area-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+}
+
+.tree-area-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--area-accent, #1a237e);
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--area-accent, #1a237e) 18%, transparent);
+  white-space: nowrap;
+}
+
+.tree-area-roots {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
 }
 
 .empty-tree {
