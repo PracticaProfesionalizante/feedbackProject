@@ -71,6 +71,7 @@ const isAdmin = computed(() => auth.isAdmin)
 const treeQuery = useQuery({
   queryKey: ['org-chart', 'hierarchy'],
   queryFn: orgChartService.getHierarchyTree,
+  staleTime: 0,
 })
 
 const areasQuery = useQuery({

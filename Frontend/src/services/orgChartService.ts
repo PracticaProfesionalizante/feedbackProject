@@ -135,7 +135,73 @@ export const orgChartService = {
       headers: { ...auth.getAuthHeader() },
     })
     if (!res.ok) throw new Error(await parseErrorMessage(res))
-    const raw = await parseJson<{ tree?: HierarchyNode[] }>(res)
-    return raw.tree ?? []
+    const raw = await parseJson<any>(res)
+
+    // Respuesta esperada: { tree: HierarchyNode[] }
+    let tree = raw?.tree ?? raw?.data?.tree
+    if (Array.isArray(tree) && tree.length > 0) return tree as HierarchyNode[]
+
+    // Fallback 1: si el backend devuelve { positions: [...] } en hierarchy, armamos el árbol
+    const positionsFromHierarchy = raw?.positions ?? raw?.data?.positions
+    if (Array.isArray(positionsFromHierarchy) && positionsFromHierarchy.length > 0) {
+      return buildTreeFromFlatPositions(positionsFromHierarchy)
+    }
+
+    // Fallback 2: hierarchy viene vacío pero areas/positions sí traen datos → pedimos positions y armamos el árbol
+    try {
+      const positionsList = await this.getPositions()
+      if (positionsList.length > 0) {
+        const withParentId = positionsList.map((p) => ({
+          ...p,
+          parentPositionId: (p as any).parentPositionId ?? p.parent?.id ?? null,
+          assignedUsers: [],
+        }))
+        return buildTreeFromFlatPositions(withParentId)
+      }
+    } catch {
+      // Si positions falla (ej. no admin), dejamos árbol vacío
+    }
+
+    return []
   },
+}
+
+/** Construye árbol de nodos a partir de lista plana con parentPositionId */
+function buildTreeFromFlatPositions(positions: any[]): HierarchyNode[] {
+  const nodeMap = new Map<string, HierarchyNode>()
+  for (const p of positions) {
+    const area = p.area ?? { id: p.areaId, name: '' }
+    const assignedUsers = p.assignedUsers ?? p.userLinks?.map((l: any) => l.user ?? l) ?? []
+    nodeMap.set(p.id, {
+      id: p.id,
+      name: p.name,
+      area: { id: area.id, name: area.name },
+      parentPositionId: p.parentPositionId ?? p.parent?.id ?? null,
+      assignedUsers: assignedUsers.map((u: any) => ({
+        id: u.id,
+        name: u.name ?? u.email,
+        email: u.email ?? '',
+      })),
+      children: [],
+    })
+  }
+  const roots: HierarchyNode[] = []
+  for (const p of positions) {
+    const node = nodeMap.get(p.id)!
+    const parentId = p.parentPositionId ?? p.parent?.id ?? null
+    if (!parentId) {
+      roots.push(node)
+    } else {
+      const parent = nodeMap.get(parentId)
+      if (parent) parent.children.push(node)
+      else roots.push(node)
+    }
+  }
+  function sortChildren(n: HierarchyNode) {
+    n.children.sort((a, b) => a.name.localeCompare(b.name))
+    n.children.forEach(sortChildren)
+  }
+  roots.sort((a, b) => a.area.name.localeCompare(b.area.name) || a.name.localeCompare(b.name))
+  roots.forEach(sortChildren)
+  return roots
 }

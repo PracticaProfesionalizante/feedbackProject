@@ -5,9 +5,7 @@
  */
 import 'dotenv/config'
 import '../src/config/constants'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../src/utils/prisma'
 
 const STRUCTURE: { area: string; positions: string[] }[] = [
   { area: 'Dirección', positions: ['CEO', 'COO'] },
