@@ -34,7 +34,7 @@
       @click:row="onRowClick"
     >
       <template v-if="hideFooter" #bottom />
-      <!-- Indicador checklist: 3 estados (completo / pendiente / sin checklist) -->
+      <!-- Indicador checklist: 3 estados (realizados todos / pendientes / sin checklist) -->
       <template #item.checklist="{ item }">
         <v-tooltip location="top">
           <template #activator="{ props: tooltipProps }">
@@ -133,7 +133,7 @@ const emit = defineEmits<{
  */
 const headers = computed(() => {
   return [
-    { title: '', key: 'checklist', sortable: false, width: '48px', align: 'center' },
+    { title: 'Checklist', key: 'checklist', sortable: false, width: '56px', align: 'center' },
     {
       title: props.mode === 'received' ? 'De' : 'Para',
       key: 'counterpart',
@@ -210,8 +210,8 @@ function getChecklistIcon(f: Feedback): string {
 
 function getChecklistTooltip(f: Feedback): string {
   const status = getChecklistStatus(f)
-  if (status === 'done') return 'Checklist completo'
-  if (status === 'pending') return 'Checklist pendiente'
+  if (status === 'done') return 'Checklist realizados (todos)'
+  if (status === 'pending') return 'Checklist pendientes'
   return 'Sin checklist'
 }
 </script>
