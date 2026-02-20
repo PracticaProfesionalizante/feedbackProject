@@ -67,7 +67,7 @@ defineProps<{
   isAdmin?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'refresh'): void
   (e: 'select', node: HierarchyNode): void
 }>()

@@ -254,7 +254,7 @@ import { useQuery } from '@tanstack/vue-query'
 import FeedbackList from '../components/feedbacks/FeedbackList.vue'
 import { useFeedbackFilters } from '../composables/useFeedbackFilters'
 import { feedbackService } from '../services/feedbackServices'
-import type { Feedback, FeedbacksResponse, FeedbackCounterpart } from '../types/feedback'
+import type { Feedback, FeedbackCounterpart } from '../types/feedback'
 
 const router = useRouter()
 const {
