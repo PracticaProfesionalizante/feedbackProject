@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/config/constants'
 import { useAuthStore } from '@/stores/authStore'
-import type { AccessRole, SetUserRolesDto, UserRoleAssignmentsResponse } from '@/types/roles'
+import type { AccessRole, SetUserRolesDto } from '@/types/roles'
 
 const API_BASE = API_BASE_URL
 
@@ -25,10 +25,6 @@ async function parseJson<T>(res: Response): Promise<T> {
     throw new Error(`Respuesta inválida (no JSON). ${text.slice(0, 80)}`)
   }
   return res.json() as Promise<T>
-}
-
-function unwrap<T>(raw: any): T {
-  return (raw?.data ?? raw?.roles ?? raw?.assignments ?? raw) as T
 }
 
 export const userRoleService = {
