@@ -47,9 +47,9 @@
           <template v-if="isCeoLayout">
             <div class="tree-ceo-row">
               <HierarchyNodeCard
-                :node="singleRoot"
+                :node="ceoRoot"
                 :depth="0"
-                :area-color="areaColorMap.get(singleRoot.area.id)"
+                :area-color="areaColorMap.get(ceoRoot.area.id)"
                 :area-colors-map="areaColorMap"
                 :expanded-ids="expandedIds"
                 :selectable="isAdmin"
@@ -186,6 +186,8 @@ const singleRoot = computed(() =>
 const isCeoLayout = computed(
   () => singleRoot.value != null && singleRoot.value.children.length > 0
 )
+/** Raíz para el template (solo se usa cuando isCeoLayout; evita null en TS) */
+const ceoRoot = computed((): HierarchyNode => singleRoot.value ?? props.tree[0]!)
 /** Jefes de área bajo el CEO, ordenados por nombre de área para fila horizontal */
 const chiefsSortedByArea = computed(() => {
   const root = singleRoot.value
