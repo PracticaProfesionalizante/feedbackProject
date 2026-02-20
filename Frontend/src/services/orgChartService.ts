@@ -197,6 +197,36 @@ function buildTreeFromFlatPositions(positions: any[]): HierarchyNode[] {
       else roots.push(node)
     }
   }
+
+  // Si no hay raíces (ej. ciclo CEO ↔ Director Académico en BD), forzar CEO como raíz
+  if (roots.length === 0 && positions.length > 0) {
+    const ceoPosition = positions.find((p: any) => p.name === 'CEO' && p.area?.name === 'Dirección')
+    const ceoNode = ceoPosition ? nodeMap.get(ceoPosition.id) : null
+    if (ceoNode) {
+      const parentId = ceoPosition.parentPositionId ?? ceoPosition.parent?.id
+      if (parentId) {
+        const parent = nodeMap.get(parentId)
+        if (parent) {
+          const idx = parent.children.findIndex((c) => c.id === ceoNode.id)
+          if (idx !== -1) parent.children.splice(idx, 1)
+        }
+      }
+      roots.push(ceoNode)
+    } else {
+      // Sin CEO, usar el primer puesto como raíz para que al menos se vea algo
+      const first = nodeMap.get(positions[0].id)!
+      const firstParentId = positions[0].parentPositionId ?? positions[0].parent?.id
+      if (firstParentId) {
+        const parent = nodeMap.get(firstParentId)
+        if (parent) {
+          const idx = parent.children.findIndex((c) => c.id === first.id)
+          if (idx !== -1) parent.children.splice(idx, 1)
+        }
+      }
+      roots.push(first)
+    }
+  }
+
   function sortChildren(n: HierarchyNode) {
     n.children.sort((a, b) => a.name.localeCompare(b.name))
     n.children.forEach(sortChildren)

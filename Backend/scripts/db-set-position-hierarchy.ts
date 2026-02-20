@@ -47,6 +47,13 @@ async function main() {
   const globalRoot = positions.find((p) => p.area.name === 'Dirección' && p.name === 'CEO') ?? positions[0]!
   console.log('Raíz (CEO):', globalRoot.name, `(${globalRoot.area.name})`)
 
+  // CEO debe ser la única raíz: sin padre
+  await prisma.orgPosition.update({
+    where: { id: globalRoot.id },
+    data: { parentPositionId: null },
+  })
+  console.log('  CEO sin padre (raíz única)')
+
   const areaNames = [...new Set(positions.map((p) => p.area.name))].sort()
   for (const areaName of areaNames) {
     const list = positions.filter((p) => p.area.name === areaName)
