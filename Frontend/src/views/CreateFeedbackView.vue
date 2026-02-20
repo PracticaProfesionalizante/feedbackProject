@@ -38,15 +38,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
-import { feedbackService } from '../services/feedbackServices'
+import { feedbackService, type AvailableRecipient } from '../services/feedbackServices'
 import FeedbackForm from '../components/feedbacks/FeedbackForm.vue'
-import { API_BASE_URL } from '../config/constants'
 
-type AvailableUser = {
-  id: string
-  name: string
-  email: string
-}
+type AvailableUser = AvailableRecipient
 
 const router = useRouter()
 const route = useRoute()
@@ -77,46 +72,11 @@ async function fetchAvailableUsers() {
       return
     }
 
-    const isAdmin = auth.isAdmin
-    const users: AvailableUser[] = []
-
-    // Si es admin: puede ver empleados y líderes de su equipo
-    if (isAdmin) {
-      const employeesRes = await fetch(`${API_BASE_URL}/team/employees`, {
-        headers: { ...auth.getAuthHeader() }
-      })
-      if (employeesRes.ok) {
-        const employeesData = await employeesRes.json()
-        const employees = employeesData?.employees || employeesData || []
-        users.push(...employees.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
-      }
-
-      const leadersRes = await fetch(`${API_BASE_URL}/team/leaders`, {
-        headers: { ...auth.getAuthHeader() }
-      })
-      if (leadersRes.ok) {
-        const leadersData = await leadersRes.json()
-        const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
-      }
-    } else {
-      const leadersRes = await fetch(`${API_BASE_URL}/team/leaders`, {
-        headers: { ...auth.getAuthHeader() }
-      })
-      if (leadersRes.ok) {
-        const leadersData = await leadersRes.json()
-        const leaders = leadersData?.leaders || leadersData || []
-        users.push(...leaders.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
-      }
-    }
-
-    // Eliminar duplicados (por si un LEADER también es líder de otro)
-    const uniqueUsers = Array.from(
-      new Map(users.map(u => [u.id, u])).values()
-    )
+    // Cualquier usuario puede dar feedback a cualquier otro (sin restricción por puesto ni jerarquía)
+    const users = await feedbackService.getAvailableRecipients()
 
     // Filtrar el usuario actual (no puede enviarse feedback a sí mismo)
-    availableUsers.value = uniqueUsers.filter(u => u.id !== userId)
+    availableUsers.value = users.filter(u => u.id !== userId)
   } catch (error: any) {
     showError(error?.message || 'Error al cargar usuarios disponibles')
     availableUsers.value = []

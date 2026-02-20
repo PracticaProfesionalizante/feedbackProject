@@ -77,7 +77,26 @@ function unwrapArray<T>(raw: any): T[] {
   return []
 }
 
+export type AvailableRecipient = {
+  id: string
+  name: string
+  email: string
+  orgPositions?: { position?: { name?: string; area?: { name?: string } } }[]
+}
+
 export const feedbackService = {
+  /** Lista de todos los usuarios para elegir como destinatario (sin restricción por jerarquía) */
+  async getAvailableRecipients(): Promise<AvailableRecipient[]> {
+    const auth = useAuthStore()
+    const res = await fetch(buildUrl('/feedbacks/available-recipients'), {
+      headers: { ...auth.getAuthHeader() }
+    })
+    if (!res.ok) throw new Error(await parseErrorMessage(res))
+    const raw = await parseJson<{ users: AvailableRecipient[] }>(res)
+    const users = raw?.users ?? []
+    return users
+  },
+
   /** Lista de usuarios con los que tengo feedbacks (para filtro por usuario) */
   async getCounterparts(): Promise<FeedbackCounterpart[]> {
     const auth = useAuthStore()

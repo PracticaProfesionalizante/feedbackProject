@@ -19,6 +19,7 @@
 
     <template #subtitle>
       <div class="d-flex flex-column ga-1 mt-1">
+        <span v-if="positionArea" class="text-caption position-area">{{ positionArea }}</span>
         <span class="text-body-2">{{ previewText }}</span>
         <span class="text-caption text-medium-emphasis">{{ relativeTime }}</span>
       </div>
@@ -36,7 +37,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Feedback } from '../../types/feedback'
-import { formatRelativeTime } from '../../utils'
+import { formatRelativeTime, formatUserPositionArea } from '../../utils'
 import { useAuthStore } from '../../stores/authStore'
 
 const props = defineProps<{
@@ -68,6 +69,8 @@ const displayName = computed(() => {
   return displayUser.value?.name || 'Usuario desconocido'
 })
 
+const positionArea = computed(() => formatUserPositionArea(displayUser.value))
+
 const avatarInitials = computed(() => {
   const name = displayName.value
   // Filtrar strings vacíos para manejar múltiples espacios consecutivos
@@ -89,7 +92,13 @@ const relativeTime = computed(() => {
 })
 
 function handleClick() {
-  // Por ahora navega a /feedbacks, después puedes crear una vista de detalle
-  router.push('/feedbacks')
+  router.push(`/feedbacks/${props.feedback.id}`)
 }
 </script>
+
+<style scoped>
+.position-area {
+  color: rgba(var(--v-theme-on-surface), 0.65);
+  font-size: 0.7rem;
+}
+</style>

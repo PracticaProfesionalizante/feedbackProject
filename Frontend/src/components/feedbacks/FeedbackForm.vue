@@ -25,7 +25,10 @@
               </v-avatar>
             </template>
             <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
-            <v-list-item-subtitle>{{ item.raw.email }}</v-list-item-subtitle>
+            <v-list-item-subtitle class="recipient-subtitle">
+              <span>{{ item.raw.email }}</span>
+              <span v-if="getPositionArea(item.raw)" class="recipient-position">{{ getPositionArea(item.raw) }}</span>
+            </v-list-item-subtitle>
           </v-list-item>
         </template>
       </v-select>
@@ -112,12 +115,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { formatUserPositionArea } from '../../utils'
 
 type AvailableUser = {
   id: string
   name: string
   email: string
   role?: 'LEADER' | 'EMPLOYEE'
+  orgPositions?: { position?: { name?: string; area?: { name?: string } } }[]
 }
 
 const props = defineProps<{
@@ -164,6 +169,10 @@ function getInitials(name: string): string {
     return (first + last).toUpperCase()
   }
   return name.substring(0, 2).toUpperCase()
+}
+
+function getPositionArea(user: AvailableUser): string {
+  return formatUserPositionArea(user)
 }
 
 async function handleSubmit() {
@@ -263,5 +272,15 @@ defineExpose({
 
 .checklist-add-link:hover {
   background: rgba(var(--v-theme-primary), 0.08);
+}
+
+.recipient-subtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.recipient-position {
+  font-size: 0.7rem;
+  color: rgba(var(--v-theme-on-surface), 0.65);
 }
 </style>

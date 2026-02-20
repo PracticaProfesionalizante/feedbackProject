@@ -1,10 +1,17 @@
 export type Role = 'LEADER' | 'EMPLOYEE'
 
+/** Un puesto del usuario (viene del backend en fromUser/toUser) */
+export type UserOrgPositionItem = {
+  position?: { name: string; area?: { name: string } }
+}
+
 export type FeedbackUser = {
   id: string
   name: string
   email: string
   role?: Role
+  /** Puestos y áreas del organigrama (opcional) */
+  orgPositions?: UserOrgPositionItem[]
 }
 
 /** ✅ NUEVO: Acción tipo checklist */
@@ -67,11 +74,12 @@ export type FeedbackFilters = {
   sortOrder?: 'asc' | 'desc'
 }
 
-/** Usuario contraparte para el selector (id, name, email) */
+/** Usuario contraparte para el selector (id, name, email, opcional puesto/área) */
 export type FeedbackCounterpart = {
   id: string
   name: string
   email: string
+  orgPositions?: UserOrgPositionItem[]
 }
 
 /**

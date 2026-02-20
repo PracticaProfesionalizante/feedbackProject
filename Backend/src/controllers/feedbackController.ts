@@ -23,6 +23,23 @@ function getAuthUser(req: Request) {
   return user
 }
 
+/** Select de usuario con puestos y áreas para vistas de feedback */
+const userWithPositionSelect = {
+  id: true,
+  name: true,
+  email: true,
+  orgPositions: {
+    select: {
+      position: {
+        select: {
+          name: true,
+          area: { select: { name: true } },
+        },
+      },
+    },
+  },
+} as const
+
 /* ======================================================
    LISTAR FEEDBACKS
 ====================================================== */
@@ -77,8 +94,8 @@ async function listFeedbacksCore(userId: string, rawQuery: unknown) {
         skip,
         take: limit,
         include: {
-          fromUser: { select: { id: true, name: true, email: true } },
-          toUser: { select: { id: true, name: true, email: true } },
+          fromUser: { select: userWithPositionSelect },
+          toUser: { select: userWithPositionSelect },
           actions: {
             orderBy: { createdAt: 'asc' },
             select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -116,8 +133,8 @@ async function getFeedbackByIdCore(userId: string, feedbackId: string) {
   const feedback = await prisma.feedback.findFirst({
     where: { id: feedbackId, deletedAt: null },
     include: {
-      fromUser: { select: { id: true, name: true, email: true } },
-      toUser: { select: { id: true, name: true, email: true } },
+      fromUser: { select: userWithPositionSelect },
+      toUser: { select: userWithPositionSelect },
       actions: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -175,8 +192,8 @@ async function createFeedbackCore(req: Request) {
         : undefined,
     } as any,
     include: {
-      fromUser: { select: { id: true, name: true, email: true } },
-      toUser: { select: { id: true, name: true, email: true } },
+      fromUser: { select: userWithPositionSelect },
+      toUser: { select: userWithPositionSelect },
       actions: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -252,8 +269,8 @@ async function updateFeedbackCore(req: Request) {
         ...(shouldMarkEdited ? { contentEditedAt: new Date() } : {}),
       },
       include: {
-        fromUser: { select: { id: true, name: true, email: true } },
-        toUser: { select: { id: true, name: true, email: true } },
+        fromUser: { select: userWithPositionSelect },
+        toUser: { select: userWithPositionSelect },
         actions: {
           orderBy: { createdAt: 'asc' },
           select: { id: true, text: true, done: true, createdAt: true, updatedAt: true },
@@ -347,6 +364,24 @@ async function toggleActionCore(req: Request, res: Response, next: NextFunction)
 }
 
 /* ======================================================
+   AVAILABLE RECIPIENTS (GET /api/feedbacks/available-recipients)
+   Lista de todos los usuarios para elegir destinatario (sin restricción por jerarquía).
+====================================================== */
+
+export async function getAvailableRecipients(req: Request, res: Response, next: NextFunction) {
+  try {
+    getAuthUser(req)
+    const users = await prisma.user.findMany({
+      select: userWithPositionSelect,
+      orderBy: { name: 'asc' },
+    })
+    return res.json({ users })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/* ======================================================
    COUNTERPARTS (GET /api/feedbacks/counterparts)
    Usuarios con los que tengo al menos un feedback (enviado o recibido).
 ====================================================== */
@@ -378,7 +413,7 @@ export async function getCounterparts(req: Request, res: Response, next: NextFun
     }
     const users = await prisma.user.findMany({
       where: { id: { in: Array.from(ids) } },
-      select: { id: true, name: true, email: true },
+      select: userWithPositionSelect,
     })
     const list = users.sort((a, b) => a.name.localeCompare(b.name))
     return res.json(list)

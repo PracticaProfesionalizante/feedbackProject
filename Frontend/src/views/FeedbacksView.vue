@@ -68,12 +68,16 @@
             <v-list-item
               v-for="u in sortedCounterparts"
               :key="u.id"
-              :title="u.name"
-              :subtitle="u.email"
               rounded="lg"
               :class="['user-list-item', { 'user-list-item--selected': userId === u.id }]"
               @click="toggleUserFilter(u.id)"
-            />
+            >
+              <template #title>{{ u.name }}</template>
+              <template #subtitle>
+                <span>{{ u.email }}</span>
+                <span v-if="counterpartPositionArea(u)" class="sidebar-user-position">{{ counterpartPositionArea(u) }}</span>
+              </template>
+            </v-list-item>
           </v-list>
         </div>
       </aside>
@@ -227,6 +231,12 @@
 .user-list-item--selected :deep(.v-list-item-subtitle) {
   opacity: 0.9;
 }
+.sidebar-user-position {
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 0.1rem;
+  opacity: 0.85;
+}
 
 .content-area {
   flex: 1;
@@ -255,6 +265,7 @@ import FeedbackList from '../components/feedbacks/FeedbackList.vue'
 import { useFeedbackFilters } from '../composables/useFeedbackFilters'
 import { feedbackService } from '../services/feedbackServices'
 import type { Feedback, FeedbackCounterpart } from '../types/feedback'
+import { formatUserPositionArea } from '../utils'
 
 const router = useRouter()
 const {
@@ -309,6 +320,10 @@ function showError(message: string) {
 }
 
 const tabTitle = computed(() => (tab.value === 'received' ? 'Feedbacks Recibidos' : 'Feedbacks Enviados'))
+
+function counterpartPositionArea(u: FeedbackCounterpart) {
+  return formatUserPositionArea(u)
+}
 
 const counterpartsQuery = useQuery<FeedbackCounterpart[]>({
   queryKey: ['feedbacks-counterparts'],

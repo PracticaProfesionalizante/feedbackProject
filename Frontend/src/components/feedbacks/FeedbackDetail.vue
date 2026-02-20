@@ -35,23 +35,23 @@
 
     <v-card-text>
       <!-- Meta info -->
-      <div class="d-flex flex-column ga-1 mb-4">
-        <div class="text-body-2">
-          <span class="text-medium-emphasis">De:</span>
-          <span class="font-weight-medium">
-            {{ feedback.fromUser?.name ?? feedback.fromUserId }}
-          </span>
-          <span class="text-medium-emphasis">·</span>
-          <span class="text-medium-emphasis">
-            {{ metaLabel }} {{ formatDateTime(metaDateIso) }}
-          </span>
+      <div class="feedback-meta-block">
+        <div class="feedback-meta-row">
+          <span class="feedback-meta-label">De:</span>
+          <div class="feedback-meta-user">
+            <span class="feedback-meta-name">{{ feedback.fromUser?.name ?? feedback.fromUserId }}</span>
+            <span v-if="fromUserPositionArea" class="feedback-meta-position">{{ fromUserPositionArea }}</span>
+          </div>
+          <span class="feedback-meta-sep">·</span>
+          <span class="feedback-meta-date">{{ metaLabel }} {{ formatDateTime(metaDateIso) }}</span>
         </div>
 
-        <div class="text-body-2">
-          <span class="text-medium-emphasis">Para:</span>
-          <span class="font-weight-medium">
-            {{ feedback.toUser?.name ?? feedback.toUserId }}
-          </span>
+        <div class="feedback-meta-row">
+          <span class="feedback-meta-label">Para:</span>
+          <div class="feedback-meta-user">
+            <span class="feedback-meta-name">{{ feedback.toUser?.name ?? feedback.toUserId }}</span>
+            <span v-if="toUserPositionArea" class="feedback-meta-position">{{ toUserPositionArea }}</span>
+          </div>
         </div>
       </div>
 
@@ -158,6 +158,7 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import type { Feedback, FeedbackAction, FeedbackActionInput } from '../../types/feedback'
+import { formatUserPositionArea } from '../../utils'
 
 const props = defineProps<{
   feedback: Feedback
@@ -189,6 +190,9 @@ const canSeeMenu = computed(() => canEditChecklist.value || canDelete.value)
 
 const metaLabel = computed(() => (props.feedback.contentEditedAt ? 'Editado ·' : 'Creado ·'))
 const metaDateIso = computed(() => (props.feedback.contentEditedAt ?? props.feedback.createdAt))
+
+const fromUserPositionArea = computed(() => formatUserPositionArea(props.feedback.fromUser))
+const toUserPositionArea = computed(() => formatUserPositionArea(props.feedback.toUser))
 
 /* =========================
    Acciones (Checklist)
@@ -279,3 +283,51 @@ function formatDateTime(iso: string) {
   return d.toLocaleString()
 }
 </script>
+
+<style scoped>
+.feedback-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.feedback-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.feedback-meta-label {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  flex-shrink: 0;
+}
+
+.feedback-meta-user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.feedback-meta-name {
+  font-weight: 600;
+}
+
+.feedback-meta-position {
+  font-size: 0.75rem;
+  color: rgba(var(--v-theme-on-surface), 0.65);
+  font-weight: 400;
+}
+
+.feedback-meta-sep {
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  margin: 0 0.15rem;
+}
+
+.feedback-meta-date {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.8125rem;
+}
+</style>

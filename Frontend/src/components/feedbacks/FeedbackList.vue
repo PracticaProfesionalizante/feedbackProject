@@ -50,12 +50,11 @@
 
       <!-- De/Para según mode -->
       <template #item.counterpart="{ item }">
-        <div class="d-flex flex-column">
-          <span class="text-body-2 font-weight-medium">
-            {{ getCounterpartName(item) }}
-          </span>
-          <span class="text-caption text-medium-emphasis">
-            {{ getCounterpartEmail(item) }}
+        <div class="counterpart-cell">
+          <span class="counterpart-name">{{ getCounterpartName(item) }}</span>
+          <span class="counterpart-email">{{ getCounterpartEmail(item) }}</span>
+          <span v-if="getCounterpartPositionArea(item)" class="counterpart-position">
+            {{ getCounterpartPositionArea(item) }}
           </span>
         </div>
       </template>
@@ -88,6 +87,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Feedback } from '../../types/feedback'
+import { formatUserPositionArea } from '../../utils'
 
 type Mode = 'received' | 'sent'
 
@@ -193,6 +193,11 @@ function getCounterpartEmail(f: Feedback) {
   return f.toUser?.email ?? ''
 }
 
+function getCounterpartPositionArea(f: Feedback) {
+  const user = props.mode === 'received' ? f.fromUser : f.toUser
+  return formatUserPositionArea(user)
+}
+
 /** 'pending' = tiene checklist con ítems pendientes, 'done' = checklist todo hecho, 'none' = sin checklist */
 function getChecklistStatus(f: Feedback): 'pending' | 'done' | 'none' {
   const actions = f.actions ?? []
@@ -241,5 +246,23 @@ function getChecklistTooltip(f: Feedback): string {
 }
 .checklist-icon--none {
   color: #757575 !important;
+}
+
+.counterpart-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.counterpart-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.counterpart-email {
+  font-size: 0.75rem;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+.counterpart-position {
+  font-size: 0.7rem;
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 </style>

@@ -340,5 +340,117 @@ export const orgChartService = {
 
     return { tree: roots }
   },
+
+  /**
+   * IDs de puestos que están por DEBAJO del usuario en la jerarquía (hijos, nietos, etc.).
+   * Útil para "personas a cargo": usuarios asignados a esos puestos.
+   */
+  async getDescendantPositionIds(userId: string): Promise<string[]> {
+    const myLinks = await prisma.userOrgPosition.findMany({
+      where: { userId },
+      select: { positionId: true },
+    })
+    const myPositionIds = new Set(myLinks.map((l) => l.positionId))
+    if (myPositionIds.size === 0) return []
+
+    const allPositions = await prisma.orgPosition.findMany({
+      select: { id: true, parentPositionId: true },
+    })
+    const descendantIds = new Set<string>()
+    let currentLevel = new Set(myPositionIds)
+    while (currentLevel.size > 0) {
+      const nextLevel = new Set<string>()
+      for (const p of allPositions) {
+        if (p.parentPositionId && currentLevel.has(p.parentPositionId)) {
+          nextLevel.add(p.id)
+          descendantIds.add(p.id)
+        }
+      }
+      currentLevel = nextLevel
+    }
+    return Array.from(descendantIds)
+  },
+
+  /**
+   * IDs de puestos que están por ARRIBA del usuario en la jerarquía (padre, abuelo, etc.).
+   * Útil para "mis líderes": usuarios asignados a esos puestos.
+   */
+  async getAncestorPositionIds(userId: string): Promise<string[]> {
+    const myLinks = await prisma.userOrgPosition.findMany({
+      where: { userId },
+      select: { positionId: true },
+    })
+    const myPositionIds = new Set(myLinks.map((l) => l.positionId))
+    if (myPositionIds.size === 0) return []
+
+    const allPositions = await prisma.orgPosition.findMany({
+      select: { id: true, parentPositionId: true },
+    })
+    const idToParent = new Map<string, string | null>()
+    for (const p of allPositions) idToParent.set(p.id, p.parentPositionId)
+
+    const ancestorIds = new Set<string>()
+    let currentIds = new Set(myPositionIds)
+    while (currentIds.size > 0) {
+      const parents = new Set<string>()
+      for (const id of currentIds) {
+        const parentId = idToParent.get(id) ?? null
+        if (parentId) {
+          parents.add(parentId)
+          ancestorIds.add(parentId)
+        }
+      }
+      currentIds = parents
+    }
+    return Array.from(ancestorIds)
+  },
+
+  /**
+   * Usuarios asignados a puestos que están por debajo de los míos (personas a cargo por jerarquía).
+   */
+  async getUsersInDescendantPositions(userId: string) {
+    const descendantIds = await this.getDescendantPositionIds(userId)
+    if (descendantIds.length === 0) return []
+
+    const links = await prisma.userOrgPosition.findMany({
+      where: { positionId: { in: descendantIds } },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    })
+    const seen = new Set<string>()
+    const users: Array<{ id: string; name: string; email: string }> = []
+    for (const l of links) {
+      if (!seen.has(l.user.id)) {
+        seen.add(l.user.id)
+        users.push(l.user)
+      }
+    }
+    return users.sort((a, b) => a.name.localeCompare(b.name))
+  },
+
+  /**
+   * Usuarios asignados a puestos que están por encima de los míos (mis líderes por jerarquía).
+   */
+  async getUsersInAncestorPositions(userId: string) {
+    const ancestorIds = await this.getAncestorPositionIds(userId)
+    if (ancestorIds.length === 0) return []
+
+    const links = await prisma.userOrgPosition.findMany({
+      where: { positionId: { in: ancestorIds } },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    })
+    const seen = new Set<string>()
+    const users: Array<{ id: string; name: string; email: string }> = []
+    for (const l of links) {
+      if (!seen.has(l.user.id)) {
+        seen.add(l.user.id)
+        users.push(l.user)
+      }
+    }
+    return users.sort((a, b) => a.name.localeCompare(b.name))
+  },
 }
 

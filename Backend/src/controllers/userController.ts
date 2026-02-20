@@ -2,6 +2,7 @@ import type { Response, NextFunction } from 'express'
 import type { AuthRequest } from '../middleware/auth.middleware'
 import { prisma } from '../utils/prisma'
 import { AppError } from '../middleware/error.handler'
+import { orgChartService } from '../services/org-chart.service'
 
 type ProfileUser = {
   id: string
@@ -75,13 +76,16 @@ async function buildProfile(req: AuthRequest, res: Response) {
     throw new AppError('User not found', 404)
   }
 
-  const [feedbacksGiven, feedbacksReceived, comments, employeesCount, leadersCount] = await Promise.all([
-    prisma.feedback.count({ where: { fromUserId: userId, deletedAt: null } }),
-    prisma.feedback.count({ where: { toUserId: userId, deletedAt: null } }),
-    prisma.comment.count({ where: { userId, deletedAt: null } }),
-    prisma.teamMember.count({ where: { leaderId: userId } }),
-    prisma.teamMember.count({ where: { memberId: userId } }),
-  ])
+  const [feedbacksGiven, feedbacksReceived, comments, employeesByHierarchy, leadersByHierarchy] =
+    await Promise.all([
+      prisma.feedback.count({ where: { fromUserId: userId, deletedAt: null } }),
+      prisma.feedback.count({ where: { toUserId: userId, deletedAt: null } }),
+      prisma.comment.count({ where: { userId, deletedAt: null } }),
+      orgChartService.getUsersInDescendantPositions(userId),
+      orgChartService.getUsersInAncestorPositions(userId),
+    ])
+  const employeesCount = employeesByHierarchy.length
+  const leadersCount = leadersByHierarchy.length
 
   const positionsByAreaMap = new Map<
     string,

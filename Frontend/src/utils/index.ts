@@ -58,5 +58,25 @@ export function formatRelativeTime(date: Date | string): string {
   return `Hace ${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`
 }
 
+/**
+ * Formatea puestos y áreas de un usuario para mostrar (ej: "Desarrollador · Tecnología").
+ * Acepta usuario con orgPositions opcional (FeedbackUser o AvailableRecipient).
+ */
+export function formatUserPositionArea(user: {
+  orgPositions?: { position?: { name?: string; area?: { name?: string } } }[]
+} | null | undefined): string {
+  if (!user?.orgPositions?.length) return ''
+  const parts = user.orgPositions
+    .map((op) => {
+      const p = op.position
+      const name = p?.name?.trim()
+      if (!name) return ''
+      const areaName = p?.area?.name?.trim()
+      return areaName ? `${name} · ${areaName}` : name
+    })
+    .filter(Boolean)
+  return parts.join(', ')
+}
+
 // Agrega más utilidades aquí según necesites
 

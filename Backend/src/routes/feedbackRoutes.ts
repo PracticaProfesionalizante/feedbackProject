@@ -3,6 +3,7 @@ import {
   feedbackController,
   getRecentFeedbacks,
   getCounterparts,
+  getAvailableRecipients,
 } from '../controllers/feedbackController'
 import { feedbackActionController } from '../controllers/feedbackActionController'
 import { authenticate } from '../middleware/auth.middleware'
@@ -26,6 +27,9 @@ router.get('/recent', validate(recentFeedbacksSchema), getRecentFeedbacks)
 
 // GET /api/feedbacks/counterparts (debe ir antes de /:id)
 router.get('/counterparts', getCounterparts)
+
+// GET /api/feedbacks/available-recipients — todos los usuarios para elegir destinatario (sin jerarquía)
+router.get('/available-recipients', getAvailableRecipients)
 
 // GET /api/feedbacks
 router.get('/', validate(queryFeedbackSchema), feedbackController.list)
